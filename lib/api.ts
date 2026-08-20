@@ -1,0 +1,72 @@
+import type { LoginResponse, Order, Rider, User } from "@/lib/types";
+
+const API_URL = (
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
+).replace(/\/$/, "");
+
+function unwrap<T>(value: unknown): T {
+  if (value && typeof value === "object" && "data" in value)
+    return (value as { data: T }).data;
+  return value as T;
+}
+
+async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
+  const response = await fetch(`${API_URL}${path}`, {
+    ...init,
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(init.headers || {}),
+    },
+  });
+  if (!response.ok) {
+    if (response.status === 401) throw new Error("SESSION_EXPIRED");
+    const body = await response.json().catch(() => null);
+    throw new Error(body?.message || body?.error || "REQUEST_FAILED");
+  }
+  if (response.status === 204) return undefined as T;
+  return unwrap<T>(await response.json());
+}
+
+export const api = {
+  login: (payload: { phone: string; password: string }) =>
+    request<LoginResponse>("/auth/login", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+
+  getCurrentUser: () => request<User>("/auth/me"),
+  logout: () =>
+    request<void>("/auth/logout", { method: "POST" }).catch(() => undefined),
+  getOrders: () => request<Order[]>("/orders"),
+  getOrder: (orderId: string) => request<Order>(`/orders/${orderId}`),
+  createOrder: (payload: Partial<Order> & { assignedRiderId?: string }) =>
+    request<Order>("/orders", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+  updateOrder: (orderId: string, payload: Record<string, unknown>) =>
+    request<Order>(`/orders/${orderId}`, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    }),
+  markOutForDelivery: (orderId: string) =>
+    request<Order>(`/orders/${orderId}/out-for-delivery`, { method: "POST" }),
+  cancelOrder: (orderId: string) =>
+    request<Order>(`/orders/${orderId}/cancel`, { method: "POST" }),
+  getRiders: () => request<Rider[]>("/riders"),
+  createRider: (payload: Partial<Rider> & { password: string }) =>
+    request<Rider>("/riders", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+  getRiderOrders: () => request<Order[]>("/rider/orders"),
+  confirmDelivery: (payload: { orderId: string; deliveryCode: string }) =>
+    request<Order>("/rider/confirm-delivery", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+};
