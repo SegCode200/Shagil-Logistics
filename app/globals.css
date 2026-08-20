@@ -986,7 +986,7 @@ select {
   }
   .login-card {
     width: 100%;
-    min-height: calc(100dvh - 250px);
+    min-height: calc(100dvh - 100px);
     margin: -24px auto 0;
     position: relative;
     padding: 28px 22px;
