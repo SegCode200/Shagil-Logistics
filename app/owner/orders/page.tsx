@@ -7,7 +7,157 @@ import { useQuery } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/app-shell";
 import { useRoleRedirect } from "@/components/auth/auth-provider";
 import { api } from "@/lib/api";
-import { EmptyState, ErrorState, LoadingState, OrderStatusBadge, formatDate } from "@/components/ui/primitives";
+import {
+  EmptyState,
+  ErrorState,
+  LoadingState,
+  OrderStatusBadge,
+  formatDate,
+} from "@/components/ui/primitives";
 
-export default function OrdersPage() { const { user, isLoading: authLoading } = useRoleRedirect("OWNER"); const query = useQuery({ queryKey: ["orders"], queryFn: api.getOrders, enabled: Boolean(user) }); const [search, setSearch] = useState(""); const [status, setStatus] = useState("ALL"); const filtered = useMemo(() => (query.data || []).filter(order => `${order.orderId} ${order.customerName}`.toLowerCase().includes(search.toLowerCase()) && (status === "ALL" || order.status === status)), [query.data, search, status]); if (authLoading || !user) return <LoadingState />;
-  return <AppShell role="OWNER"><div className="page"><header className="page-header"><div><p className="eyebrow">Operations</p><h1>Orders</h1><p className="subtext">Track every order from creation to confirmation.</p></div><Link className="button button-primary" href="/owner/orders/new"><Plus size={18} /> Create order</Link></header><section className="panel"><div className="panel-heading"><div className="filters"><div className="input-icon search"><Search size={16} /><input className="input" placeholder="Search orders" value={search} onChange={e => setSearch(e.target.value)} /></div><select className="select filter-select" value={status} onChange={e => setStatus(e.target.value)}><option value="ALL">All statuses</option><option value="PENDING">Pending</option><option value="OUT_FOR_DELIVERY">Out for delivery</option><option value="DELIVERED">Delivered</option><option value="CANCELLED">Cancelled</option></select></div><span className="muted count-label">{filtered.length} orders</span></div>{query.isLoading ? <LoadingState label="Loading orders" /> : query.isError ? <ErrorState /> : filtered.length === 0 ? <EmptyState title="No matching orders" description="Try another search or create a new order." /> : <><div className="table-wrap desktop-table"><table className="orders-table"><thead><tr><th>Order</th><th>Customer</th><th>Rider</th><th>Status</th><th>Created</th><th /></tr></thead><tbody>{filtered.map(order => <tr key={order.id}><td className="order-ref">{order.orderId || order.id}</td><td>{order.customerName}<small className="muted block">{order.customerPhone}</small></td><td className="muted">{order.rider?.name || "Unassigned"}</td><td><OrderStatusBadge status={order.status} /></td><td className="muted">{formatDate(order.createdAt)}</td><td><Link href={`/owner/orders/${order.id}`} className="text-link">Open</Link></td></tr>)}</tbody></table></div><div className="mobile-order-list">{filtered.map(order => <article className="mobile-order-card" key={order.id}><header><strong className="order-ref">{order.orderId || order.id}</strong><OrderStatusBadge status={order.status} /></header><p>{order.customerName}</p><footer><span>{formatDate(order.createdAt)}</span><Link href={`/owner/orders/${order.id}`} className="text-link">Open</Link></footer></article>)}</div></>}</section></div></AppShell>; }
+export default function OrdersPage() {
+  const { user, isLoading: authLoading } = useRoleRedirect("OWNER");
+  const query = useQuery({
+    queryKey: ["orders"],
+    queryFn: api.getOrders,
+    enabled: Boolean(user),
+  });
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("ALL");
+  const filtered = useMemo(
+    () =>
+      (query.data || []).filter(
+        (order) =>
+          `${order.orderId} ${order.customerName}`
+            .toLowerCase()
+            .includes(search.toLowerCase()) &&
+          (status === "ALL" || order.status === status),
+      ),
+    [query.data, search, status],
+  );
+  if (authLoading || !user) return <LoadingState />;
+  return (
+    <AppShell role="OWNER">
+      <div className="page">
+        <header className="page-header">
+          <div>
+            <p className="eyebrow">Operations</p>
+            <h1>Orders</h1>
+            <p className="subtext">
+              Track every order from creation to confirmation.
+            </p>
+          </div>
+          <Link className="button button-primary" href="/owner/orders/new">
+            <Plus size={18} /> Create order
+          </Link>
+        </header>
+        <section className="panel">
+          <div className="panel-heading">
+            <div className="filters">
+              <div className="input-icon search">
+                <Search size={16} />
+                <input
+                  className="input"
+                  placeholder="Search orders"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </div>
+              <select
+                className="select filter-select"
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+              >
+                <option value="ALL">All statuses</option>
+                <option value="PENDING">Pending</option>
+                <option value="OUT_FOR_DELIVERY">Out for delivery</option>
+                <option value="DELIVERED">Delivered</option>
+                <option value="CANCELLED">Cancelled</option>
+              </select>
+            </div>
+            <span className="muted count-label">{filtered.length} orders</span>
+          </div>
+          {query.isLoading ? (
+            <LoadingState label="Loading orders" />
+          ) : query.isError ? (
+            <ErrorState />
+          ) : filtered.length === 0 ? (
+            <EmptyState
+              title="No matching orders"
+              description="Try another search or create a new order."
+            />
+          ) : (
+            <>
+              <div className="table-wrap desktop-table">
+                <table className="orders-table">
+                  <thead>
+                    <tr>
+                      <th>Order</th>
+                      <th>Customer</th>
+                      <th>Rider</th>
+                      <th>Status</th>
+                      <th>Created</th>
+                      <th />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filtered.map((order) => (
+                      <tr key={order.id}>
+                        <td className="order-ref">
+                          {order.orderId || order.id}
+                        </td>
+                        <td>
+                          {order.customerName}
+                          <small className="muted block">
+                            {order.customerPhone}
+                          </small>
+                        </td>
+                        <td className="muted">
+                          {order.rider?.name || "Unassigned"}
+                        </td>
+                        <td>
+                          <OrderStatusBadge status={order.status} />
+                        </td>
+                        <td className="muted">{formatDate(order.createdAt)}</td>
+                        <td>
+                          <Link
+                            href={`/owner/orders/${order.id}`}
+                            className="text-link"
+                          >
+                            Open
+                          </Link>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="mobile-order-list">
+                {filtered.map((order) => (
+                  <article className="mobile-order-card" key={order.id}>
+                    <header>
+                      <strong className="order-ref">
+                        {order.orderId || order.id}
+                      </strong>
+                      <OrderStatusBadge status={order.status} />
+                    </header>
+                    <p>{order.customerName}</p>
+                    <footer>
+                      <span>{formatDate(order.createdAt)}</span>
+                      <Link
+                        href={`/owner/orders/${order.id}`}
+                        className="text-link"
+                      >
+                        Open
+                      </Link>
+                    </footer>
+                  </article>
+                ))}
+              </div>
+            </>
+          )}
+        </section>
+      </div>
+    </AppShell>
+  );
+}

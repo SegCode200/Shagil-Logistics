@@ -16,10 +16,11 @@ export type Order = {
   customerPhone?: string;
   orderDetails: string;
   deliveryAddress: string;
-  amount?: number;
+  amount?: number | string;
   deliveryCode?: string;
   status: OrderStatus;
   rider?: User | null;
+  assignedRider?: User | null;
   createdAt: string;
   deliveredAt?: string | null;
   confirmedBy?: User | null;
