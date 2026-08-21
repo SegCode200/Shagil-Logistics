@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Plus, ArrowUpRight } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/app-shell";
+import { SenderLinkGenerator } from "@/components/orders/sender-link-generator";
 import { useRoleRedirect } from "@/components/auth/auth-provider";
 import { api } from "@/lib/api";
 import {
@@ -46,6 +47,7 @@ export default function OwnerDashboard() {
             <Plus size={18} /> Create order
           </Link>
         </header>
+        <SenderLinkGenerator />
         <div className="summary-grid">
           {[
             ["Pending approval", counts.pendingApproval, ""],

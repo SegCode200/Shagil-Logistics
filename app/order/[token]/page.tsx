@@ -10,21 +10,249 @@ import { OrderStatusBadge, LoadingState } from "@/components/ui/primitives";
 type Props = { params: Promise<{ token: string }> };
 export default function PublicOrderPage({ params }: Props) {
   const { token } = use(params);
-  const query = useQuery({ queryKey: ["public-order", token], queryFn: () => api.getPublicOrder(token) });
-  const [values, setValues] = useState({ senderName: "", senderPhone: "", receiverName: "", receiverPhone: "", packageDescription: "", quantity: "1", pickupMethod: "SENDER_DROP_OFF", pickupAddress: "", pickupInstructions: "", deliveryAddress: "", deliveryZone: "", paymentMethod: "PAYMENT_ON_DELIVERY", orderAmount: "", notes: "" });
-  const mutation = useMutation({ mutationFn: () => api.createPublicOrder(token, { ...values, quantity: Number(values.quantity), orderAmount: values.orderAmount ? Number(values.orderAmount) : undefined }) });
-  const set = (key: keyof typeof values, value: string) => setValues((current) => ({ ...current, [key]: value }));
+  const query = useQuery({
+    queryKey: ["public-order", token],
+    queryFn: () => api.getPublicOrder(token),
+  });
+  const [values, setValues] = useState({
+    senderName: "",
+    senderPhone: "",
+    receiverName: "",
+    receiverPhone: "",
+    packageDescription: "",
+    quantity: "1",
+    pickupMethod: "SENDER_DROP_OFF",
+    pickupAddress: "",
+    pickupInstructions: "",
+    deliveryAddress: "",
+    deliveryZone: "",
+    paymentMethod: "PAYMENT_ON_DELIVERY",
+    orderAmount: "",
+    notes: "",
+  });
+  const mutation = useMutation({
+    mutationFn: () =>
+      api.createPublicOrder(token, {
+        ...values,
+        quantity: Number(values.quantity),
+        orderAmount: values.orderAmount
+          ? Number(values.orderAmount)
+          : undefined,
+      }),
+  });
+  const set = (key: keyof typeof values, value: string) =>
+    setValues((current) => ({ ...current, [key]: value }));
   if (query.isLoading) return <LoadingState label="Opening order link" />;
-  if (query.isError || !query.data) return <main className="public-page"><div className="public-card"><p className="eyebrow">Shagil</p><h1>This order link is unavailable</h1><p className="subtext">It may have expired or already been used. Please request a new link.</p></div></main>;
-  if (mutation.data) return <main className="public-page"><div className="public-card success-card"><CheckCircle2 size={40} color="#2d9862" /><h1>Delivery request received</h1><p className="subtext">Keep these details for your records.</p><div className="code-box"><span>Order ID</span><strong>{mutation.data.orderId || "Available in your confirmation message"}</strong></div><OrderStatusBadge status={mutation.data.status} /><p className="subtext">We will review the request and share next steps shortly.</p></div></main>;
-  return <main className="public-page"><div className="public-card"><header className="public-header"><p className="eyebrow">Shagil delivery</p><h1>Create Your Delivery</h1><p className="subtext">Tell us where the package should go. No account needed.</p></header><form className="public-form" onSubmit={(event) => { event.preventDefault(); mutation.mutate(); }}>
-    <fieldset><legend>1. Sender information</legend><div className="form-grid"><Field label="Sender / business name" value={values.senderName} onChange={(v) => set("senderName", v)} /><Field label="Sender phone number" type="tel" value={values.senderPhone} onChange={(v) => set("senderPhone", v)} /></div></fieldset>
-    <fieldset><legend>2. Receiver information</legend><div className="form-grid"><Field label="Receiver name" value={values.receiverName} onChange={(v) => set("receiverName", v)} /><Field label="Receiver phone number" type="tel" value={values.receiverPhone} onChange={(v) => set("receiverPhone", v)} /></div></fieldset>
-    <fieldset><legend>3. Package information</legend><div className="form-grid"><Field label="Product / package description" value={values.packageDescription} onChange={(v) => set("packageDescription", v)} /><Field label="Quantity" type="number" value={values.quantity} onChange={(v) => set("quantity", v)} /><Field label="Notes" value={values.notes} onChange={(v) => set("notes", v)} /></div></fieldset>
-    <fieldset><legend>4. Pickup information</legend><select className="select" value={values.pickupMethod} onChange={(e) => set("pickupMethod", e.target.value)}><option value="SENDER_DROP_OFF">I will bring the package to the office</option><option value="RIDER_PICKUP">Rider will pick up from me</option></select>{values.pickupMethod === "RIDER_PICKUP" && <div className="form-grid public-followup"><Field label="Pickup address" value={values.pickupAddress} onChange={(v) => set("pickupAddress", v)} /><Field label="Pickup instructions" value={values.pickupInstructions} onChange={(v) => set("pickupInstructions", v)} /></div>} </fieldset>
-    <fieldset><legend>5. Delivery information</legend><div className="form-grid"><Field label="Delivery address" value={values.deliveryAddress} onChange={(v) => set("deliveryAddress", v)} /><Field label="Lagos delivery zone" value={values.deliveryZone} onChange={(v) => set("deliveryZone", v)} /></div></fieldset>
-    <fieldset><legend>6. Payment</legend><select className="select" value={values.paymentMethod} onChange={(e) => set("paymentMethod", e.target.value)}><option value="PAYMENT_ON_DELIVERY">Payment on delivery</option><option value="ALREADY_PAID">Already paid</option></select>{values.paymentMethod === "PAYMENT_ON_DELIVERY" && <Field label="Order amount" type="number" value={values.orderAmount} onChange={(v) => set("orderAmount", v)} />}</fieldset>
-    {mutation.isError && <p className="form-error">We could not submit this request. Check the details and try again.</p>}<button className="button button-primary button-full" disabled={mutation.isPending}>{mutation.isPending ? "Submitting..." : <>Submit delivery request <ArrowRight size={17} /></>}</button>
-  </form><p className="public-foot"><Link href="/login">Staff sign in</Link></p></div></main>;
+  if (query.isError || !query.data)
+    return (
+      <main className="public-page">
+        <div className="public-card">
+          <p className="eyebrow">Shagil</p>
+          <h1>This order link is unavailable</h1>
+          <p className="subtext">
+            It may have expired or already been used. Please request a new link.
+          </p>
+        </div>
+      </main>
+    );
+  if (mutation.data)
+    return (
+      <main className="public-page">
+        <div className="public-card success-card">
+          <CheckCircle2 size={40} color="#2d9862" />
+          <h1>Delivery request received</h1>
+          <p className="subtext">Keep these details for your records.</p>
+          <div className="code-box">
+            <span>Order ID</span>
+            <strong>
+              {mutation.data.orderId ||
+                "Available in your confirmation message"}
+            </strong>
+          </div>
+          <OrderStatusBadge status={mutation.data.status} />
+          <p className="subtext">
+            We will review the request and share next steps shortly.
+          </p>
+        </div>
+      </main>
+    );
+  return (
+    <main className="public-page">
+      <div className="public-card">
+        <header className="public-header">
+          <p className="eyebrow">Shagil delivery</p>
+          <h1>Create Your Delivery</h1>
+          <p className="subtext">
+            Tell us where the package should go. No account needed.
+          </p>
+        </header>
+        <form
+          className="public-form"
+          onSubmit={(event) => {
+            event.preventDefault();
+            mutation.mutate();
+          }}
+        >
+          <fieldset>
+            <legend>1. Sender information</legend>
+            <div className="form-grid">
+              <Field
+                label="Sender / business name"
+                value={values.senderName}
+                onChange={(v) => set("senderName", v)}
+              />
+              <Field
+                label="Sender phone number"
+                type="tel"
+                value={values.senderPhone}
+                onChange={(v) => set("senderPhone", v)}
+              />
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>2. Receiver information</legend>
+            <div className="form-grid">
+              <Field
+                label="Receiver name"
+                value={values.receiverName}
+                onChange={(v) => set("receiverName", v)}
+              />
+              <Field
+                label="Receiver phone number"
+                type="tel"
+                value={values.receiverPhone}
+                onChange={(v) => set("receiverPhone", v)}
+              />
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>3. Package information</legend>
+            <div className="form-grid">
+              <Field
+                label="Product / package description"
+                value={values.packageDescription}
+                onChange={(v) => set("packageDescription", v)}
+              />
+              <Field
+                label="Quantity"
+                type="number"
+                value={values.quantity}
+                onChange={(v) => set("quantity", v)}
+              />
+              <Field
+                label="Notes"
+                value={values.notes}
+                onChange={(v) => set("notes", v)}
+              />
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>4. Pickup information</legend>
+            <select
+              className="select"
+              value={values.pickupMethod}
+              onChange={(e) => set("pickupMethod", e.target.value)}
+            >
+              <option value="SENDER_DROP_OFF">
+                I will bring the package to the office
+              </option>
+              <option value="RIDER_PICKUP">Rider will pick up from me</option>
+            </select>
+            {values.pickupMethod === "RIDER_PICKUP" && (
+              <div className="form-grid public-followup">
+                <Field
+                  label="Pickup address"
+                  value={values.pickupAddress}
+                  onChange={(v) => set("pickupAddress", v)}
+                />
+                <Field
+                  label="Pickup instructions"
+                  value={values.pickupInstructions}
+                  onChange={(v) => set("pickupInstructions", v)}
+                />
+              </div>
+            )}{" "}
+          </fieldset>
+          <fieldset>
+            <legend>5. Delivery information</legend>
+            <div className="form-grid">
+              <Field
+                label="Delivery address"
+                value={values.deliveryAddress}
+                onChange={(v) => set("deliveryAddress", v)}
+              />
+              <Field
+                label="Lagos delivery zone"
+                value={values.deliveryZone}
+                onChange={(v) => set("deliveryZone", v)}
+              />
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>6. Payment</legend>
+            <select
+              className="select"
+              value={values.paymentMethod}
+              onChange={(e) => set("paymentMethod", e.target.value)}
+            >
+              <option value="PAYMENT_ON_DELIVERY">Payment on delivery</option>
+              <option value="ALREADY_PAID">Already paid</option>
+            </select>
+            {values.paymentMethod === "PAYMENT_ON_DELIVERY" && (
+              <Field
+                label="Order amount"
+                type="number"
+                value={values.orderAmount}
+                onChange={(v) => set("orderAmount", v)}
+              />
+            )}
+          </fieldset>
+          {mutation.isError && (
+            <p className="form-error">
+              We could not submit this request. Check the details and try again.
+            </p>
+          )}
+          <button
+            className="button button-primary button-full"
+            disabled={mutation.isPending}
+          >
+            {mutation.isPending ? (
+              "Submitting..."
+            ) : (
+              <>
+                Submit delivery request <ArrowRight size={17} />
+              </>
+            )}
+          </button>
+        </form>
+        <p className="public-foot">
+          <Link href="/login">Staff sign in</Link>
+        </p>
+      </div>
+    </main>
+  );
 }
-function Field({ label, value, onChange, type = "text" }: { label: string; value: string; onChange: (value: string) => void; type?: string }) { return <div className="field"><label>{label}</label><input className="input" required={label !== "Notes" && label !== "Pickup instructions"} type={type} value={value} onChange={(e) => onChange(e.target.value)} /></div>; }
+function Field({
+  label,
+  value,
+  onChange,
+  type = "text",
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  type?: string;
+}) {
+  return (
+    <div className="field">
+      <label>{label}</label>
+      <input
+        className="input"
+        required={label !== "Notes" && label !== "Pickup instructions"}
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      />
+    </div>
+  );
+}

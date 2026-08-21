@@ -279,6 +279,74 @@ select {
 .detail-card {
   padding: 20px;
 }
+.sender-link-panel {
+  margin-bottom: 24px;
+}
+.panel-supporting-text {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+.sender-link-panel .panel-heading > svg {
+  color: var(--brand-dark);
+}
+.sender-link-form {
+  display: grid;
+  gap: 18px;
+}
+.sender-link-actions {
+  justify-content: flex-start;
+  margin-top: 0;
+}
+.sender-link-result {
+  display: grid;
+  gap: 16px;
+}
+.sender-link-success-heading {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #287650;
+  font-size: 14px;
+}
+.success-icon {
+  width: 27px;
+  height: 27px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: white;
+  background: #2d9862;
+}
+.sender-link-url {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  padding: 13px 14px;
+  border: 1px dashed #bfe4cd;
+  border-radius: 8px;
+  color: var(--navy);
+  background: #f5fcf7;
+}
+.sender-link-url svg {
+  flex: 0 0 auto;
+  color: #2d9862;
+}
+.sender-link-url a {
+  overflow: hidden;
+  color: var(--navy);
+  font-size: 13px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sender-link-toast {
+  margin: 14px 0 0;
+  color: #287650;
+  font-size: 12px;
+  font-weight: 700;
+}
 .table-wrap {
   overflow-x: auto;
 }

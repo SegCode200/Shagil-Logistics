@@ -83,4 +83,9 @@ export const api = {
   getPublicOrder: (token: string) => request<Order>(`/public/orders/${token}`),
   createPublicOrder: (token: string, payload: Record<string, unknown>) => request<Order>(`/public/orders/${token}`, { method: "POST", body: JSON.stringify(payload) }),
   getCustomerDelivery: (token: string) => request<Order>(`/public/deliveries/${token}`),
+  createSenderLink: (payload: { senderName: string; senderPhoneNumber: string }) =>
+    request<{ url: string }>("/sender-links", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
 };
