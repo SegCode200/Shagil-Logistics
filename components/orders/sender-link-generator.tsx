@@ -2,21 +2,8 @@
 
 import { Check, Clipboard, Link2, MessageCircle, Send, X } from "lucide-react";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { useMutation } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-
-const schema = z.object({
-  senderName: z.string().trim().min(2, "Enter the sender or business name."),
-  senderPhoneNumber: z
-    .string()
-    .trim()
-    .regex(/^[+\d][\d\s()-]{6,19}$/, "Enter a valid WhatsApp or phone number."),
-});
-
-type FormValues = z.infer<typeof schema>;
 
 function friendlyError(error: unknown) {
   if (error instanceof Error && error.message === "SESSION_EXPIRED") {
@@ -29,14 +16,10 @@ export function SenderLinkGenerator() {
   const [generatedUrl, setGeneratedUrl] = useState("");
   const [copied, setCopied] = useState(false);
   const [toast, setToast] = useState("");
-  const form = useForm<FormValues>({
-    resolver: zodResolver(schema),
-    defaultValues: { senderName: "", senderPhoneNumber: "" },
-  });
   const mutation = useMutation({
     mutationFn: api.createSenderLink,
-    onSuccess: ({ url }) => {
-      setGeneratedUrl(url);
+    onSuccess: ({ path }) => {
+      setGeneratedUrl(new URL(path, window.location.origin).toString());
       setCopied(false);
       setToast("");
     },
@@ -56,9 +39,8 @@ export function SenderLinkGenerator() {
 
   function sendViaWhatsApp() {
     if (!generatedUrl) return;
-    const phone = form.getValues("senderPhoneNumber").replace(/\D/g, "");
     const message = `Hello 👋\n\nPlease use the link below to provide your delivery details:\n\n${generatedUrl}\n\nThank you.`;
-    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank", "noopener,noreferrer");
+    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank", "noopener,noreferrer");
   }
 
   function reset() {
@@ -66,7 +48,6 @@ export function SenderLinkGenerator() {
     setCopied(false);
     setToast("");
     mutation.reset();
-    form.reset();
   }
 
   return (
@@ -80,26 +61,15 @@ export function SenderLinkGenerator() {
       </div>
       <div className="panel-body">
         {!generatedUrl ? (
-          <form className="sender-link-form" onSubmit={form.handleSubmit((values) => mutation.mutate(values))}>
-            <div className="form-grid">
-              <div className="field">
-                <label htmlFor="sender-link-name">Sender / business name</label>
-                <input className="input" id="sender-link-name" autoComplete="organization" {...form.register("senderName")} />
-                {form.formState.errors.senderName && <small>{form.formState.errors.senderName.message}</small>}
-              </div>
-              <div className="field">
-                <label htmlFor="sender-link-phone">Sender WhatsApp / phone number</label>
-                <input className="input" id="sender-link-phone" type="tel" inputMode="tel" autoComplete="tel" placeholder="08012345678" {...form.register("senderPhoneNumber")} />
-                {form.formState.errors.senderPhoneNumber && <small>{form.formState.errors.senderPhoneNumber.message}</small>}
-              </div>
-            </div>
+          <div className="sender-link-form">
+            <p className="subtext">Generate a secure form link, then forward it to any sender through WhatsApp or another channel.</p>
             {mutation.isError && <p className="form-error" role="alert">{friendlyError(mutation.error)}</p>}
             <div className="form-actions sender-link-actions">
-              <button className="button button-primary" disabled={mutation.isPending}>
+              <button className="button button-primary" disabled={mutation.isPending} onClick={() => mutation.mutate()}>
                 <Send size={17} /> {mutation.isPending ? "Generating link..." : "Generate form link"}
               </button>
             </div>
-          </form>
+          </div>
         ) : (
           <div className="sender-link-result" role="status" aria-live="polite">
             <div className="sender-link-success-heading"><span className="success-icon"><Check size={17} /></span><strong>Sender form link generated</strong></div>

@@ -77,15 +77,15 @@ export const api = {
       method: "POST",
       body: JSON.stringify(payload),
     }),
-  getDeliveryZones: () => request<DeliveryZone[]>("/delivery-zones"),
-  createDeliveryZone: (payload: Omit<DeliveryZone, "id">) => request<DeliveryZone>("/delivery-zones", { method: "POST", body: JSON.stringify(payload) }),
-  updateDeliveryZone: (id: string, payload: Partial<Omit<DeliveryZone, "id">>) => request<DeliveryZone>(`/delivery-zones/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
+  getDeliveryZones: () => request<DeliveryZone[]>("/orders/zones"),
+  createDeliveryZone: (payload: Omit<DeliveryZone, "id">) => request<DeliveryZone>("/orders/zones", { method: "POST", body: JSON.stringify(payload) }),
+  updateDeliveryZone: (id: string, payload: Partial<Omit<DeliveryZone, "id">>) => request<DeliveryZone>(`/orders/zones/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
   getPublicOrder: (token: string) => request<Order>(`/public/orders/${token}`),
   createPublicOrder: (token: string, payload: Record<string, unknown>) => request<Order>(`/public/orders/${token}`, { method: "POST", body: JSON.stringify(payload) }),
   getCustomerDelivery: (token: string) => request<Order>(`/public/deliveries/${token}`),
-  createSenderLink: (payload: { senderName: string; senderPhoneNumber: string }) =>
-    request<{ url: string }>("/sender-links", {
+  createSenderLink: () =>
+    request<{ token: string; path: string; expiresAt: string }>("/orders/links", {
       method: "POST",
-      body: JSON.stringify(payload),
+      body: JSON.stringify({}),
     }),
 };
