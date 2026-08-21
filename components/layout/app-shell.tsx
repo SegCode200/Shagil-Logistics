@@ -61,10 +61,8 @@ export function AppShell({
             </button>
           )}
         </div>
-        <div className="workspace-label">
-          {role === "OWNER" ? "Operations" : "Delivery mode"}
-        </div>
-        <nav>
+        <div className="workspace-label">{role === "OWNER" ? "Workspace" : "Delivery mode"}</div>
+        <nav className="primary-nav">
           {links.map(({ href, label, icon: Icon }) => (
             <Link
               key={href}
@@ -82,6 +80,7 @@ export function AppShell({
           ))}
         </nav>
         <div className="sidebar-bottom">
+          <span className="sidebar-section-label">Account</span>
           <div className="user-mini">
             <span className="avatar">
               {user?.name?.slice(0, 1).toUpperCase() || "U"}
