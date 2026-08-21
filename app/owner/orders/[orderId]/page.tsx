@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, Truck, Ban } from "lucide-react";
+import { ArrowLeft, Truck, Ban, PackageCheck } from "lucide-react";
 import { use } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/app-shell";
@@ -20,16 +20,19 @@ export default function OrderDetailsPage({ params }: Props) {
   const { orderId } = use(params);
   const { user, isLoading } = useRoleRedirect("OWNER");
   const queryClient = useQueryClient();
+  const riders = useQuery({ queryKey: ["riders"], queryFn: api.getRiders, enabled: Boolean(user) });
   const query = useQuery({
     queryKey: ["order", orderId],
     queryFn: () => api.getOrder(orderId),
     enabled: Boolean(user),
   });
   const action = useMutation({
-    mutationFn: (type: "out" | "cancel") =>
-      type === "out"
-        ? api.markOutForDelivery(orderId)
-        : api.cancelOrder(orderId),
+    mutationFn: (type: "approve" | "received" | "out" | "cancel") => {
+      if (type === "cancel") return api.cancelOrder(orderId);
+      if (type === "out") return api.markOutForDelivery(orderId);
+      if (type === "received") return api.markPackageReceived(orderId);
+      return api.updateOrderStatus(orderId, "APPROVED");
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["order", orderId] });
       queryClient.invalidateQueries({ queryKey: ["orders"] });
@@ -78,6 +81,14 @@ export default function OrderDetailsPage({ params }: Props) {
                 <dd>{order.deliveryAddress}</dd>
               </div>
             </dl>
+            <h2 className="section-gap">Sender and package</h2>
+            <dl className="detail-list">
+              <div><dt>Sender</dt><dd>{order.senderName || order.customerName}</dd></div>
+              <div><dt>Sender phone</dt><dd>{order.senderPhone || order.customerPhone || "—"}</dd></div>
+              <div><dt>Package</dt><dd>{order.packageDescription || order.orderDetails}</dd></div>
+              <div><dt>Quantity</dt><dd>{order.quantity || 1}</dd></div>
+              <div><dt>Pickup</dt><dd>{order.pickupMethod === "RIDER_PICKUP" ? order.pickupAddress : "Sender drop-off"}</dd></div>
+            </dl>
             <h2 className="section-gap">Order information</h2>
             <dl className="detail-list">
               <div>
@@ -92,6 +103,9 @@ export default function OrderDetailsPage({ params }: Props) {
                     : "Not specified"}
                 </dd>
               </div>
+              <div><dt>Payment method</dt><dd>{order.paymentMethod === "PAYMENT_ON_DELIVERY" ? "Payment on delivery" : "Already paid"}</dd></div>
+              <div><dt>Delivery fee</dt><dd>{order.deliveryFee == null ? "—" : `₦${Number(order.deliveryFee).toLocaleString()}`}</dd></div>
+              <div><dt>Total</dt><dd>{order.totalAmount == null ? "—" : `₦${Number(order.totalAmount).toLocaleString()}`}</dd></div>
               <div>
                 <dt>Created</dt>
                 <dd>{formatDate(order.createdAt)}</dd>
@@ -121,6 +135,8 @@ export default function OrderDetailsPage({ params }: Props) {
               )}
             </dl>
             <div className="action-stack section-gap">
+              {(order.status === "PENDING" || order.status === "PENDING_APPROVAL") && <button className="button button-primary button-full" disabled={action.isPending} onClick={() => action.mutate("approve")}>Approve order</button>}
+              {order.status === "WAITING_FOR_PACKAGE" && <button className="button button-primary button-full" disabled={action.isPending} onClick={() => action.mutate("received")}><PackageCheck size={17} /> Mark package received</button>}
               {order.status === "PENDING" && (
                 <>
                   <button
@@ -139,6 +155,7 @@ export default function OrderDetailsPage({ params }: Props) {
                   </button>
                 </>
               )}
+              <div className="field"><label htmlFor="assign-rider">Assign rider</label><select className="select" id="assign-rider" value={order.assignedRider?.id || order.rider?.id || ""} onChange={(event) => { if (event.target.value) api.assignRider(orderId, event.target.value).then(() => { queryClient.invalidateQueries({ queryKey: ["order", orderId] }); queryClient.invalidateQueries({ queryKey: ["orders"] }); }); }}><option value="">Unassigned</option>{(riders.data || []).map((rider) => <option key={rider.id} value={rider.id}>{rider.name}</option>)}</select></div>
               {order.status === "OUT_FOR_DELIVERY" && (
                 <button
                   className="button button-danger button-full"

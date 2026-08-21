@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Home, LogOut, Menu, Package, Plus, Settings, Truck, Users, X } from "lucide-react";
+import { Home, LogOut, Menu, Package, Plus, Settings, Truck, Users, X, MapPinned } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
 
-const ownerLinks = [{ href: "/owner/dashboard", label: "Dashboard", icon: Home }, { href: "/owner/orders", label: "Orders", icon: Package }, { href: "/owner/orders/new", label: "Create order", icon: Plus }, { href: "/owner/riders", label: "Riders", icon: Users }];
+const ownerLinks = [{ href: "/owner/dashboard", label: "Dashboard", icon: Home }, { href: "/owner/orders", label: "Orders", icon: Package }, { href: "/owner/orders/new", label: "Create order", icon: Plus }, { href: "/owner/riders", label: "Riders", icon: Users }, { href: "/owner/zones", label: "Delivery zones", icon: MapPinned }];
 const riderLinks = [{ href: "/rider/dashboard", label: "My deliveries", icon: Truck }, { href: "/rider/profile", label: "Profile", icon: Settings }];
 
 export function AppShell({ children, role }: { children: React.ReactNode; role: "OWNER" | "RIDER" }) {

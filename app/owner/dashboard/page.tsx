@@ -24,11 +24,12 @@ export default function OwnerDashboard() {
   if (authLoading || !user) return <LoadingState />;
   const items = orders.data || [];
   const counts = {
-    total: items.length,
-    pending: items.filter((o) => o.status === "PENDING").length,
+    pendingApproval: items.filter((o) => ["PENDING", "PENDING_APPROVAL"].includes(o.status)).length,
+    waiting: items.filter((o) => o.status === "WAITING_FOR_PACKAGE").length,
+    assigned: items.filter((o) => ["ASSIGNED", "PACKAGE_RECEIVED", "APPROVED"].includes(o.status)).length,
     out: items.filter((o) => o.status === "OUT_FOR_DELIVERY").length,
     delivered: items.filter((o) => o.status === "DELIVERED").length,
-    cancelled: items.filter((o) => o.status === "CANCELLED").length,
+    cod: items.filter((o) => o.paymentMethod === "PAYMENT_ON_DELIVERY").length,
   };
   return (
     <AppShell role="OWNER">
@@ -47,11 +48,13 @@ export default function OwnerDashboard() {
         </header>
         <div className="summary-grid">
           {[
-            ["Total orders", counts.total, ""],
-            ["Pending", counts.pending, ""],
+            ["Pending approval", counts.pendingApproval, ""],
+            ["Waiting for package", counts.waiting, ""],
+            ["Assigned", counts.assigned, "dot-blue"],
             ["Out for delivery", counts.out, "dot-blue"],
             ["Delivered", counts.delivered, "dot-green"],
-            ["Cancelled", counts.cancelled, "dot-red"],
+            ["Payment on delivery", counts.cod, ""],
+            ["Today's orders", items.length, "dot-red"],
           ].map(([label, value, dot]) => (
             <div className="summary-card" key={label as string}>
               <span className={`summary-dot ${dot}`} />

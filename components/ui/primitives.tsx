@@ -62,6 +62,12 @@ export function SuccessState({ children }: { children: React.ReactNode }) {
 export function OrderStatusBadge({ status }: { status: OrderStatus }) {
   const labels = {
     PENDING: "Pending",
+    PENDING_APPROVAL: "Pending approval",
+    WAITING_FOR_PACKAGE: "Waiting for package",
+    APPROVED: "Approved",
+    PACKAGE_RECEIVED: "Package received",
+    ASSIGNED: "Assigned",
+    PICKED_UP: "Picked up",
     OUT_FOR_DELIVERY: "Out for delivery",
     DELIVERED: "Delivered",
     CANCELLED: "Cancelled",

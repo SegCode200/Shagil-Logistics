@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { MapPin, ArrowRight } from "lucide-react";
+import { MapPin, ArrowRight, Phone, Wallet } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/app-shell";
 import { useRoleRedirect } from "@/components/auth/auth-provider";
@@ -55,6 +55,11 @@ export default function RiderDashboard() {
                 <p className="address">
                   <MapPin size={15} /> {order.deliveryAddress}
                 </p>
+                <div className="rider-facts">
+                  <span><strong>Receiver</strong>{order.receiverName || order.customerName}</span>
+                  <span><strong>Phone</strong>{order.receiverPhone ? <a href={`tel:${order.receiverPhone}`}><Phone size={13} /> {order.receiverPhone}</a> : "—"}</span>
+                  <span><strong>Payment</strong><span><Wallet size={13} /> {order.paymentMethod === "PAYMENT_ON_DELIVERY" ? `Collect ₦${Number(order.totalAmount ?? order.amount ?? 0).toLocaleString()}` : "Already paid"}</span></span>
+                </div>
                 {order.status !== "DELIVERED" &&
                   order.status !== "CANCELLED" && (
                     <Link

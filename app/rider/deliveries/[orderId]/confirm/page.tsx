@@ -15,6 +15,8 @@ export default function ConfirmDeliveryPage({ params }: Props) {
   const { user, isLoading } = useRoleRedirect("RIDER");
   const [orderId, setOrderId] = useState("");
   const [code, setCode] = useState("");
+  const [amountReceived, setAmountReceived] = useState("");
+  const [paymentReceived, setPaymentReceived] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
   const [confirmedOrder, setConfirmedOrder] = useState<Awaited<
     ReturnType<typeof api.confirmDelivery>
@@ -34,6 +36,10 @@ export default function ConfirmDeliveryPage({ params }: Props) {
       setConfirmedOrder(data);
       setConfirmed(true);
     },
+  });
+  const paymentMutation = useMutation({
+    mutationFn: () => api.confirmPayment(routeOrderId, Number(amountReceived)),
+    onSuccess: () => setPaymentReceived(true),
   });
   if (isLoading || !user || deliveries.isLoading) return <LoadingState />;
   if (deliveries.isError || !order)
@@ -96,7 +102,16 @@ export default function ConfirmDeliveryPage({ params }: Props) {
             <strong>{order.customerName || "Delivery"}</strong>
             <span>{order.orderId || routeOrderId}</span>
             <p>{order.deliveryAddress}</p>
+            <span>{order.paymentMethod === "PAYMENT_ON_DELIVERY" ? `Amount to collect: ₦${Number(order.totalAmount ?? order.amount ?? 0).toLocaleString()}` : "Already paid"}</span>
           </div>
+          {order.paymentMethod === "PAYMENT_ON_DELIVERY" && !paymentReceived && (
+            <div className="payment-check">
+              <div className="field"><label htmlFor="amount-received">Amount received</label><input className="input" id="amount-received" type="number" min="0" step="0.01" required value={amountReceived} onChange={(event) => setAmountReceived(event.target.value)} /></div>
+              {paymentMutation.isError && <p className="form-error confirm-error">Payment could not be confirmed. Check the amount and try again.</p>}
+              <button type="button" className="button button-secondary button-full" disabled={paymentMutation.isPending || !amountReceived || Number(amountReceived) < 0} onClick={() => paymentMutation.mutate()}>{paymentMutation.isPending ? "Confirming payment..." : "Confirm payment"}</button>
+            </div>
+          )}
+          {paymentReceived && <p className="payment-received">Payment received</p>}
           <form
             className="confirm-form"
             onSubmit={(e) => {
@@ -134,7 +149,7 @@ export default function ConfirmDeliveryPage({ params }: Props) {
             )}
             <button
               className="button button-primary button-full"
-              disabled={mutation.isPending}
+              disabled={mutation.isPending || (order.paymentMethod === "PAYMENT_ON_DELIVERY" && !paymentReceived)}
             >
               {mutation.isPending ? "Confirming..." : "CONFIRM DELIVERY"}
             </button>

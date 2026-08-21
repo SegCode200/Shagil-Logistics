@@ -24,6 +24,9 @@ export default function OrdersPage() {
   });
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("ALL");
+  const [payment, setPayment] = useState("ALL");
+  const [rider, setRider] = useState("ALL");
+  const riders = useQuery({ queryKey: ["riders"], queryFn: api.getRiders, enabled: Boolean(user) });
   const filtered = useMemo(
     () =>
       (query.data || []).filter(
@@ -31,9 +34,11 @@ export default function OrdersPage() {
           `${order.orderId} ${order.customerName}`
             .toLowerCase()
             .includes(search.toLowerCase()) &&
-          (status === "ALL" || order.status === status),
+          (status === "ALL" || order.status === status) &&
+          (payment === "ALL" || order.paymentMethod === payment) &&
+          (rider === "ALL" || order.assignedRider?.id === rider || order.rider?.id === rider),
       ),
-    [query.data, search, status],
+    [query.data, search, status, payment, rider],
   );
   if (authLoading || !user) return <LoadingState />;
   return (
@@ -70,9 +75,23 @@ export default function OrdersPage() {
               >
                 <option value="ALL">All statuses</option>
                 <option value="PENDING">Pending</option>
+                <option value="PENDING_APPROVAL">Pending approval</option>
+                <option value="WAITING_FOR_PACKAGE">Waiting for package</option>
+                <option value="PACKAGE_RECEIVED">Package received</option>
+                <option value="ASSIGNED">Assigned</option>
+                <option value="PICKED_UP">Picked up</option>
                 <option value="OUT_FOR_DELIVERY">Out for delivery</option>
                 <option value="DELIVERED">Delivered</option>
                 <option value="CANCELLED">Cancelled</option>
+              </select>
+              <select className="select filter-select" value={payment} onChange={(e) => setPayment(e.target.value)}>
+                <option value="ALL">All payments</option>
+                <option value="ALREADY_PAID">Already paid</option>
+                <option value="PAYMENT_ON_DELIVERY">Payment on delivery</option>
+              </select>
+              <select className="select filter-select" value={rider} onChange={(e) => setRider(e.target.value)}>
+                <option value="ALL">All riders</option>
+                {(riders.data || []).map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
               </select>
             </div>
             <span className="muted count-label">{filtered.length} orders</span>
