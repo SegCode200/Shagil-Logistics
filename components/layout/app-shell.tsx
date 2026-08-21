@@ -20,7 +20,7 @@ import { useAuth } from "@/components/auth/auth-provider";
 const ownerLinks = [
   { href: "/owner/dashboard", label: "Dashboard", icon: Home },
   { href: "/owner/orders", label: "Orders", icon: Package },
-  { href: "/owner/orders/new", label: "Create order", icon: Plus },
+  { href: "/create-order", label: "Create order", icon: Plus },
   { href: "/owner/riders", label: "Riders", icon: Users },
   { href: "/owner/zones", label: "Delivery zones", icon: MapPinned },
 ];

@@ -26,19 +26,22 @@ export default function OrdersPage() {
   const [status, setStatus] = useState("ALL");
   const [payment, setPayment] = useState("ALL");
   const [rider, setRider] = useState("ALL");
+  const [date, setDate] = useState("");
+  const [sort, setSort] = useState("newest");
   const riders = useQuery({ queryKey: ["riders"], queryFn: api.getRiders, enabled: Boolean(user) });
   const filtered = useMemo(
     () =>
       (query.data || []).filter(
         (order) =>
-          `${order.orderId} ${order.customerName}`
+          `${order.orderId} ${order.customerName} ${order.senderName || ""} ${order.receiverName || ""} ${order.receiverPhone || ""} ${order.rider?.name || order.assignedRider?.name || ""}`
             .toLowerCase()
             .includes(search.toLowerCase()) &&
           (status === "ALL" || order.status === status) &&
           (payment === "ALL" || order.paymentMethod === payment) &&
-          (rider === "ALL" || order.assignedRider?.id === rider || order.rider?.id === rider),
-      ),
-    [query.data, search, status, payment, rider],
+              (rider === "ALL" || order.assignedRider?.id === rider || order.rider?.id === rider) &&
+              (!date || order.createdAt.slice(0, 10) === date),
+            ).sort((left, right) => sort === "oldest" ? left.createdAt.localeCompare(right.createdAt) : right.createdAt.localeCompare(left.createdAt)),
+            [query.data, search, status, payment, rider, date, sort],
   );
   if (authLoading || !user) return <LoadingState />;
   return (
@@ -52,7 +55,7 @@ export default function OrdersPage() {
               Track every order from creation to confirmation.
             </p>
           </div>
-          <Link className="button button-primary" href="/owner/orders/new">
+          <Link className="button button-primary" href="/create-order">
             <Plus size={18} /> Create order
           </Link>
         </header>
@@ -93,6 +96,11 @@ export default function OrdersPage() {
                 <option value="ALL">All riders</option>
                 {(riders.data || []).map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
               </select>
+              <input className="input filter-date" type="date" aria-label="Filter by date" value={date} onChange={(e) => setDate(e.target.value)} />
+              <select className="select filter-select" value={sort} onChange={(e) => setSort(e.target.value)} aria-label="Sort orders">
+                <option value="newest">Newest first</option>
+                <option value="oldest">Oldest first</option>
+              </select>
             </div>
             <span className="muted count-label">{filtered.length} orders</span>
           </div>
@@ -112,8 +120,11 @@ export default function OrdersPage() {
                   <thead>
                     <tr>
                       <th>Order</th>
-                      <th>Customer</th>
+                      <th>Sender</th>
+                      <th>Receiver</th>
+                      <th>Delivery</th>
                       <th>Rider</th>
+                      <th>Payment</th>
                       <th>Status</th>
                       <th>Created</th>
                       <th />
@@ -125,15 +136,13 @@ export default function OrdersPage() {
                         <td className="order-ref">
                           {order.orderId || order.id}
                         </td>
-                        <td>
-                          {order.customerName}
-                          <small className="muted block">
-                            {order.customerPhone}
-                          </small>
-                        </td>
+                        <td>{order.senderName || order.customerName}<small className="muted block">{order.senderPhone || order.customerPhone}</small></td>
+                        <td>{order.receiverName || order.customerName}<small className="muted block">{order.receiverPhone || order.customerPhone}</small></td>
+                        <td>{order.deliveryAddress}</td>
                         <td className="muted">
                           {order.rider?.name || "Unassigned"}
                         </td>
+                        <td>{order.paymentMethod === "PAYMENT_ON_DELIVERY" ? "COD" : "Paid"}<small className="muted block">{order.companyDeliveryAmount == null ? "—" : `₦${Number(order.companyDeliveryAmount).toLocaleString()}`}</small></td>
                         <td>
                           <OrderStatusBadge status={order.status} />
                         </td>

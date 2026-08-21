@@ -13,6 +13,11 @@ export type OrderStatus =
 export type PaymentMethod = "ALREADY_PAID" | "PAYMENT_ON_DELIVERY";
 export type PaymentStatus = "UNPAID" | "PENDING" | "PAID";
 export type PickupMethod = "SENDER_DROP_OFF" | "RIDER_PICKUP";
+export type CustomerCollectionStatus = "NOT_COLLECTED" | "COLLECTED";
+
+export type OrderImage = { id?: string; url: string; name?: string };
+export type OrderEvent = { id: string; type: string; createdAt: string; createdBy?: User | null };
+export type Notification = { id: string; type: string; status: "SENT" | "FAILED"; createdAt: string };
 
 export type User = {
   id: string;
@@ -57,6 +62,15 @@ export type Order = {
   companyDeliveryAmount?: number | string;
   publicToken?: string;
   deliveryToken?: string;
+  approvalStatus?: "PENDING" | "APPROVED" | "REJECTED";
+  approvedAt?: string | null;
+  approvedBy?: User | null;
+  companyPaymentStatus?: PaymentStatus;
+  senderPaymentStatus?: PaymentStatus;
+  customerCollectionStatus?: CustomerCollectionStatus;
+  images?: OrderImage[];
+  events?: OrderEvent[];
+  notifications?: Notification[];
 };
 
 export type DeliveryZone = { id: string; name: string; fee: number | string; active: boolean };

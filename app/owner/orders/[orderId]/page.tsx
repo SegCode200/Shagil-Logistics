@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowLeft, Truck, Ban, PackageCheck } from "lucide-react";
 import { use } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -49,7 +50,13 @@ export default function OrderDetailsPage({ params }: Props) {
     );
   const order = query.data;
   const amount = order.amount == null || order.amount === "" ? null : Number(order.amount);
-  console.log("order details", order);
+  const canApprove = Boolean(
+    (order.senderName || order.customerName) &&
+      (order.receiverName || order.customerName) &&
+      order.deliveryAddress &&
+      order.paymentMethod &&
+      order.deliveryFee != null,
+  );
   return (
     <AppShell role="OWNER">
       <div className="page">
@@ -91,25 +98,19 @@ export default function OrderDetailsPage({ params }: Props) {
             </dl>
             <h2 className="section-gap">Order information</h2>
             <dl className="detail-list">
-              <div>
-                <dt>Details</dt>
-                <dd>{order.orderDetails}</dd>
-              </div>
-              <div>
-                <dt>Amount</dt>
-                <dd>
-                  {amount !== null && Number.isFinite(amount)
-                    ? amount.toFixed(2)
-                    : "Not specified"}
-                </dd>
-              </div>
-              <div><dt>Payment method</dt><dd>{order.paymentMethod === "PAYMENT_ON_DELIVERY" ? "Payment on delivery" : "Already paid"}</dd></div>
+              <div><dt>Details</dt><dd>{order.orderDetails}</dd></div>
+              <div><dt>Amount</dt><dd>{amount !== null && Number.isFinite(amount) ? amount.toFixed(2) : "Not specified"}</dd></div>
               <div><dt>Delivery fee</dt><dd>{order.deliveryFee == null ? "—" : `₦${Number(order.deliveryFee).toLocaleString()}`}</dd></div>
               <div><dt>Total</dt><dd>{order.totalAmount == null ? "—" : `₦${Number(order.totalAmount).toLocaleString()}`}</dd></div>
-              <div>
-                <dt>Created</dt>
-                <dd>{formatDate(order.createdAt)}</dd>
-              </div>
+              <div><dt>Created</dt><dd>{formatDate(order.createdAt)}</dd></div>
+            </dl>
+            {order.images?.length ? <><h2 className="section-gap">Product images</h2><div className="public-image-grid">{order.images.map((image) => <Image key={image.id || image.url} src={image.url} alt={image.name || "Product"} width={240} height={240} />)}</div></> : null}
+            <h2 className="section-gap">Payment</h2>
+            <dl className="detail-list payment-ledger">
+              <div><dt>Payment method</dt><dd>{order.paymentMethod === "PAYMENT_ON_DELIVERY" ? "Payment on delivery" : "Already paid"}</dd></div>
+              <div><dt>Company payment</dt><dd>{order.companyPaymentStatus === "PAID" ? "PAID ✓" : "PENDING"}</dd></div>
+              <div><dt>Sender payment</dt><dd>{order.senderPaymentStatus === "PAID" ? "PAID ✓" : "PENDING"}</dd></div>
+              <div><dt>Customer collection</dt><dd>{order.customerCollectionStatus === "COLLECTED" ? "COLLECTED" : "NOT COLLECTED"}</dd></div>
             </dl>
           </section>
           <aside className="detail-card">
@@ -135,7 +136,7 @@ export default function OrderDetailsPage({ params }: Props) {
               )}
             </dl>
             <div className="action-stack section-gap">
-              {(order.status === "PENDING" || order.status === "PENDING_APPROVAL") && <button className="button button-primary button-full" disabled={action.isPending} onClick={() => action.mutate("approve")}>Approve order</button>}
+              {(order.status === "PENDING" || order.status === "PENDING_APPROVAL") && <button className="button button-primary button-full" disabled={action.isPending || !canApprove} title={!canApprove ? "Complete sender, receiver, payment, and delivery fee information first" : undefined} onClick={() => { if (window.confirm(`Are you sure you want to approve ${order.orderId || "this order"}?`)) action.mutate("approve"); }}>Approve order</button>}
               {order.status === "WAITING_FOR_PACKAGE" && <button className="button button-primary button-full" disabled={action.isPending} onClick={() => action.mutate("received")}><PackageCheck size={17} /> Mark package received</button>}
               {order.status === "PENDING" && (
                 <>
@@ -172,6 +173,7 @@ export default function OrderDetailsPage({ params }: Props) {
                 deliveryCode={order.deliveryCode}
               />
             </div>
+            {!canApprove && (order.status === "PENDING" || order.status === "PENDING_APPROVAL") && <p className="form-error">Complete the required order and delivery fee information before approval.</p>}
             {action.isError && (
               <p className="form-error">
                 That action could not be completed. Please try again.
@@ -179,6 +181,7 @@ export default function OrderDetailsPage({ params }: Props) {
             )}
           </aside>
         </div>
+        {order.events?.length ? <section className="detail-card section-gap"><h2>Order timeline</h2><div className="order-timeline">{order.events.map((event) => <div className="timeline-row" key={event.id}><span className="timeline-marker" /><div><strong>{event.type}</strong><small>{formatDate(event.createdAt)}{event.createdBy ? ` · ${event.createdBy.name}` : ""}</small></div></div>)}</div></section> : null}
       </div>
     </AppShell>
   );

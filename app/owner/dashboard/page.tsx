@@ -4,7 +4,6 @@ import Link from "next/link";
 import { Plus, ArrowUpRight } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/app-shell";
-import { SenderLinkGenerator } from "@/components/orders/sender-link-generator";
 import { useRoleRedirect } from "@/components/auth/auth-provider";
 import { api } from "@/lib/api";
 import {
@@ -31,6 +30,9 @@ export default function OwnerDashboard() {
     out: items.filter((o) => o.status === "OUT_FOR_DELIVERY").length,
     delivered: items.filter((o) => o.status === "DELIVERED").length,
     cod: items.filter((o) => o.paymentMethod === "PAYMENT_ON_DELIVERY").length,
+    approved: items.filter((o) => o.approvalStatus === "APPROVED" || o.status === "APPROVED").length,
+    pendingCompany: items.filter((o) => o.companyPaymentStatus !== "PAID").length,
+    pendingSender: items.filter((o) => o.senderPaymentStatus !== "PAID").length,
   };
   return (
     <AppShell role="OWNER">
@@ -43,11 +45,10 @@ export default function OwnerDashboard() {
               A clear view of what needs your attention.
             </p>
           </div>
-          <Link className="button button-primary" href="/owner/orders/new">
+          <Link className="button button-primary" href="/create-order">
             <Plus size={18} /> Create order
           </Link>
         </header>
-        <SenderLinkGenerator />
         <div className="summary-grid">
           {[
             ["Pending approval", counts.pendingApproval, ""],
@@ -57,6 +58,9 @@ export default function OwnerDashboard() {
             ["Delivered", counts.delivered, "dot-green"],
             ["Payment on delivery", counts.cod, ""],
             ["Today's orders", items.length, "dot-red"],
+            ["Approved", counts.approved, "dot-green"],
+            ["Pending company payments", counts.pendingCompany, ""],
+            ["Pending sender payments", counts.pendingSender, ""],
           ].map(([label, value, dot]) => (
             <div className="summary-card" key={label as string}>
               <span className={`summary-dot ${dot}`} />
@@ -83,7 +87,7 @@ export default function OwnerDashboard() {
               action={
                 <Link
                   className="button button-primary"
-                  href="/owner/orders/new"
+                  href="/create-order"
                 >
                   Create order
                 </Link>

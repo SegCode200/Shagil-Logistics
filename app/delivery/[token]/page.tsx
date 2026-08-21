@@ -2,6 +2,7 @@
 
 import { CheckCircle2, Circle } from "lucide-react";
 import { use, useEffect } from "react";
+import Image from "next/image";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { LoadingState } from "@/components/ui/primitives";
@@ -17,5 +18,31 @@ export default function CustomerDeliveryPage({ params }: { params: Promise<{ tok
   const order = query.data;
   const current = timeline.indexOf(order.status);
   const amount = order.totalAmount ?? order.amount;
-  return <main className="public-page"><div className="public-card delivery-public"><header className="public-header"><p className="eyebrow">Your delivery</p><h1>{order.orderId || "Delivery"}</h1><span className="delivery-status">{labels[order.status] || order.status}</span></header><div className="public-facts"><div><span>Delivery code</span><strong>{order.deliveryCode || "Provided by sender"}</strong></div><div><span>Account / sender</span><strong>{order.senderName || order.customerName}</strong></div><div><span>Payment</span><strong>{order.paymentMethod === "PAYMENT_ON_DELIVERY" ? "Payment on delivery" : "Already paid"}</strong></div>{order.paymentMethod === "PAYMENT_ON_DELIVERY" && <div><span>Amount to pay</span><strong>₦{Number(amount || 0).toLocaleString()}</strong></div>}</div><div className="timeline">{timeline.map((status, index) => <div className={index <= current ? "timeline-item complete" : "timeline-item"} key={status}>{index <= current ? <CheckCircle2 size={19} /> : <Circle size={19} />}<span>{labels[status]}</span></div>)}</div><p className="public-refresh">Status refreshes automatically.</p></div></main>;
+  return (
+    <main className="public-page">
+      <div className="public-card delivery-public">
+        <header className="public-header">
+          <p className="eyebrow">Your delivery</p>
+          <h1>{order.orderId || "Delivery"}</h1>
+          <span className="delivery-status">{labels[order.status] || order.status}</span>
+        </header>
+        <div className="delivery-code-card">
+          <span>Delivery code</span>
+          <strong>{order.deliveryCode || "Provided by sender"}</strong>
+          <p>Show this code to the rider when your order is delivered.</p>
+        </div>
+        <div className="public-facts">
+          <div><span>Account / sender</span><strong>{order.senderName || order.customerName}</strong></div>
+          <div><span>Product</span><strong>{order.packageDescription || order.orderDetails || "—"}</strong></div>
+          <div><span>Quantity</span><strong>{order.quantity || 1}</strong></div>
+          <div><span>Delivery address</span><strong>{order.deliveryAddress}</strong></div>
+          <div><span>Payment</span><strong>{order.customerCollectionStatus === "COLLECTED" ? "PAID ✓" : order.paymentMethod === "PAYMENT_ON_DELIVERY" ? "Payment on delivery" : "Already paid ✓"}</strong></div>
+          {order.paymentMethod === "PAYMENT_ON_DELIVERY" && order.customerCollectionStatus !== "COLLECTED" && <div><span>Amount to pay</span><strong>₦{Number(amount || 0).toLocaleString()}</strong></div>}
+        </div>
+        {order.images?.length ? <div className="public-image-grid">{order.images.map((image) => <Image key={image.id || image.url} src={image.url} alt={image.name || "Product"} width={240} height={240} />)}</div> : null}
+        <div className="timeline">{timeline.map((status, index) => <div className={index <= current ? "timeline-item complete" : "timeline-item"} key={status}>{index <= current ? <CheckCircle2 size={19} /> : <Circle size={19} />}<span>{labels[status]}</span></div>)}</div>
+        <p className="public-refresh">Status refreshes automatically.</p>
+      </div>
+    </main>
+  );
 }

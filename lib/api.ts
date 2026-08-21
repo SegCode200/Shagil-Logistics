@@ -65,7 +65,7 @@ export const api = {
   cancelOrder: (orderId: string) =>
     request<Order>(`/orders/${orderId}/cancel`, { method: "POST" }),
   getRiders: () => request<Rider[]>("/riders"),
-  createRider: (payload: Partial<Rider> & { password: string }) =>
+  createRider: (payload: Pick<Rider, "name" | "phone">) =>
     request<Rider>("/riders", {
       method: "POST",
       body: JSON.stringify(payload),
@@ -114,12 +114,4 @@ export const api = {
     }),
   getCustomerDelivery: (token: string) =>
     request<Order>(`/public/deliveries/${token}`),
-  createSenderLink: () =>
-    request<{ token: string; path: string; expiresAt: string }>(
-      "/orders/links",
-      {
-        method: "POST",
-        body: JSON.stringify({}),
-      },
-    ),
 };
