@@ -3,17 +3,13 @@
 import Link from "next/link";
 import { CheckCircle2, ArrowRight } from "lucide-react";
 import { use, useState } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { OrderStatusBadge, LoadingState } from "@/components/ui/primitives";
+import { OrderStatusBadge } from "@/components/ui/primitives";
 
 type Props = { params: Promise<{ token: string }> };
 export default function PublicOrderPage({ params }: Props) {
   const { token } = use(params);
-  const query = useQuery({
-    queryKey: ["public-order", token],
-    queryFn: () => api.getPublicOrder(token),
-  });
   const [values, setValues] = useState({
     senderName: "",
     senderPhone: "",
@@ -42,19 +38,6 @@ export default function PublicOrderPage({ params }: Props) {
   });
   const set = (key: keyof typeof values, value: string) =>
     setValues((current) => ({ ...current, [key]: value }));
-  if (query.isLoading) return <LoadingState label="Opening order link" />;
-  if (query.isError || !query.data)
-    return (
-      <main className="public-page">
-        <div className="public-card">
-          <p className="eyebrow">Shagil</p>
-          <h1>This order link is unavailable</h1>
-          <p className="subtext">
-            It may have expired or already been used. Please request a new link.
-          </p>
-        </div>
-      </main>
-    );
   if (mutation.data)
     return (
       <main className="public-page">
@@ -209,7 +192,8 @@ export default function PublicOrderPage({ params }: Props) {
           </fieldset>
           {mutation.isError && (
             <p className="form-error">
-              We could not submit this request. Check the details and try again.
+              We could not submit this request. The link may be invalid or
+              expired, or the details may need attention.
             </p>
           )}
           <button

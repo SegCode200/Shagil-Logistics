@@ -1,4 +1,11 @@
-import type { DeliveryZone, LoginResponse, Order, OrderStatus, Rider, User } from "@/lib/types";
+import type {
+  DeliveryZone,
+  LoginResponse,
+  Order,
+  OrderStatus,
+  Rider,
+  User,
+} from "@/lib/types";
 
 const API_URL = (
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
@@ -65,27 +72,54 @@ export const api = {
     }),
   getRiderOrders: () => request<Order[]>("/rider/orders"),
   updateOrderStatus: (orderId: string, status: OrderStatus) =>
-    request<Order>(`/orders/${orderId}/status`, { method: "POST", body: JSON.stringify({ status }) }),
+    request<Order>(`/orders/${orderId}/status`, {
+      method: "POST",
+      body: JSON.stringify({ status }),
+    }),
   assignRider: (orderId: string, riderId: string) =>
-    request<Order>(`/orders/${orderId}/assign`, { method: "POST", body: JSON.stringify({ riderId }) }),
+    request<Order>(`/orders/${orderId}/assign`, {
+      method: "POST",
+      body: JSON.stringify({ riderId }),
+    }),
   markPackageReceived: (orderId: string) =>
     request<Order>(`/orders/${orderId}/package-received`, { method: "POST" }),
   confirmPayment: (orderId: string, amountReceived: number) =>
-    request<Order>(`/rider/orders/${orderId}/confirm-payment`, { method: "POST", body: JSON.stringify({ amountReceived }) }),
+    request<Order>(`/rider/orders/${orderId}/confirm-payment`, {
+      method: "POST",
+      body: JSON.stringify({ amountReceived }),
+    }),
   confirmDelivery: (payload: { orderId: string; deliveryCode: string }) =>
     request<Order>("/rider/confirm-delivery", {
       method: "POST",
       body: JSON.stringify(payload),
     }),
   getDeliveryZones: () => request<DeliveryZone[]>("/orders/zones"),
-  createDeliveryZone: (payload: Omit<DeliveryZone, "id">) => request<DeliveryZone>("/orders/zones", { method: "POST", body: JSON.stringify(payload) }),
-  updateDeliveryZone: (id: string, payload: Partial<Omit<DeliveryZone, "id">>) => request<DeliveryZone>(`/orders/zones/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
-  getPublicOrder: (token: string) => request<Order>(`/public/orders/${token}`),
-  createPublicOrder: (token: string, payload: Record<string, unknown>) => request<Order>(`/public/orders/${token}`, { method: "POST", body: JSON.stringify(payload) }),
-  getCustomerDelivery: (token: string) => request<Order>(`/public/deliveries/${token}`),
-  createSenderLink: () =>
-    request<{ token: string; path: string; expiresAt: string }>("/orders/links", {
+  createDeliveryZone: (payload: Omit<DeliveryZone, "id">) =>
+    request<DeliveryZone>("/orders/zones", {
       method: "POST",
-      body: JSON.stringify({}),
+      body: JSON.stringify(payload),
     }),
+  updateDeliveryZone: (
+    id: string,
+    payload: Partial<Omit<DeliveryZone, "id">>,
+  ) =>
+    request<DeliveryZone>(`/orders/zones/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    }),
+  createPublicOrder: (token: string, payload: Record<string, unknown>) =>
+    request<Order>(`/public/orders/${token}`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+  getCustomerDelivery: (token: string) =>
+    request<Order>(`/public/deliveries/${token}`),
+  createSenderLink: () =>
+    request<{ token: string; path: string; expiresAt: string }>(
+      "/orders/links",
+      {
+        method: "POST",
+        body: JSON.stringify({}),
+      },
+    ),
 };
