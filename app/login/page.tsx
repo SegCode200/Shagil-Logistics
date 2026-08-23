@@ -10,7 +10,6 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth/auth-provider";
-import { normalizeNigerianPhone } from "@/lib/phone";
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -25,7 +24,8 @@ export default function LoginPage() {
     setBusy(true);
     setError("");
     try {
-      const user = await login({ phone: identifier.includes("@") ? identifier : normalizeNigerianPhone(identifier), password });
+      console.log("Attempting login with identifier:", identifier);
+      const user = await login({ phone: identifier, password });
       router.replace(
         user.role === "OWNER" ? "/owner/dashboard" : "/rider/dashboard",
       );

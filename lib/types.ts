@@ -82,7 +82,11 @@ export type Order = {
   riderReport?: RiderReport | null;
 };
 
-export type DeliveryZone = { id: string; name: string; fee: number | string; active: boolean };
+export type DeliveryZone = { id: string; name: string; fee: number | string; active: boolean; updatedAt?: string };
+export type DeliveryZoneImportRow = { locationCode: string; locationName: string; deliveryFee: number | string; status: "ACTIVE" | "INACTIVE" };
+export type DeliveryZoneImportChange = { locationId: string; location: string; oldFee: number | string; newFee: number | string; changeType: "UPDATED" };
+export type DeliveryZoneImportError = { row: number; locationId?: string; errors: string[] };
+export type DeliveryZoneImport = { importId: string; summary: { total: number; updated: number; unchanged: number; invalid: number }; changes: DeliveryZoneImportChange[]; errors: DeliveryZoneImportError[]; applied: boolean };
 
 export type Rider = User & {
   active?: boolean;
@@ -92,5 +96,8 @@ export type Rider = User & {
   totalDeliveries?: number;
   ratingDistribution?: Partial<Record<1 | 2 | 3 | 4 | 5, number>>;
 };
+
+export type Pagination = { page: number; pageSize: number; total: number; totalPages: number };
+export type PaginatedResponse<T> = { items: T[]; pagination: Pagination };
 
 export type LoginResponse = { user?: User; token?: string; accessToken?: string };

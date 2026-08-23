@@ -23,10 +23,10 @@ export default function ConfirmDeliveryPage({ params }: Props) {
   > | null>(null);
   const deliveries = useQuery({
     queryKey: ["rider-orders"],
-    queryFn: api.getRiderOrders,
+    queryFn: () => api.getRiderOrders(1, 100),
     enabled: Boolean(user && routeOrderId),
   });
-  const order = deliveries.data?.find(
+  const order = deliveries.data?.items.find(
     (delivery) =>
       delivery.id === routeOrderId || delivery.orderId === routeOrderId,
   );

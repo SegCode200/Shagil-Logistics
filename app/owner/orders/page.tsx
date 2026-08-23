@@ -17,9 +17,10 @@ import {
 
 export default function OrdersPage() {
   const { user, isLoading: authLoading } = useRoleRedirect("OWNER");
+  const [page, setPage] = useState(1);
   const query = useQuery({
-    queryKey: ["orders"],
-    queryFn: api.getOrders,
+    queryKey: ["orders", page],
+    queryFn: () => api.getOrders(page, 20),
     enabled: Boolean(user),
   });
   const [search, setSearch] = useState("");
@@ -31,7 +32,7 @@ export default function OrdersPage() {
   const riders = useQuery({ queryKey: ["riders"], queryFn: api.getRiders, enabled: Boolean(user) });
   const filtered = useMemo(
     () =>
-      (query.data || []).filter(
+      (query.data?.items || []).filter(
         (order) =>
           `${order.orderId} ${order.customerName} ${order.senderName || ""} ${order.receiverName || ""} ${order.receiverPhoneNumber || ""} ${order.rider?.name || order.assignedRider?.name || ""}`
             .toLowerCase()
@@ -185,6 +186,9 @@ export default function OrdersPage() {
             </>
           )}
         </section>
+        {query.data && query.data.pagination.totalPages > 1 && (
+          <div className="pagination"><button className="button button-secondary" disabled={page === 1 || query.isFetching} onClick={() => setPage((current) => current - 1)}>Previous</button><span>Page {page} of {query.data.pagination.totalPages} · {query.data.pagination.total} orders</span><button className="button button-secondary" disabled={page >= query.data.pagination.totalPages || query.isFetching} onClick={() => setPage((current) => current + 1)}>Next</button></div>
+        )}
       </div>
     </AppShell>
   );

@@ -52,18 +52,34 @@ function compressImage(file: File): Promise<File> {
     const image = new window.Image();
     image.onload = () => {
       const maxDimension = 1600;
-      const scale = Math.min(1, maxDimension / Math.max(image.width, image.height));
+      const scale = Math.min(
+        1,
+        maxDimension / Math.max(image.width, image.height),
+      );
       const canvas = document.createElement("canvas");
       canvas.width = Math.max(1, Math.round(image.width * scale));
       canvas.height = Math.max(1, Math.round(image.height * scale));
-      canvas.getContext("2d")?.drawImage(image, 0, 0, canvas.width, canvas.height);
-      canvas.toBlob((blob) => {
-        URL.revokeObjectURL(sourceUrl);
-        if (!blob) return reject(new Error("IMAGE_COMPRESSION_FAILED"));
-        resolve(new File([blob], `${file.name.replace(/\.[^.]+$/, "")}.webp`, { type: "image/webp" }));
-      }, "image/webp", 0.78);
+      canvas
+        .getContext("2d")
+        ?.drawImage(image, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob(
+        (blob) => {
+          URL.revokeObjectURL(sourceUrl);
+          if (!blob) return reject(new Error("IMAGE_COMPRESSION_FAILED"));
+          resolve(
+            new File([blob], `${file.name.replace(/\.[^.]+$/, "")}.webp`, {
+              type: "image/webp",
+            }),
+          );
+        },
+        "image/webp",
+        0.78,
+      );
     };
-    image.onerror = () => { URL.revokeObjectURL(sourceUrl); reject(new Error("IMAGE_COMPRESSION_FAILED")); };
+    image.onerror = () => {
+      URL.revokeObjectURL(sourceUrl);
+      reject(new Error("IMAGE_COMPRESSION_FAILED"));
+    };
     image.src = sourceUrl;
   });
 }
@@ -81,15 +97,17 @@ export default function CreateOrderPage() {
   const streamRef = useRef<MediaStream | null>(null);
   const [created, setCreated] = useState<Awaited<
     ReturnType<typeof api.createOrder>
-  > | null>(null);  
-  
+  > | null>(null);
+
   const mutation = useMutation({
     mutationFn: () =>
       api.createOrder({
         ...removeEmptyValues({
           ...values,
           senderPhoneNumber: normalizeNigerianPhone(values.senderPhoneNumber),
-          receiverPhoneNumber: normalizeNigerianPhone(values.receiverPhoneNumber),
+          receiverPhoneNumber: normalizeNigerianPhone(
+            values.receiverPhoneNumber,
+          ),
         }),
         quantity: Number(values.quantity),
         orderAmount: values.orderAmount
@@ -121,7 +139,9 @@ export default function CreateOrderPage() {
         if (videoRef.current) videoRef.current.srcObject = stream;
       });
     } catch {
-      setCameraError("Camera permission was denied. Please allow camera access and try again.");
+      setCameraError(
+        "Camera permission was denied. Please allow camera access and try again.",
+      );
     }
   }
   function closeCamera() {
@@ -135,20 +155,36 @@ export default function CreateOrderPage() {
     if (!video || images.length >= 5) return;
     const canvas = document.createElement("canvas");
     const maxDimension = 1600;
-    const scale = Math.min(1, maxDimension / Math.max(video.videoWidth, video.videoHeight));
+    const scale = Math.min(
+      1,
+      maxDimension / Math.max(video.videoWidth, video.videoHeight),
+    );
     canvas.width = Math.max(1, Math.round(video.videoWidth * scale));
     canvas.height = Math.max(1, Math.round(video.videoHeight * scale));
-    canvas.getContext("2d")?.drawImage(video, 0, 0, canvas.width, canvas.height);
-    canvas.toBlob(async (blob) => {
-      if (!blob) {
-        setCameraError("That photo could not be captured. Please try again.");
-        return;
-      }
-      const file = await compressImage(new File([blob], `product-${Date.now()}.webp`, { type: "image/webp" }));
-      setImages((current) => [...current, { file, url: URL.createObjectURL(file) }]);
-      setCameraError("");
-      if (images.length + 1 >= 5) closeCamera();
-    }, "image/webp", 0.78);
+    canvas
+      .getContext("2d")
+      ?.drawImage(video, 0, 0, canvas.width, canvas.height);
+    canvas.toBlob(
+      async (blob) => {
+        if (!blob) {
+          setCameraError("That photo could not be captured. Please try again.");
+          return;
+        }
+        const file = await compressImage(
+          new File([blob], `product-${Date.now()}.webp`, {
+            type: "image/webp",
+          }),
+        );
+        setImages((current) => [
+          ...current,
+          { file, url: URL.createObjectURL(file) },
+        ]);
+        setCameraError("");
+        if (images.length + 1 >= 5) closeCamera();
+      },
+      "image/webp",
+      0.78,
+    );
   }
   useEffect(() => closeCamera, []);
   if (created)
@@ -202,7 +238,12 @@ export default function CreateOrderPage() {
                 required
                 value={values.senderPhoneNumber}
                 onChange={(v) => set("senderPhoneNumber", v)}
-                onBlur={() => set("senderPhoneNumber", normalizeNigerianPhone(values.senderPhoneNumber))}
+                onBlur={() =>
+                  set(
+                    "senderPhoneNumber",
+                    normalizeNigerianPhone(values.senderPhoneNumber),
+                  )
+                }
               />
             </div>
           </Section>
@@ -220,7 +261,12 @@ export default function CreateOrderPage() {
                 required
                 value={values.receiverPhoneNumber}
                 onChange={(v) => set("receiverPhoneNumber", v)}
-                onBlur={() => set("receiverPhoneNumber", normalizeNigerianPhone(values.receiverPhoneNumber))}
+                onBlur={() =>
+                  set(
+                    "receiverPhoneNumber",
+                    normalizeNigerianPhone(values.receiverPhoneNumber),
+                  )
+                }
               />
               <Field
                 label="Receiver delivery address"
@@ -306,8 +352,19 @@ export default function CreateOrderPage() {
                 onChange={(v) => set("packageNotes", v)}
               />
             </div>
-            <button type="button" className="upload-field" onClick={openCamera} disabled={images.length >= 5}><Camera size={18} /> Snap product photo</button>
-            {cameraError && <p className="form-error" role="alert">{cameraError}</p>}
+            <button
+              type="button"
+              className="upload-field"
+              onClick={openCamera}
+              disabled={images.length >= 5}
+            >
+              <Camera size={18} /> Snap product photo
+            </button>
+            {cameraError && (
+              <p className="form-error" role="alert">
+                {cameraError}
+              </p>
+            )}
             {images.length > 0 && (
               <div className="upload-previews">
                 {images.map((image, index) => (
@@ -346,13 +403,13 @@ export default function CreateOrderPage() {
               <option value="ALREADY_PAID">Already paid</option>
               <option value="PAYMENT_ON_DELIVERY">Payment on delivery</option>
             </select>
-              <Field
-                label="Order / product amount"
-                type="number"
-                required
-                value={values.orderAmount}
-                onChange={(v) => set("orderAmount", v)}
-              />
+            <Field
+              label="Order / product amount"
+              type="number"
+              required
+              value={values.orderAmount}
+              onChange={(v) => set("orderAmount", v)}
+            />
             <p className="form-hint text-red-600">
               Delivery fee might change depending on the size of your goods.
             </p>
@@ -379,7 +436,52 @@ export default function CreateOrderPage() {
           <Link href="/login">Staff sign in</Link>
         </p>
       </div>
-      {cameraOpen && <div className="camera-backdrop"><div className="camera-modal" role="dialog" aria-modal="true" aria-labelledby="camera-title"><div className="camera-header"><h2 id="camera-title">Snap product photo</h2><button type="button" className="icon-button" onClick={closeCamera} aria-label="Close camera"><X size={20} /></button></div><video ref={videoRef} autoPlay muted playsInline className="camera-preview" /><div className="camera-controls"><button type="button" className="button button-secondary" onClick={closeCamera}>Cancel</button><button type="button" className="button button-primary" onClick={capturePhoto} disabled={images.length >= 5}><Camera size={18} /> Capture photo</button></div></div></div>}
+      {cameraOpen && (
+        <div className="camera-backdrop">
+          <div
+            className="camera-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="camera-title"
+          >
+            <div className="camera-header">
+              <h2 id="camera-title">Snap product photo</h2>
+              <button
+                type="button"
+                className="icon-button"
+                onClick={closeCamera}
+                aria-label="Close camera"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <video
+              ref={videoRef}
+              autoPlay
+              muted
+              playsInline
+              className="camera-preview"
+            />
+            <div className="camera-controls">
+              <button
+                type="button"
+                className="button button-secondary"
+                onClick={closeCamera}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="button button-primary"
+                onClick={capturePhoto}
+                disabled={images.length >= 5}
+              >
+                <Camera size={18} /> Capture photo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

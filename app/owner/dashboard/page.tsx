@@ -18,11 +18,11 @@ export default function OwnerDashboard() {
   const { user, isLoading: authLoading } = useRoleRedirect("OWNER");
   const orders = useQuery({
     queryKey: ["orders"],
-    queryFn: api.getOrders,
+    queryFn: () => api.getOrders(1, 8),
     enabled: Boolean(user),
   });
   if (authLoading || !user) return <LoadingState />;
-  const items = orders.data || [];
+  const items = orders.data?.items || [];
   const counts = {
     total: items.length,
     pendingApproval: items.filter((o) =>

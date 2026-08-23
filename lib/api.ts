@@ -1,5 +1,6 @@
 import type {
   DeliveryZone,
+  DeliveryZoneImport,
   LoginResponse,
   Order,
   OrderStatus,
@@ -8,6 +9,7 @@ import type {
   RiderRating,
   RiderReport,
   RiderReportStatus,
+  PaginatedResponse,
 } from "@/lib/types";
 import { normalizeNigerianPhone } from "@/lib/phone";
 
@@ -32,6 +34,10 @@ function unwrap<T>(value: unknown): T {
   return value as T;
 }
 
+function paginationQuery(page: number, pageSize: number) {
+  return `?page=${page}&pageSize=${pageSize}`;
+}
+
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const token =
     typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
@@ -39,7 +45,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
     ...init,
     credentials: "include",
     headers: {
-      "Content-Type": "application/json",
+      ...(init.body instanceof FormData ? {} : { "Content-Type": "application/json" }),
       ...(init.headers || {}),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
@@ -53,6 +59,13 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   return unwrap<T>(await response.json());
 }
 
+async function requestBlob(path: string) {
+  const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
+  const response = await fetch(`${API_URL}${path}`, { credentials: "include", headers: token ? { Authorization: `Bearer ${token}` } : {} });
+  if (!response.ok) throw new Error(response.status === 401 ? "SESSION_EXPIRED" : "REQUEST_FAILED");
+  return response.blob();
+}
+
 export const api = {
   login: (payload: { phone: string; password: string }) =>
     request<LoginResponse>("/auth/login", {
@@ -63,7 +76,8 @@ export const api = {
   getCurrentUser: () => request<User>("/auth/me"),
   logout: () =>
     request<void>("/auth/logout", { method: "POST" }).catch(() => undefined),
-  getOrders: () => request<Order[]>("/orders"),
+  getOrders: (page = 1, pageSize = 20) =>
+    request<PaginatedResponse<Order>>(`/orders${paginationQuery(page, pageSize)}`),
   getOrder: (orderId: string) => request<Order>(`/orders/${orderId}`),
   createOrder: (payload: Partial<Order>) =>
     request<Order>("/orders", {
@@ -85,7 +99,8 @@ export const api = {
       method: "POST",
       body: JSON.stringify(normalizePhoneFields(payload)),
     }),
-  getRiderOrders: () => request<Order[]>("/rider/orders"),
+  getRiderOrders: (page = 1, pageSize = 20) =>
+    request<PaginatedResponse<Order>>(`/rider/orders${paginationQuery(page, pageSize)}`),
   accessRider: (token: string) =>
     request<{ token?: string; accessToken?: string; user?: User }>(
       `/riders/access/${encodeURIComponent(token)}`,
@@ -126,6 +141,13 @@ export const api = {
       method: "PATCH",
       body: JSON.stringify(payload),
     }),
+  exportDeliveryZones: () => requestBlob("/orders/zones/export"),
+  downloadDeliveryZoneTemplate: () => requestBlob("/orders/zones/template"),
+  uploadDeliveryZoneExcel: (file: File) => {
+    const body = new FormData();
+    body.append("file", file);
+    return request<DeliveryZoneImport>("/orders/zones/import", { method: "POST", body, headers: {} });
+  },
   createPublicOrder: (token: string, payload: Record<string, unknown>) =>
     request<Order>(`/public/orders/${token}`, {
       method: "POST",
