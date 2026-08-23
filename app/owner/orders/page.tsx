@@ -33,7 +33,7 @@ export default function OrdersPage() {
     () =>
       (query.data || []).filter(
         (order) =>
-          `${order.orderId} ${order.customerName} ${order.senderName || ""} ${order.receiverName || ""} ${order.receiverPhone || ""} ${order.rider?.name || order.assignedRider?.name || ""}`
+          `${order.orderId} ${order.customerName} ${order.senderName || ""} ${order.receiverName || ""} ${order.receiverPhoneNumber || ""} ${order.rider?.name || order.assignedRider?.name || ""}`
             .toLowerCase()
             .includes(search.toLowerCase()) &&
           (status === "ALL" || order.status === status) &&
@@ -136,9 +136,9 @@ export default function OrdersPage() {
                         <td className="order-ref">
                           {order.orderId || order.id}
                         </td>
-                        <td>{order.senderName || order.customerName}<small className="muted block">{order.senderPhone || order.customerPhone}</small></td>
-                        <td>{order.receiverName || order.customerName}<small className="muted block">{order.receiverPhone || order.customerPhone}</small></td>
-                        <td>{order.deliveryAddress}</td>
+                        <td>{order.senderName || order.customerName}<small className="muted block">{order.senderPhoneNumber || order.customerPhone}</small></td>
+                        <td>{order.receiverName || order.customerName}<small className="muted block">{order.receiverPhoneNumber || order.customerPhone}</small></td>
+                        <td className="location-cell"><strong>{order.deliveryAddress}</strong><small className="muted block">{order.deliveryFee != null ? ` · ₦${Number(order.deliveryFee).toLocaleString()}` : ""}</small></td>
                         <td className="muted">
                           {order.rider?.name || "Unassigned"}
                         </td>

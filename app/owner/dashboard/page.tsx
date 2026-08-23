@@ -25,14 +25,21 @@ export default function OwnerDashboard() {
   const items = orders.data || [];
   const counts = {
     total: items.length,
-    pendingApproval: items.filter((o) => ["PENDING", "PENDING_APPROVAL"].includes(o.status)).length,
+    pendingApproval: items.filter((o) =>
+      ["PENDING", "PENDING_APPROVAL"].includes(o.status),
+    ).length,
     waiting: items.filter((o) => o.status === "WAITING_FOR_PACKAGE").length,
-    assigned: items.filter((o) => ["ASSIGNED", "PACKAGE_RECEIVED", "APPROVED"].includes(o.status)).length,
+    assigned: items.filter((o) =>
+      ["ASSIGNED", "PACKAGE_RECEIVED", "APPROVED"].includes(o.status),
+    ).length,
     out: items.filter((o) => o.status === "OUT_FOR_DELIVERY").length,
     delivered: items.filter((o) => o.status === "DELIVERED").length,
     cod: items.filter((o) => o.paymentMethod === "PAYMENT_ON_DELIVERY").length,
-    approved: items.filter((o) => o.approvalStatus === "APPROVED" || o.status === "APPROVED").length,
-    pendingCompany: items.filter((o) => o.companyPaymentStatus !== "PAID").length,
+    approved: items.filter(
+      (o) => o.approvalStatus === "APPROVED" || o.status === "APPROVED",
+    ).length,
+    pendingCompany: items.filter((o) => o.companyPaymentStatus !== "PAID")
+      .length,
     pendingSender: items.filter((o) => o.senderPaymentStatus !== "PAID").length,
   };
   return (
@@ -50,7 +57,7 @@ export default function OwnerDashboard() {
             <Plus size={18} /> Create order
           </Link>
         </header>
-          <div className="summary-grid summary-grid-primary">
+        <div className="summary-grid summary-grid-primary">
           {[
             ["Orders today", counts.total, ""],
             ["Pending approval", counts.pendingApproval, ""],
@@ -93,10 +100,7 @@ export default function OwnerDashboard() {
               title="No orders yet"
               description="Create your first order to get started."
               action={
-                <Link
-                  className="button button-primary"
-                  href="/create-order"
-                >
+                <Link className="button button-primary" href="/create-order">
                   Create order
                 </Link>
               }
@@ -107,7 +111,7 @@ export default function OwnerDashboard() {
                 <thead>
                   <tr>
                     <th>Order</th>
-                    <th>Customer</th>
+                    <th>Sender</th>
                     <th>Rider</th>
                     <th>Status</th>
                     <th>Created</th>
@@ -118,7 +122,7 @@ export default function OwnerDashboard() {
                   {items.slice(0, 8).map((order) => (
                     <tr key={order.id}>
                       <td className="order-ref">{order.orderId || order.id}</td>
-                      <td>{order.customerName}</td>
+                      <td>{order.senderName}</td>
                       <td className="muted">
                         {order.rider?.name || "Unassigned"}
                       </td>

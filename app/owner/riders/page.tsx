@@ -7,6 +7,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/app-shell";
 import { useRoleRedirect } from "@/components/auth/auth-provider";
 import { api } from "@/lib/api";
+import { normalizeNigerianPhone } from "@/lib/phone";
 import {
   EmptyState,
   ErrorState,
@@ -71,8 +72,11 @@ export default function RidersPage() {
                     className="input"
                     id="rider-phone"
                     type="tel"
+                    placeholder="+2347042604550"
                     required
-                    {...form.register("phone")}
+                    {...form.register("phone", {
+                      onBlur: (event) => form.setValue("phone", normalizeNigerianPhone(event.target.value)),
+                    })}
                   />
                 </div>
               </div>
@@ -134,6 +138,7 @@ export default function RidersPage() {
                 </header>
                 <h3>{rider.name}</h3>
                 <p>{rider.phone || rider.email || "No contact details"}</p>
+                <span className="rider-rating-summary">{rider.averageRating != null ? `★ ${rider.averageRating.toFixed(1)} · ${rider.totalRatings || 0} ratings` : "No ratings yet"}</span>
                 <span className="muted">
                   <Users size={14} /> {rider.assignedOrders || 0} assigned
                   orders

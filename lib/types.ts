@@ -12,12 +12,15 @@ export type OrderStatus =
   | "CANCELLED";
 export type PaymentMethod = "ALREADY_PAID" | "PAYMENT_ON_DELIVERY";
 export type PaymentStatus = "UNPAID" | "PENDING" | "PAID";
-export type PickupMethod = "SENDER_DROP_OFF" | "RIDER_PICKUP";
+export type PickupMethod = "SENDER_DROPOFF" | "SENDER_DROP_OFF" | "RIDER_PICKUP";
 export type CustomerCollectionStatus = "NOT_COLLECTED" | "COLLECTED";
 
 export type OrderImage = { id?: string; url: string; name?: string };
 export type OrderEvent = { id: string; type: string; createdAt: string; createdBy?: User | null };
 export type Notification = { id: string; type: string; status: "SENT" | "FAILED"; createdAt: string };
+export type RiderRating = { id: string; orderId: string; riderId?: string; rating: number; comment?: string | null; createdAt: string };
+export type RiderReportStatus = "OPEN" | "UNDER_REVIEW" | "RESOLVED" | "DISMISSED";
+export type RiderReport = { id: string; orderId: string; riderId?: string; reason: string; description: string; status: RiderReportStatus; createdAt: string };
 
 export type User = {
   id: string;
@@ -43,8 +46,10 @@ export type Order = {
   deliveredAt?: string | null;
   confirmedBy?: User | null;
   senderName?: string;
+  senderPhoneNumber?: string;
   senderPhone?: string;
   receiverName?: string;
+  receiverPhoneNumber?: string;
   receiverPhone?: string;
   packageDescription?: string;
   quantity?: number;
@@ -52,7 +57,7 @@ export type Order = {
   pickupMethod?: PickupMethod;
   pickupAddress?: string;
   pickupInstructions?: string;
-  deliveryZone?: string;
+  deliveryZoneId?: string;
   paymentMethod?: PaymentMethod;
   paymentStatus?: PaymentStatus;
   orderAmount?: number | string;
@@ -71,6 +76,10 @@ export type Order = {
   images?: OrderImage[];
   events?: OrderEvent[];
   notifications?: Notification[];
+  rating?: RiderRating | null;
+  riderRating?: RiderRating | null;
+  report?: RiderReport | null;
+  riderReport?: RiderReport | null;
 };
 
 export type DeliveryZone = { id: string; name: string; fee: number | string; active: boolean };
@@ -78,6 +87,10 @@ export type DeliveryZone = { id: string; name: string; fee: number | string; act
 export type Rider = User & {
   active?: boolean;
   assignedOrders?: number;
+  averageRating?: number;
+  totalRatings?: number;
+  totalDeliveries?: number;
+  ratingDistribution?: Partial<Record<1 | 2 | 3 | 4 | 5, number>>;
 };
 
 export type LoginResponse = { user?: User; token?: string; accessToken?: string };

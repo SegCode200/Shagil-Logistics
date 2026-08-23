@@ -20,6 +20,7 @@ export default function RiderDashboard() {
     queryFn: api.getRiderOrders,
     enabled: Boolean(user),
   });
+  const ratingQuery = useQuery({ queryKey: ["rider-ratings"], queryFn: api.getRiderRatings, enabled: Boolean(user) });
   if (authLoading || !user) return <LoadingState />;
   const orders = query.data || [];
   return (
@@ -32,6 +33,7 @@ export default function RiderDashboard() {
             <p className="subtext">Keep it simple. One delivery at a time.</p>
           </div>
         </header>
+        <section className="rider-rating-card"><span>My rating</span><strong>{ratingQuery.data?.length ? `★ ${(ratingQuery.data.reduce((total, item) => total + item.rating, 0) / ratingQuery.data.length).toFixed(1)} / 5` : "No ratings yet"}</strong><small>{ratingQuery.data?.length || 0} ratings</small></section>
         {query.isLoading ? (
           <LoadingState label="Loading deliveries" />
         ) : query.isError ? (

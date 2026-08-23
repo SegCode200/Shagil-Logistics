@@ -9,12 +9,14 @@ import {
   type Resolver,
   type UseFormReturn,
 } from "react-hook-form";
+import type { FocusEvent } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/app-shell";
 import { useRoleRedirect } from "@/components/auth/auth-provider";
 import { api } from "@/lib/api";
+import { normalizeNigerianPhone } from "@/lib/phone";
 import { LoadingState } from "@/components/ui/primitives";
 
 const schema = z.object({
@@ -25,11 +27,11 @@ const schema = z.object({
   packageDescription: z.string().min(2),
   quantity: z.coerce.number().int().positive(),
   notes: z.string().optional(),
-  pickupMethod: z.enum(["SENDER_DROP_OFF", "RIDER_PICKUP"]),
+  pickupMethod: z.enum(["SENDER_DROPOFF", "RIDER_PICKUP"]),
   pickupAddress: z.string().optional(),
   pickupInstructions: z.string().optional(),
   deliveryAddress: z.string().min(5),
-  deliveryZone: z.string().min(2),
+  deliveryZoneId: z.string().min(1),
   paymentMethod: z.enum(["ALREADY_PAID", "PAYMENT_ON_DELIVERY"]),
   orderAmount: z.coerce.number().nonnegative().optional(),
   assignedRiderId: z.string().optional(),
@@ -56,7 +58,7 @@ export default function NewOrderPage() {
     resolver: zodResolver(schema) as Resolver<FormValues>,
     defaultValues: {
       quantity: 1,
-      pickupMethod: "SENDER_DROP_OFF",
+      pickupMethod: "SENDER_DROPOFF",
       paymentMethod: "PAYMENT_ON_DELIVERY",
     },
   });
@@ -138,6 +140,8 @@ export default function NewOrderPage() {
                 name="senderPhone"
                 label="Sender phone number"
                 type="tel"
+                placeholder="+2347042604550"
+                onBlur={(event) => form.setValue("senderPhone", normalizeNigerianPhone(event.target.value))}
               />
               <h2 className="field-span form-section-title">Receiver</h2>
               <Field form={form} name="receiverName" label="Receiver name" />
@@ -146,6 +150,8 @@ export default function NewOrderPage() {
                 name="receiverPhone"
                 label="Receiver phone number"
                 type="tel"
+                placeholder="+2347042604550"
+                onBlur={(event) => form.setValue("receiverPhone", normalizeNigerianPhone(event.target.value))}
               />
               <h2 className="field-span form-section-title">Package</h2>
               <Field
@@ -197,18 +203,18 @@ export default function NewOrderPage() {
                 label="Delivery address"
               />
               <div className="field">
-                <label htmlFor="deliveryZone">Lagos delivery zone</label>
+                <label htmlFor="deliveryZoneId">Area</label>
                 <select
                   className="select"
-                  id="deliveryZone"
-                  {...form.register("deliveryZone")}
+                  id="deliveryZoneId"
+                  {...form.register("deliveryZoneId")}
                 >
                   <option value="">Select a zone</option>
                   {(zones.data || [])
                     .filter((zone) => zone.active)
                     .map((zone) => (
-                      <option key={zone.id} value={zone.name}>
-                        {zone.name}
+                      <option key={zone.id} value={zone.id}>
+                        {zone.name} · ₦{Number(zone.fee).toLocaleString()}
                       </option>
                     ))}
                 </select>
@@ -283,11 +289,15 @@ function Field({
   name,
   label,
   type = "text",
+  placeholder,
+  onBlur,
 }: {
   form: UseFormReturn<FormValues>;
   name: keyof FormValues;
   label: string;
   type?: string;
+  placeholder?: string;
+  onBlur?: (event: FocusEvent<HTMLInputElement>) => void;
 }) {
   return (
     <div className="field">
@@ -296,7 +306,9 @@ function Field({
         className="input"
         id={String(name)}
         type={type}
+        placeholder={placeholder}
         {...form.register(name)}
+        onBlur={onBlur}
       />
       {form.formState.errors[name] && (
         <small>

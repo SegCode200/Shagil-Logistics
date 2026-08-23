@@ -13,6 +13,7 @@ import {
   Users,
   X,
   MapPinned,
+  Flag,
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
@@ -23,6 +24,7 @@ const ownerLinks = [
   { href: "/create-order", label: "Create order", icon: Plus },
   { href: "/owner/riders", label: "Riders", icon: Users },
   { href: "/owner/zones", label: "Delivery zones", icon: MapPinned },
+  { href: "/owner/rider-reports", label: "Rider reports", icon: Flag },
 ];
 const riderLinks = [
   { href: "/rider/dashboard", label: "My deliveries", icon: Truck },

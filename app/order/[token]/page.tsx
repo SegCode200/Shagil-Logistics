@@ -3,13 +3,18 @@
 import Link from "next/link";
 import { CheckCircle2, ArrowRight } from "lucide-react";
 import { use, useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { OrderStatusBadge } from "@/components/ui/primitives";
+import { normalizeNigerianPhone } from "@/lib/phone";
 
 type Props = { params: Promise<{ token: string }> };
 export default function PublicOrderPage({ params }: Props) {
   const { token } = use(params);
+  const zones = useQuery({
+    queryKey: ["delivery-zones"],
+    queryFn: api.getDeliveryZones,
+  });
   const [values, setValues] = useState({
     senderName: "",
     senderPhone: "",
@@ -21,7 +26,7 @@ export default function PublicOrderPage({ params }: Props) {
     pickupAddress: "",
     pickupInstructions: "",
     deliveryAddress: "",
-    deliveryZone: "",
+    deliveryZoneId: "",
     paymentMethod: "PAYMENT_ON_DELIVERY",
     orderAmount: "",
     notes: "",
@@ -30,6 +35,8 @@ export default function PublicOrderPage({ params }: Props) {
     mutationFn: () =>
       api.createPublicOrder(token, {
         ...values,
+        senderPhone: normalizeNigerianPhone(values.senderPhone),
+        receiverPhone: normalizeNigerianPhone(values.receiverPhone),
         quantity: Number(values.quantity),
         orderAmount: values.orderAmount
           ? Number(values.orderAmount)
@@ -89,6 +96,7 @@ export default function PublicOrderPage({ params }: Props) {
                 type="tel"
                 value={values.senderPhone}
                 onChange={(v) => set("senderPhone", v)}
+                onBlur={() => set("senderPhone", normalizeNigerianPhone(values.senderPhone))}
               />
             </div>
           </fieldset>
@@ -105,6 +113,7 @@ export default function PublicOrderPage({ params }: Props) {
                 type="tel"
                 value={values.receiverPhone}
                 onChange={(v) => set("receiverPhone", v)}
+                onBlur={() => set("receiverPhone", normalizeNigerianPhone(values.receiverPhone))}
               />
             </div>
           </fieldset>
@@ -164,11 +173,25 @@ export default function PublicOrderPage({ params }: Props) {
                 value={values.deliveryAddress}
                 onChange={(v) => set("deliveryAddress", v)}
               />
-              <Field
-                label="Lagos delivery zone"
-                value={values.deliveryZone}
-                onChange={(v) => set("deliveryZone", v)}
-              />
+              <div className="field">
+                <label htmlFor="public-area">Area</label>
+                <select
+                  className="select"
+                  id="public-area"
+                  required
+                  value={values.deliveryZoneId}
+                  onChange={(event) => set("deliveryZoneId", event.target.value)}
+                >
+                  <option value="">Select an area</option>
+                  {(zones.data || [])
+                    .filter((zone) => zone.active)
+                    .map((zone) => (
+                      <option key={zone.id} value={zone.id}>
+                        {zone.name} · ₦{Number(zone.fee).toLocaleString()}
+                      </option>
+                    ))}
+                </select>
+              </div>
             </div>
           </fieldset>
           <fieldset>
@@ -221,11 +244,13 @@ function Field({
   value,
   onChange,
   type = "text",
+  onBlur,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   type?: string;
+  onBlur?: () => void;
 }) {
   return (
     <div className="field">
@@ -236,6 +261,7 @@ function Field({
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        onBlur={onBlur}
       />
     </div>
   );

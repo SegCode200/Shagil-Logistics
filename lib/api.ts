@@ -5,11 +5,26 @@ import type {
   OrderStatus,
   Rider,
   User,
+  RiderRating,
+  RiderReport,
+  RiderReportStatus,
 } from "@/lib/types";
+import { normalizeNigerianPhone } from "@/lib/phone";
 
 const API_URL = (
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
 ).replace(/\/$/, "");
+
+function normalizePhoneFields(payload: Record<string, unknown>) {
+  return Object.fromEntries(
+    Object.entries(payload).map(([key, value]) => [
+      key,
+      typeof value === "string" && key.toLowerCase().includes("phone")
+        ? normalizeNigerianPhone(value)
+        : value,
+    ]),
+  );
+}
 
 function unwrap<T>(value: unknown): T {
   if (value && typeof value === "object" && "data" in value)
@@ -50,10 +65,10 @@ export const api = {
     request<void>("/auth/logout", { method: "POST" }).catch(() => undefined),
   getOrders: () => request<Order[]>("/orders"),
   getOrder: (orderId: string) => request<Order>(`/orders/${orderId}`),
-  createOrder: (payload: Partial<Order> & { assignedRiderId?: string }) =>
+  createOrder: (payload: Partial<Order>) =>
     request<Order>("/orders", {
       method: "POST",
-      body: JSON.stringify(payload),
+      body: JSON.stringify(normalizePhoneFields(payload)),
     }),
   updateOrder: (orderId: string, payload: Record<string, unknown>) =>
     request<Order>(`/orders/${orderId}`, {
@@ -68,9 +83,13 @@ export const api = {
   createRider: (payload: Pick<Rider, "name" | "phone">) =>
     request<Rider>("/riders", {
       method: "POST",
-      body: JSON.stringify(payload),
+      body: JSON.stringify(normalizePhoneFields(payload)),
     }),
   getRiderOrders: () => request<Order[]>("/rider/orders"),
+  accessRider: (token: string) =>
+    request<{ token?: string; accessToken?: string; user?: User }>(
+      `/riders/access/${encodeURIComponent(token)}`,
+    ),
   updateOrderStatus: (orderId: string, status: OrderStatus) =>
     request<Order>(`/orders/${orderId}/status`, {
       method: "POST",
@@ -110,8 +129,18 @@ export const api = {
   createPublicOrder: (token: string, payload: Record<string, unknown>) =>
     request<Order>(`/public/orders/${token}`, {
       method: "POST",
-      body: JSON.stringify(payload),
+      body: JSON.stringify(normalizePhoneFields(payload)),
     }),
   getCustomerDelivery: (token: string) =>
     request<Order>(`/public/deliveries/${token}`),
+  submitDeliveryRating: (token: string, payload: { rating: number; comment?: string }) =>
+    request<RiderRating>(`/public/delivery/${token}/rating`, { method: "POST", body: JSON.stringify(payload) }),
+  submitDeliveryReport: (token: string, payload: { reason: string; description: string }) =>
+    request<RiderReport>(`/public/delivery/${token}/report`, { method: "POST", body: JSON.stringify(payload) }),
+  getRiderRatings: () => request<RiderRating[]>("/riders/me/ratings"),
+  getRiderReports: () => request<RiderReport[]>("/riders/me/reports"),
+  getAdminRiderRatings: (riderId: string) => request<RiderRating[]>(`/admin/riders/${riderId}/ratings`),
+  getAdminRiderReports: (riderId: string) => request<RiderReport[]>(`/admin/riders/${riderId}/reports`),
+  getAdminRiderReportsList: () => request<RiderReport[]>("/admin/rider-reports"),
+  updateAdminReportStatus: (reportId: string, status: RiderReportStatus) => request<RiderReport>(`/admin/rider-reports/${reportId}/status`, { method: "PATCH", body: JSON.stringify({ status }) }),
 };

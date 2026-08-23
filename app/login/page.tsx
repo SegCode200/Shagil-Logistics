@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth/auth-provider";
+import { normalizeNigerianPhone } from "@/lib/phone";
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -24,7 +25,7 @@ export default function LoginPage() {
     setBusy(true);
     setError("");
     try {
-      const user = await login({ phone: identifier, password });
+      const user = await login({ phone: identifier.includes("@") ? identifier : normalizeNigerianPhone(identifier), password });
       router.replace(
         user.role === "OWNER" ? "/owner/dashboard" : "/rider/dashboard",
       );
@@ -66,6 +67,7 @@ export default function LoginPage() {
                 className="input"
                 id="identifier"
                 required
+                placeholder="+2347042604550 or email"
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
               />

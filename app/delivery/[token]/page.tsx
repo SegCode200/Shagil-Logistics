@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { LoadingState } from "@/components/ui/primitives";
+import { DeliveryFeedback } from "@/components/feedback/delivery-feedback";
 
 const timeline = ["PENDING", "APPROVED", "PACKAGE_RECEIVED", "ASSIGNED", "PICKED_UP", "OUT_FOR_DELIVERY", "DELIVERED"];
 const labels: Record<string, string> = { PENDING: "Order created", APPROVED: "Approved", PACKAGE_RECEIVED: "Package received", ASSIGNED: "Rider assigned", PICKED_UP: "Package picked up", OUT_FOR_DELIVERY: "Out for delivery", DELIVERED: "Delivered" };
@@ -41,6 +42,7 @@ export default function CustomerDeliveryPage({ params }: { params: Promise<{ tok
         </div>
         {order.images?.length ? <div className="public-image-grid">{order.images.map((image) => <Image key={image.id || image.url} src={image.url} alt={image.name || "Product"} width={240} height={240} />)}</div> : null}
         <div className="timeline">{timeline.map((status, index) => <div className={index <= current ? "timeline-item complete" : "timeline-item"} key={status}>{index <= current ? <CheckCircle2 size={19} /> : <Circle size={19} />}<span>{labels[status]}</span></div>)}</div>
+        <DeliveryFeedback token={token} order={order} />
         <p className="public-refresh">Status refreshes automatically.</p>
       </div>
     </main>

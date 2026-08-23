@@ -2,45 +2,71 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, CheckCircle2, ImagePlus, X } from "lucide-react";
-import { useState } from "react";
+import { ArrowRight, Camera, CheckCircle2, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { normalizeNigerianPhone } from "@/lib/phone";
 
 type Values = {
   senderName: string;
-  senderPhone: string;
+  senderPhoneNumber: string;
   receiverName: string;
-  receiverPhone: string;
+  receiverPhoneNumber: string;
   deliveryAddress: string;
-  deliveryZone: string;
-  pickupMethod: "SENDER_DROP_OFF" | "RIDER_PICKUP";
+  deliveryZoneId: string;
+  pickupMethod: "SENDER_DROPOFF" | "RIDER_PICKUP";
   pickupAddress: string;
   pickupInstructions: string;
-  packageDescription: string;
+  orderDetails: string;
   quantity: string;
-  notes: string;
+  packageNotes: string;
   paymentMethod: "ALREADY_PAID" | "PAYMENT_ON_DELIVERY";
   orderAmount: string;
 };
 const initialValues: Values = {
   senderName: "",
-  senderPhone: "",
+  senderPhoneNumber: "",
   receiverName: "",
-  receiverPhone: "",
+  receiverPhoneNumber: "",
   deliveryAddress: "",
-  deliveryZone: "",
-  pickupMethod: "SENDER_DROP_OFF",
+  deliveryZoneId: "",
+  pickupMethod: "SENDER_DROPOFF",
   pickupAddress: "",
   pickupInstructions: "",
-  packageDescription: "",
+  orderDetails: "",
   quantity: "1",
-  notes: "",
+  packageNotes: "",
   paymentMethod: "PAYMENT_ON_DELIVERY",
   orderAmount: "",
 };
-const allowedImageExtensions = new Set(["png", "jpeg", "jpg", "webp"]);
-const allowedImageTypes = new Set(["image/png", "image/jpeg", "image/webp"]);
+function removeEmptyValues(values: Values) {
+  return Object.fromEntries(
+    Object.entries(values).filter(([, value]) => value !== "" && value != null),
+  );
+}
+
+function compressImage(file: File): Promise<File> {
+  return new Promise((resolve, reject) => {
+    const sourceUrl = URL.createObjectURL(file);
+    const image = new window.Image();
+    image.onload = () => {
+      const maxDimension = 1600;
+      const scale = Math.min(1, maxDimension / Math.max(image.width, image.height));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(image.width * scale));
+      canvas.height = Math.max(1, Math.round(image.height * scale));
+      canvas.getContext("2d")?.drawImage(image, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob((blob) => {
+        URL.revokeObjectURL(sourceUrl);
+        if (!blob) return reject(new Error("IMAGE_COMPRESSION_FAILED"));
+        resolve(new File([blob], `${file.name.replace(/\.[^.]+$/, "")}.webp`, { type: "image/webp" }));
+      }, "image/webp", 0.78);
+    };
+    image.onerror = () => { URL.revokeObjectURL(sourceUrl); reject(new Error("IMAGE_COMPRESSION_FAILED")); };
+    image.src = sourceUrl;
+  });
+}
 
 export default function CreateOrderPage() {
   const zones = useQuery({
@@ -49,14 +75,22 @@ export default function CreateOrderPage() {
   });
   const [values, setValues] = useState(initialValues);
   const [images, setImages] = useState<{ file: File; url: string }[]>([]);
-  const [imageError, setImageError] = useState("");
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const [cameraError, setCameraError] = useState("");
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const [created, setCreated] = useState<Awaited<
     ReturnType<typeof api.createOrder>
-  > | null>(null);
+  > | null>(null);  
+  
   const mutation = useMutation({
     mutationFn: () =>
       api.createOrder({
-        ...values,
+        ...removeEmptyValues({
+          ...values,
+          senderPhoneNumber: normalizeNigerianPhone(values.senderPhoneNumber),
+          receiverPhoneNumber: normalizeNigerianPhone(values.receiverPhoneNumber),
+        }),
         quantity: Number(values.quantity),
         orderAmount: values.orderAmount
           ? Number(values.orderAmount)
@@ -70,27 +104,53 @@ export default function CreateOrderPage() {
   });
   const set = <K extends keyof Values>(key: K, value: Values[K]) =>
     setValues((current) => ({ ...current, [key]: value }));
-  function chooseImages(event: React.ChangeEvent<HTMLInputElement>) {
-    const selected = Array.from(event.target.files || []);
-    const invalid = selected.filter((file) => {
-      const extension = file.name.split(".").pop()?.toLowerCase();
-      return (
-        !extension ||
-        !allowedImageExtensions.has(extension) ||
-        (file.type && !allowedImageTypes.has(file.type))
-      );
-    });
-    if (invalid.length > 0) {
-      setImageError("Only PNG, JPEG, JPG, and WebP images are allowed.");
-    } else {
-      setImageError("");
+  async function openCamera() {
+    setCameraError("");
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setCameraError("Camera access is not supported on this device.");
+      return;
     }
-    const valid = selected.filter((file) => !invalid.includes(file)).slice(0, 5);
-    setImages(
-      valid.map((file) => ({ file, url: URL.createObjectURL(file) })),
-    );
-    event.target.value = "";
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: "environment" } },
+        audio: false,
+      });
+      streamRef.current = stream;
+      setCameraOpen(true);
+      requestAnimationFrame(() => {
+        if (videoRef.current) videoRef.current.srcObject = stream;
+      });
+    } catch {
+      setCameraError("Camera permission was denied. Please allow camera access and try again.");
+    }
   }
+  function closeCamera() {
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+    streamRef.current = null;
+    if (videoRef.current) videoRef.current.srcObject = null;
+    setCameraOpen(false);
+  }
+  async function capturePhoto() {
+    const video = videoRef.current;
+    if (!video || images.length >= 5) return;
+    const canvas = document.createElement("canvas");
+    const maxDimension = 1600;
+    const scale = Math.min(1, maxDimension / Math.max(video.videoWidth, video.videoHeight));
+    canvas.width = Math.max(1, Math.round(video.videoWidth * scale));
+    canvas.height = Math.max(1, Math.round(video.videoHeight * scale));
+    canvas.getContext("2d")?.drawImage(video, 0, 0, canvas.width, canvas.height);
+    canvas.toBlob(async (blob) => {
+      if (!blob) {
+        setCameraError("That photo could not be captured. Please try again.");
+        return;
+      }
+      const file = await compressImage(new File([blob], `product-${Date.now()}.webp`, { type: "image/webp" }));
+      setImages((current) => [...current, { file, url: URL.createObjectURL(file) }]);
+      setCameraError("");
+      if (images.length + 1 >= 5) closeCamera();
+    }, "image/webp", 0.78);
+  }
+  useEffect(() => closeCamera, []);
   if (created)
     return (
       <main className="public-page">
@@ -140,8 +200,9 @@ export default function CreateOrderPage() {
                 label="Sender phone number"
                 type="tel"
                 required
-                value={values.senderPhone}
-                onChange={(v) => set("senderPhone", v)}
+                value={values.senderPhoneNumber}
+                onChange={(v) => set("senderPhoneNumber", v)}
+                onBlur={() => set("senderPhoneNumber", normalizeNigerianPhone(values.senderPhoneNumber))}
               />
             </div>
           </Section>
@@ -157,8 +218,9 @@ export default function CreateOrderPage() {
                 label="Receiver phone number"
                 type="tel"
                 required
-                value={values.receiverPhone}
-                onChange={(v) => set("receiverPhone", v)}
+                value={values.receiverPhoneNumber}
+                onChange={(v) => set("receiverPhoneNumber", v)}
+                onBlur={() => set("receiverPhoneNumber", normalizeNigerianPhone(values.receiverPhoneNumber))}
               />
               <Field
                 label="Receiver delivery address"
@@ -166,6 +228,25 @@ export default function CreateOrderPage() {
                 value={values.deliveryAddress}
                 onChange={(v) => set("deliveryAddress", v)}
               />
+              <div className="field">
+                <label htmlFor="create-area">Area</label>
+                <select
+                  className="select"
+                  id="create-area"
+                  required
+                  value={values.deliveryZoneId}
+                  onChange={(e) => set("deliveryZoneId", e.target.value)}
+                >
+                  <option value="">Select an area</option>
+                  {(zones.data || [])
+                    .filter((zone) => zone.active)
+                    .map((zone) => (
+                      <option key={zone.id} value={zone.id}>
+                        {zone.name} · ₦{Number(zone.fee).toLocaleString()}
+                      </option>
+                    ))}
+                </select>
+              </div>
             </div>
           </Section>
           <Section title="3. Pickup">
@@ -176,7 +257,7 @@ export default function CreateOrderPage() {
                 set("pickupMethod", e.target.value as Values["pickupMethod"])
               }
             >
-              <option value="SENDER_DROP_OFF">
+              <option value="SENDER_DROPOFF">
                 Sender drops package at company office
               </option>
               <option value="RIDER_PICKUP">
@@ -209,8 +290,8 @@ export default function CreateOrderPage() {
               <Field
                 label="Product description"
                 required
-                value={values.packageDescription}
-                onChange={(v) => set("packageDescription", v)}
+                value={values.orderDetails}
+                onChange={(v) => set("orderDetails", v)}
               />
               <Field
                 label="Quantity"
@@ -220,21 +301,13 @@ export default function CreateOrderPage() {
                 onChange={(v) => set("quantity", v)}
               />
               <Field
-                label="Notes"
-                value={values.notes}
-                onChange={(v) => set("notes", v)}
+                label="Package Notes"
+                value={values.packageNotes}
+                onChange={(v) => set("packageNotes", v)}
               />
             </div>
-            <label className="upload-field">
-              <ImagePlus size={18} /> Add product images
-              <input
-                type="file"
-                accept=".png,.jpeg,.jpg,.webp,image/png,image/jpeg,image/webp"
-                multiple
-                onChange={chooseImages}
-              />
-            </label>
-            {imageError && <p className="form-error" role="alert">{imageError}</p>}
+            <button type="button" className="upload-field" onClick={openCamera} disabled={images.length >= 5}><Camera size={18} /> Snap product photo</button>
+            {cameraError && <p className="form-error" role="alert">{cameraError}</p>}
             {images.length > 0 && (
               <div className="upload-previews">
                 {images.map((image, index) => (
@@ -262,27 +335,6 @@ export default function CreateOrderPage() {
               </div>
             )}
           </Section>
-          <Section title="5. Delivery">
-            <div className="field">
-              <label htmlFor="create-zone">Lagos delivery zone</label>
-              <select
-                className="select"
-                id="create-zone"
-                required
-                value={values.deliveryZone}
-                onChange={(e) => set("deliveryZone", e.target.value)}
-              >
-                <option value="">Select a zone</option>
-                {(zones.data || [])
-                  .filter((zone) => zone.active)
-                  .map((zone) => (
-                    <option key={zone.id} value={zone.name}>
-                      {zone.name}
-                    </option>
-                  ))}
-              </select>
-            </div>
-          </Section>
           <Section title="6. Payment">
             <select
               className="select"
@@ -294,7 +346,6 @@ export default function CreateOrderPage() {
               <option value="ALREADY_PAID">Already paid</option>
               <option value="PAYMENT_ON_DELIVERY">Payment on delivery</option>
             </select>
-            {values.paymentMethod === "PAYMENT_ON_DELIVERY" && (
               <Field
                 label="Order / product amount"
                 type="number"
@@ -302,9 +353,8 @@ export default function CreateOrderPage() {
                 value={values.orderAmount}
                 onChange={(v) => set("orderAmount", v)}
               />
-            )}
-            <p className="form-hint">
-              Delivery fee and final total are calculated by the backend.
+            <p className="form-hint text-red-600">
+              Delivery fee might change depending on the size of your goods.
             </p>
           </Section>
           {mutation.isError && (
@@ -329,6 +379,7 @@ export default function CreateOrderPage() {
           <Link href="/login">Staff sign in</Link>
         </p>
       </div>
+      {cameraOpen && <div className="camera-backdrop"><div className="camera-modal" role="dialog" aria-modal="true" aria-labelledby="camera-title"><div className="camera-header"><h2 id="camera-title">Snap product photo</h2><button type="button" className="icon-button" onClick={closeCamera} aria-label="Close camera"><X size={20} /></button></div><video ref={videoRef} autoPlay muted playsInline className="camera-preview" /><div className="camera-controls"><button type="button" className="button button-secondary" onClick={closeCamera}>Cancel</button><button type="button" className="button button-primary" onClick={capturePhoto} disabled={images.length >= 5}><Camera size={18} /> Capture photo</button></div></div></div>}
     </main>
   );
 }
@@ -352,12 +403,14 @@ function Field({
   onChange,
   type = "text",
   required = false,
+  onBlur,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   type?: string;
   required?: boolean;
+  onBlur?: () => void;
 }) {
   return (
     <div className="field">
@@ -368,6 +421,7 @@ function Field({
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        onBlur={onBlur}
       />
     </div>
   );

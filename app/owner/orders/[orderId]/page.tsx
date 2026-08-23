@@ -21,12 +21,24 @@ export default function OrderDetailsPage({ params }: Props) {
   const { orderId } = use(params);
   const { user, isLoading } = useRoleRedirect("OWNER");
   const queryClient = useQueryClient();
-  const riders = useQuery({ queryKey: ["riders"], queryFn: api.getRiders, enabled: Boolean(user) });
+  const riders = useQuery({
+    queryKey: ["riders"],
+    queryFn: api.getRiders,
+    enabled: Boolean(user),
+  });
   const query = useQuery({
     queryKey: ["order", orderId],
     queryFn: () => api.getOrder(orderId),
     enabled: Boolean(user),
   });
+  
+  // use deliveryZoneId to get the delivery zone name from the list of zones, if available
+  const zones = useQuery({
+    queryKey: ["delivery-zones"],
+    queryFn: api.getDeliveryZones,
+    enabled: Boolean(user),
+  });
+  const zoneName = zones.data?.find((z) => z.id === query.data?.deliveryZoneId)?.name;
   const action = useMutation({
     mutationFn: (type: "approve" | "received" | "out" | "cancel") => {
       if (type === "cancel") return api.cancelOrder(orderId);
@@ -49,13 +61,14 @@ export default function OrderDetailsPage({ params }: Props) {
       </AppShell>
     );
   const order = query.data;
-  const amount = order.amount == null || order.amount === "" ? null : Number(order.amount);
+  const amount =
+    order.amount == null || order.amount === "" ? null : Number(order.amount);
   const canApprove = Boolean(
     (order.senderName || order.customerName) &&
-      (order.receiverName || order.customerName) &&
-      order.deliveryAddress &&
-      order.paymentMethod &&
-      order.deliveryFee != null,
+    (order.receiverName || order.customerName) &&
+    order.deliveryAddress &&
+    order.paymentMethod &&
+    order.deliveryFee != null,
   );
   return (
     <AppShell role="OWNER">
@@ -77,11 +90,11 @@ export default function OrderDetailsPage({ params }: Props) {
             <dl className="detail-list">
               <div>
                 <dt>Name</dt>
-                <dd>{order.customerName}</dd>
+                <dd>{order.receiverName}</dd>
               </div>
               <div>
                 <dt>Phone</dt>
-                <dd>{order.customerPhone || "—"}</dd>
+                <dd>{order.receiverPhoneNumber || "—"}</dd>
               </div>
               <div>
                 <dt>Delivery address</dt>
@@ -90,27 +103,116 @@ export default function OrderDetailsPage({ params }: Props) {
             </dl>
             <h2 className="section-gap">Sender and package</h2>
             <dl className="detail-list">
-              <div><dt>Sender</dt><dd>{order.senderName || order.customerName}</dd></div>
-              <div><dt>Sender phone</dt><dd>{order.senderPhone || order.customerPhone || "—"}</dd></div>
-              <div><dt>Package</dt><dd>{order.packageDescription || order.orderDetails}</dd></div>
-              <div><dt>Quantity</dt><dd>{order.quantity || 1}</dd></div>
-              <div><dt>Pickup</dt><dd>{order.pickupMethod === "RIDER_PICKUP" ? order.pickupAddress : "Sender drop-off"}</dd></div>
+              <div>
+                <dt>Sender</dt>
+                <dd>{order.senderName }</dd>
+              </div>
+              <div>
+                <dt>Sender phone</dt>
+                <dd>{order.senderPhoneNumber || "—"}</dd>
+              </div>
+              <div>
+                <dt>Package</dt>
+                <dd>{order.packageDescription || order.orderDetails}</dd>
+              </div>
+              <div>
+                <dt>Quantity</dt>
+                <dd>{order.quantity || 1}</dd>
+              </div>
+              <div>
+                <dt>Pickup</dt>
+                <dd>
+                  {order.pickupMethod === "RIDER_PICKUP"
+                    ? order.pickupAddress
+                    : "Sender drop-off"}
+                </dd>
+              </div>
             </dl>
             <h2 className="section-gap">Order information</h2>
             <dl className="detail-list">
-              <div><dt>Details</dt><dd>{order.orderDetails}</dd></div>
-              <div><dt>Amount</dt><dd>{amount !== null && Number.isFinite(amount) ? amount.toFixed(2) : "Not specified"}</dd></div>
-              <div><dt>Delivery fee</dt><dd>{order.deliveryFee == null ? "—" : `₦${Number(order.deliveryFee).toLocaleString()}`}</dd></div>
-              <div><dt>Total</dt><dd>{order.totalAmount == null ? "—" : `₦${Number(order.totalAmount).toLocaleString()}`}</dd></div>
-              <div><dt>Created</dt><dd>{formatDate(order.createdAt)}</dd></div>
+              <div>
+                <dt>Details</dt>
+                <dd>{order.orderDetails}</dd>
+              </div>
+              <div>
+                <dt>Amount</dt>
+                <dd>
+                  {amount !== null && Number.isFinite(amount)
+                    ? amount.toFixed(2)
+                    : "Not specified"}
+                </dd>
+              </div>
+              <div>
+                <dt>Area</dt>
+                <dd>{zoneName || "—"}</dd>
+              </div>
+              <div>
+                <dt>Delivery fee</dt>
+                <dd>
+                  {order.deliveryFee == null
+                    ? "—"
+                    : `₦${Number(order.deliveryFee).toLocaleString()}`}
+                </dd>
+              </div>
+              <div>
+                <dt>Total</dt>
+                <dd>
+                  {order.totalAmount == null
+                    ? "—"
+                    : `₦${Number(order.totalAmount).toLocaleString()}`}
+                </dd>
+              </div>
+              <div>
+                <dt>Created</dt>
+                <dd>{formatDate(order.createdAt)}</dd>
+              </div>
             </dl>
-            {order.images?.length ? <><h2 className="section-gap">Product images</h2><div className="public-image-grid">{order.images.map((image) => <Image key={image.id || image.url} src={image.url} alt={image.name || "Product"} width={240} height={240} />)}</div></> : null}
+            {order.images?.length ? (
+              <>
+                <h2 className="section-gap">Product images</h2>
+                <div className="public-image-grid">
+                  {order.images.map((image) => (
+                    <Image
+                      key={image.id || image.url}
+                      src={image.url}
+                      alt={image.name || "Product"}
+                      width={240}
+                      height={240}
+                    />
+                  ))}
+                </div>
+              </>
+            ) : null}
             <h2 className="section-gap">Payment</h2>
             <dl className="detail-list payment-ledger">
-              <div><dt>Payment method</dt><dd>{order.paymentMethod === "PAYMENT_ON_DELIVERY" ? "Payment on delivery" : "Already paid"}</dd></div>
-              <div><dt>Company payment</dt><dd>{order.companyPaymentStatus === "PAID" ? "PAID ✓" : "PENDING"}</dd></div>
-              <div><dt>Sender payment</dt><dd>{order.senderPaymentStatus === "PAID" ? "PAID ✓" : "PENDING"}</dd></div>
-              <div><dt>Customer collection</dt><dd>{order.customerCollectionStatus === "COLLECTED" ? "COLLECTED" : "NOT COLLECTED"}</dd></div>
+              <div>
+                <dt>Payment method</dt>
+                <dd>
+                  {order.paymentMethod === "PAYMENT_ON_DELIVERY"
+                    ? "Payment on delivery"
+                    : "Already paid"}
+                </dd>
+              </div>
+              <div>
+                <dt>Company payment</dt>
+                <dd>
+                  {order.companyPaymentStatus === "PAID" ? "PAID ✓" : "PENDING"}
+                </dd>
+              </div>
+              <div>
+                <dt>Sender payment</dt>
+                <dd>
+                  {order.senderPaymentStatus === "PAID" ? "PAID ✓" : "PENDING"}
+                </dd>
+              </div>
+              <div>
+                <dt>Customer collection</dt>
+                <dd>
+                  {order.customerCollectionStatus === "COLLECTED"
+                    ? "COLLECTED"
+                    : "NOT COLLECTED"}
+                </dd>
+              </div>
             </dl>
           </section>
           <aside className="detail-card">
@@ -136,8 +238,37 @@ export default function OrderDetailsPage({ params }: Props) {
               )}
             </dl>
             <div className="action-stack section-gap">
-              {(order.status === "PENDING" || order.status === "PENDING_APPROVAL") && <button className="button button-primary button-full" disabled={action.isPending || !canApprove} title={!canApprove ? "Complete sender, receiver, payment, and delivery fee information first" : undefined} onClick={() => { if (window.confirm(`Are you sure you want to approve ${order.orderId || "this order"}?`)) action.mutate("approve"); }}>Approve order</button>}
-              {order.status === "WAITING_FOR_PACKAGE" && <button className="button button-primary button-full" disabled={action.isPending} onClick={() => action.mutate("received")}><PackageCheck size={17} /> Mark package received</button>}
+              {(order.status === "PENDING" ||
+                order.status === "PENDING_APPROVAL") && (
+                <button
+                  className="button button-primary button-full"
+                  disabled={action.isPending || !canApprove}
+                  title={
+                    !canApprove
+                      ? "Complete sender, receiver, payment, and delivery fee information first"
+                      : undefined
+                  }
+                  onClick={() => {
+                    if (
+                      window.confirm(
+                        `Are you sure you want to approve ${order.orderId || "this order"}?`,
+                      )
+                    )
+                      action.mutate("approve");
+                  }}
+                >
+                  Approve order
+                </button>
+              )}
+              {order.status === "WAITING_FOR_PACKAGE" && (
+                <button
+                  className="button button-primary button-full"
+                  disabled={action.isPending}
+                  onClick={() => action.mutate("received")}
+                >
+                  <PackageCheck size={17} /> Mark package received
+                </button>
+              )}
               {order.status === "PENDING" && (
                 <>
                   <button
@@ -156,7 +287,30 @@ export default function OrderDetailsPage({ params }: Props) {
                   </button>
                 </>
               )}
-              <div className="field"><label htmlFor="assign-rider">Assign rider</label><select className="select" id="assign-rider" value={order.assignedRider?.id || order.rider?.id || ""} onChange={(event) => { if (event.target.value) api.assignRider(orderId, event.target.value).then(() => { queryClient.invalidateQueries({ queryKey: ["order", orderId] }); queryClient.invalidateQueries({ queryKey: ["orders"] }); }); }}><option value="">Unassigned</option>{(riders.data || []).map((rider) => <option key={rider.id} value={rider.id}>{rider.name}</option>)}</select></div>
+              <div className="field">
+                <label htmlFor="assign-rider">Assign rider</label>
+                <select
+                  className="select"
+                  id="assign-rider"
+                  value={order.assignedRider?.id || order.rider?.id || ""}
+                  onChange={(event) => {
+                    if (event.target.value)
+                      api.assignRider(orderId, event.target.value).then(() => {
+                        queryClient.invalidateQueries({
+                          queryKey: ["order", orderId],
+                        });
+                        queryClient.invalidateQueries({ queryKey: ["orders"] });
+                      });
+                  }}
+                >
+                  <option value="">Unassigned</option>
+                  {(riders.data || []).map((rider) => (
+                    <option key={rider.id} value={rider.id}>
+                      {rider.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
               {order.status === "OUT_FOR_DELIVERY" && (
                 <button
                   className="button button-danger button-full"
@@ -173,7 +327,14 @@ export default function OrderDetailsPage({ params }: Props) {
                 deliveryCode={order.deliveryCode}
               />
             </div>
-            {!canApprove && (order.status === "PENDING" || order.status === "PENDING_APPROVAL") && <p className="form-error">Complete the required order and delivery fee information before approval.</p>}
+            {!canApprove &&
+              (order.status === "PENDING" ||
+                order.status === "PENDING_APPROVAL") && (
+                <p className="form-error">
+                  Complete the required order and delivery fee information
+                  before approval.
+                </p>
+              )}
             {action.isError && (
               <p className="form-error">
                 That action could not be completed. Please try again.
@@ -181,7 +342,25 @@ export default function OrderDetailsPage({ params }: Props) {
             )}
           </aside>
         </div>
-        {order.events?.length ? <section className="detail-card section-gap"><h2>Order timeline</h2><div className="order-timeline">{order.events.map((event) => <div className="timeline-row" key={event.id}><span className="timeline-marker" /><div><strong>{event.type}</strong><small>{formatDate(event.createdAt)}{event.createdBy ? ` · ${event.createdBy.name}` : ""}</small></div></div>)}</div></section> : null}
+        {order.events?.length ? (
+          <section className="detail-card section-gap">
+            <h2>Order timeline</h2>
+            <div className="order-timeline">
+              {order.events.map((event) => (
+                <div className="timeline-row" key={event.id}>
+                  <span className="timeline-marker" />
+                  <div>
+                    <strong>{event.type}</strong>
+                    <small>
+                      {formatDate(event.createdAt)}
+                      {event.createdBy ? ` · ${event.createdBy.name}` : ""}
+                    </small>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        ) : null}
       </div>
     </AppShell>
   );
