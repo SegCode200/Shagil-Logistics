@@ -2,8 +2,15 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft, Truck, Ban, PackageCheck } from "lucide-react";
-import { use } from "react";
+import {
+  ArrowLeft,
+  Truck,
+  Ban,
+  PackageCheck,
+  Pencil,
+  Save,
+} from "lucide-react";
+import { use, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/app-shell";
 import { useRoleRedirect } from "@/components/auth/auth-provider";
@@ -14,7 +21,6 @@ import {
   OrderStatusBadge,
   formatDate,
 } from "@/components/ui/primitives";
-import { WhatsAppButton } from "@/components/orders/whatsapp-button";
 
 type Props = { params: Promise<{ orderId: string }> };
 export default function OrderDetailsPage({ params }: Props) {
@@ -31,14 +37,18 @@ export default function OrderDetailsPage({ params }: Props) {
     queryFn: () => api.getOrder(orderId),
     enabled: Boolean(user),
   });
-  
+
   // use deliveryZoneId to get the delivery zone name from the list of zones, if available
   const zones = useQuery({
     queryKey: ["delivery-zones"],
     queryFn: api.getDeliveryZones,
     enabled: Boolean(user),
   });
-  const zoneName = zones.data?.find((z) => z.id === query.data?.deliveryZoneId)?.name;
+  const zoneName = zones.data?.find(
+    (z) => z.id === query.data?.deliveryZoneId,
+  )?.name;
+  const [editing, setEditing] = useState(false);
+  const [editValues, setEditValues] = useState<Record<string, string>>({});
   const action = useMutation({
     mutationFn: (type: "approve" | "received" | "out" | "cancel") => {
       if (type === "cancel") return api.cancelOrder(orderId);
@@ -47,6 +57,44 @@ export default function OrderDetailsPage({ params }: Props) {
       return api.updateOrderStatus(orderId, "APPROVED");
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["order", orderId] });
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+    },
+  });
+  const update = useMutation({
+    mutationFn: () => {
+      const originalValues: Record<string, string> = {
+        senderName: query.data?.senderName || "",
+        senderPhoneNumber: query.data?.senderPhoneNumber || "",
+        receiverName: query.data?.receiverName || "",
+        receiverPhoneNumber: query.data?.receiverPhoneNumber || "",
+        pickupAddress: query.data?.pickupAddress || "",
+        deliveryAddress: query.data?.deliveryAddress || "",
+        packageNotes: query.data?.packageNotes || "",
+        quantity: String(query.data?.quantity || ""),
+        pickupMethod: query.data?.pickupMethod || "SENDER_DROPOFF",
+        paymentMethod: query.data?.paymentMethod || "PAYMENT_ON_DELIVERY",
+        orderDetails: query.data?.orderDetails || "",
+        orderAmount: String(query.data?.orderAmount ?? query.data?.amount ?? ""),
+        deliveryFee: String(query.data?.deliveryFee ?? ""),
+        deliveryZoneId: query.data?.deliveryZoneId || "",
+      };
+      const numericFields = new Set(["quantity", "orderAmount", "deliveryFee"]);
+      const payload: Record<string, unknown> = {};
+
+      Object.entries(editValues).forEach(([key, value]) => {
+        if (value === originalValues[key]) return;
+        payload[key] = numericFields.has(key)
+          ? value
+            ? Number(value)
+            : undefined
+          : value;
+      });
+
+      return api.updateOrder(orderId, payload);
+    },
+    onSuccess: () => {
+      setEditing(false);
       queryClient.invalidateQueries({ queryKey: ["order", orderId] });
       queryClient.invalidateQueries({ queryKey: ["orders"] });
     },
@@ -82,8 +130,197 @@ export default function OrderDetailsPage({ params }: Props) {
             <h1>{order.orderId || order.id}</h1>
             <p className="subtext">Created {formatDate(order.createdAt)}</p>
           </div>
-          <OrderStatusBadge status={order.status} />
+          <div className="inline-actions">
+            <OrderStatusBadge status={order.status} />
+            <button
+              className="button button-secondary"
+              onClick={() => {
+                setEditValues({
+                  senderName: order.senderName || "",
+                  senderPhoneNumber: order.senderPhoneNumber || "",
+                  receiverName: order.receiverName || "",
+                  receiverPhoneNumber: order.receiverPhoneNumber || "",
+                  pickupAddress: order.pickupAddress || "",
+                  deliveryAddress: order.deliveryAddress || "",
+                  packageNotes: order.packageNotes || "",
+                  quantity: String(order.quantity || ""),
+                  pickupMethod: order.pickupMethod || "SENDER_DROPOFF",
+                  paymentMethod: order.paymentMethod || "PAYMENT_ON_DELIVERY",
+                  orderDetails: order.orderDetails || "",
+                  orderAmount: String(order.orderAmount ?? order.amount ?? ""),
+                  deliveryFee: String(order.deliveryFee ?? ""),
+                  deliveryZoneId: order.deliveryZoneId || "",
+                });
+                setEditing(true);
+              }}
+            >
+              <Pencil size={16} /> Edit order
+            </button>
+          </div>
         </header>
+        {editing && (
+          <section className="panel edit-order-panel">
+            <form
+              className="panel-body form-grid"
+              onSubmit={(event) => {
+                event.preventDefault();
+                update.mutate();
+              }}
+            >
+              <h2 className="field-span form-section-title">Edit order</h2>
+              <EditField
+                label="Sender name"
+                name="senderName"
+                values={editValues}
+                setValues={setEditValues}
+              />
+              <EditField
+                label="Sender phone"
+                name="senderPhoneNumber"
+                values={editValues}
+                setValues={setEditValues}
+              />
+              <EditField
+                label="Receiver name"
+                name="receiverName"
+                values={editValues}
+                setValues={setEditValues}
+              />
+              <EditField
+                label="Receiver phone"
+                name="receiverPhoneNumber"
+                values={editValues}
+                setValues={setEditValues}
+              />
+              <EditField
+                label="Delivery address"
+                name="deliveryAddress"
+                values={editValues}
+                setValues={setEditValues}
+              />
+              <EditField
+                label="Pickup address"
+                name="pickupAddress"
+                values={editValues}
+                setValues={setEditValues}
+              />
+              <EditField
+                label="Product details"
+                name="orderDetails"
+                values={editValues}
+                setValues={setEditValues}
+              />
+              <EditField
+                label="Package notes"
+                name="packageNotes"
+                values={editValues}
+                setValues={setEditValues}
+              />
+              <EditField
+                label="Quantity"
+                name="quantity"
+                type="number"
+                values={editValues}
+                setValues={setEditValues}
+              />
+              <EditField
+                label="Order amount"
+                name="orderAmount"
+                type="number"
+                values={editValues}
+                setValues={setEditValues}
+              />
+              <div className="field">
+                <label htmlFor="edit-pickup">Pickup method</label>
+                <select
+                  className="select"
+                  id="edit-pickup"
+                  value={editValues.pickupMethod || ""}
+                  onChange={(event) =>
+                    setEditValues({
+                      ...editValues,
+                      pickupMethod: event.target.value,
+                    })
+                  }
+                >
+                  <option value="SENDER_DROPOFF">Sender drop-off</option>
+                  <option value="RIDER_PICKUP">Rider pickup</option>
+                </select>
+              </div>
+              <div className="field">
+                <label htmlFor="edit-payment">Payment method</label>
+                <select
+                  className="select"
+                  id="edit-payment"
+                  value={editValues.paymentMethod || ""}
+                  onChange={(event) =>
+                    setEditValues({
+                      ...editValues,
+                      paymentMethod: event.target.value,
+                    })
+                  }
+                >
+                  <option value="ALREADY_PAID">Already paid</option>
+                  <option value="PAYMENT_ON_DELIVERY">
+                    Payment on delivery
+                  </option>
+                </select>
+              </div>
+              <div className="field">
+                <label htmlFor="edit-area">Area</label>
+                <select
+                  className="select"
+                  id="edit-area"
+                  value={editValues.deliveryZoneId || ""}
+                  onChange={(event) =>
+                    setEditValues({
+                      ...editValues,
+                      deliveryZoneId: event.target.value,
+                    })
+                  }
+                >
+                  <option value="">Select area</option>
+                  {(zones.data || [])
+                    .filter((zone) => zone.active)
+                    .map((zone) => (
+                      <option key={zone.id} value={zone.id}>
+                        {zone.name} · ₦{Number(zone.fee).toLocaleString()}
+                      </option>
+                    ))}
+                </select>
+              </div>
+              <EditField
+                label="Change delivery fee"
+                name="deliveryFee"
+                type="number"
+                values={editValues}
+                setValues={setEditValues}
+              />
+              <div className="form-actions field-span">
+                <button
+                  type="button"
+                  className="button button-secondary"
+                  onClick={() => setEditing(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="button button-primary"
+                  disabled={update.isPending}
+                >
+                  <Save size={16} />{" "}
+                  {update.isPending ? "Saving..." : "Save changes"}
+                </button>
+              </div>
+              {update.isError && (
+                <p className="form-error field-span">
+                  Unable to update this order. Please check the details and try
+                  again.
+                </p>
+              )}
+            </form>
+          </section>
+        )}
         <div className="detail-grid">
           <section className="detail-card">
             <h2>Customer information</h2>
@@ -105,7 +342,7 @@ export default function OrderDetailsPage({ params }: Props) {
             <dl className="detail-list">
               <div>
                 <dt>Sender</dt>
-                <dd>{order.senderName }</dd>
+                <dd>{order.senderName}</dd>
               </div>
               <div>
                 <dt>Sender phone</dt>
@@ -138,7 +375,7 @@ export default function OrderDetailsPage({ params }: Props) {
                 <dt>Amount</dt>
                 <dd>
                   {amount !== null && Number.isFinite(amount)
-                    ? amount.toFixed(2)
+                    ? `₦${Number(amount.toFixed(2)).toLocaleString()}`
                     : "Not specified"}
                 </dd>
               </div>
@@ -157,9 +394,9 @@ export default function OrderDetailsPage({ params }: Props) {
               <div>
                 <dt>Total</dt>
                 <dd>
-                  {order.totalAmount == null
+                  {order.totalAmountToCollect == null
                     ? "—"
-                    : `₦${Number(order.totalAmount).toLocaleString()}`}
+                    : `₦${Number(order.totalAmountToCollect).toLocaleString()}`}
                 </dd>
               </div>
               <div>
@@ -220,7 +457,10 @@ export default function OrderDetailsPage({ params }: Props) {
             <dl className="detail-list">
               <div>
                 <dt>Assigned rider</dt>
-                <dd>{order.assignedRider?.name || "Unassigned"}</dd>
+                <dd>
+                  {order.assignedRider?.name || "Unassigned"} -{" "}
+                  {order.assignedRider?.phone || "—"}
+                </dd>
               </div>
               <div>
                 <dt>Delivery code</dt>
@@ -306,7 +546,7 @@ export default function OrderDetailsPage({ params }: Props) {
                   <option value="">Unassigned</option>
                   {(riders.data || []).map((rider) => (
                     <option key={rider.id} value={rider.id}>
-                      {rider.name}
+                      {rider.name} - ({rider.phone || "No phone"})
                     </option>
                   ))}
                 </select>
@@ -320,12 +560,6 @@ export default function OrderDetailsPage({ params }: Props) {
                   <Ban size={17} /> Cancel order
                 </button>
               )}
-              <WhatsAppButton
-                phone={order.customerPhone}
-                customerName={order.customerName}
-                orderId={order.orderId || order.id}
-                deliveryCode={order.deliveryCode}
-              />
             </div>
             {!canApprove &&
               (order.status === "PENDING" ||
@@ -363,5 +597,34 @@ export default function OrderDetailsPage({ params }: Props) {
         ) : null}
       </div>
     </AppShell>
+  );
+}
+
+function EditField({
+  label,
+  name,
+  values,
+  setValues,
+  type = "text",
+}: {
+  label: string;
+  name: string;
+  values: Record<string, string>;
+  setValues: (values: Record<string, string>) => void;
+  type?: string;
+}) {
+  return (
+    <div className="field">
+      <label htmlFor={`edit-${name}`}>{label}</label>
+      <input
+        className="input"
+        id={`edit-${name}`}
+        type={type}
+        value={values[name] || ""}
+        onChange={(event) =>
+          setValues({ ...values, [name]: event.target.value })
+        }
+      />
+    </div>
   );
 }

@@ -54,6 +54,7 @@ export type Order = {
   packageDescription?: string;
   quantity?: number;
   notes?: string;
+  packageNotes?: string;
   pickupMethod?: PickupMethod;
   pickupAddress?: string;
   pickupInstructions?: string;
@@ -62,7 +63,7 @@ export type Order = {
   paymentStatus?: PaymentStatus;
   orderAmount?: number | string;
   deliveryFee?: number | string;
-  totalAmount?: number | string;
+  totalAmountToCollect?: number | string;
   senderAmount?: number | string;
   companyDeliveryAmount?: number | string;
   publicToken?: string;

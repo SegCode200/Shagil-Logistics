@@ -103,7 +103,7 @@ export default function NewOrderPage() {
             )}
             <Link
               className="button button-primary"
-              href={`/owner/orders/${created.id}`}
+              href={`/owner/orders/${created.orderId}`}
             >
               View order
             </Link>

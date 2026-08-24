@@ -101,23 +101,22 @@ export default function CreateOrderPage() {
 
   const mutation = useMutation({
     mutationFn: () =>
-      api.createOrder({
-        ...removeEmptyValues({
-          ...values,
-          senderPhoneNumber: normalizeNigerianPhone(values.senderPhoneNumber),
-          receiverPhoneNumber: normalizeNigerianPhone(
-            values.receiverPhoneNumber,
-          ),
-        }),
-        quantity: Number(values.quantity),
-        orderAmount: values.orderAmount
-          ? Number(values.orderAmount)
-          : undefined,
-        images: images.map((image) => ({
-          name: image.file.name,
-          url: image.url,
-        })),
-      }),
+      api.createOrder(
+        {
+          ...removeEmptyValues({
+            ...values,
+            senderPhoneNumber: normalizeNigerianPhone(values.senderPhoneNumber),
+            receiverPhoneNumber: normalizeNigerianPhone(
+              values.receiverPhoneNumber,
+            ),
+          }),
+          quantity: Number(values.quantity),
+          orderAmount: values.orderAmount
+            ? Number(values.orderAmount)
+            : undefined,
+        },
+        images.map((image) => image.file),
+      ),
     onSuccess: setCreated,
   });
   const set = <K extends keyof Values>(key: K, value: Values[K]) =>

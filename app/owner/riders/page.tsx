@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, Users } from "lucide-react";
+import { Plus, Send, Users } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -32,10 +32,13 @@ export default function RidersPage() {
       form.reset();
     },
   });
+  const resendAccess = useMutation({
+    mutationFn: (riderId: string) => api.resendRiderAccess(riderId),
+  });
   if (isLoading || !user) return <LoadingState />;
   return (
     <AppShell role="OWNER">
-      <div className="page">
+      <div className="page"> 
         <header className="page-header">
           <div>
             <p className="eyebrow">Team</p>
@@ -143,6 +146,20 @@ export default function RidersPage() {
                   <Users size={14} /> {rider.assignedOrders || 0} assigned
                   orders
                 </span>
+                <button
+                  className="button button-secondary rider-access-button"
+                  disabled={resendAccess.isPending}
+                  onClick={() => resendAccess.mutate(rider.id)}
+                >
+                  <Send size={15} />
+                  {resendAccess.isPending ? "Sending..." : "Resend access link"}
+                </button>
+                {resendAccess.isSuccess && resendAccess.variables === rider.id && (
+                  <p className="success-text">Access link sent successfully.</p>
+                )}
+                {resendAccess.isError && resendAccess.variables === rider.id && (
+                  <p className="form-error">Unable to resend the access link. Please try again.</p>
+                )}
               </article>
             ))}
           </div>

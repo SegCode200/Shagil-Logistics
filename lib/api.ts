@@ -38,12 +38,23 @@ function paginationQuery(page: number, pageSize: number) {
   return `?page=${page}&pageSize=${pageSize}`;
 }
 
+function listFromResponse<T>(value: unknown): T[] {
+  if (Array.isArray(value)) return value as T[];
+  if (value && typeof value === "object") {
+    const result = value as { items?: unknown; reports?: unknown; data?: unknown };
+    if (Array.isArray(result.items)) return result.items as T[];
+    if (Array.isArray(result.reports)) return result.reports as T[];
+    if (Array.isArray(result.data)) return result.data as T[];
+  }
+  return [];
+}
+
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const token =
     typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
   const response = await fetch(`${API_URL}${path}`, {
     ...init,
-    credentials: "include",
+    credentials: "include", 
     headers: {
       ...(init.body instanceof FormData ? {} : { "Content-Type": "application/json" }),
       ...(init.headers || {}),
@@ -53,6 +64,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   if (!response.ok) {
     if (response.status === 401) throw new Error("SESSION_EXPIRED");
     const body = await response.json().catch(() => null);
+    console.error("API request failed:", { body });
     throw new Error(body?.message || body?.error || "REQUEST_FAILED");
   }
   if (response.status === 204) return undefined as T;
@@ -79,15 +91,25 @@ export const api = {
   getOrders: (page = 1, pageSize = 20) =>
     request<PaginatedResponse<Order>>(`/orders${paginationQuery(page, pageSize)}`),
   getOrder: (orderId: string) => request<Order>(`/orders/${orderId}`),
-  createOrder: (payload: Partial<Order>) =>
-    request<Order>("/orders", {
+  createOrder: (payload: Partial<Order>, files: File[] = []) => {
+    if (files.length) {
+      const body = new FormData();
+      Object.entries(normalizePhoneFields(payload)).forEach(([key, value]) => {
+        if (key === "images" || value == null) return;
+        body.append(key, typeof value === "object" ? JSON.stringify(value) : String(value));
+      });
+      files.slice(0, 3).forEach((file) => body.append("images", file, file.name));
+      return request<Order>("/orders", { method: "POST", body });
+    }
+    return request<Order>("/orders", {
       method: "POST",
       body: JSON.stringify(normalizePhoneFields(payload)),
-    }),
+    });
+  },
   updateOrder: (orderId: string, payload: Record<string, unknown>) =>
     request<Order>(`/orders/${orderId}`, {
       method: "PATCH",
-      body: JSON.stringify(payload),
+      body: JSON.stringify(normalizePhoneFields(payload)),
     }),
   markOutForDelivery: (orderId: string) =>
     request<Order>(`/orders/${orderId}/out-for-delivery`, { method: "POST" }),
@@ -99,6 +121,11 @@ export const api = {
       method: "POST",
       body: JSON.stringify(normalizePhoneFields(payload)),
     }),
+  resendRiderAccess: (riderId: string) =>
+    request<{ notificationStatus: string }>(
+      `/riders/${encodeURIComponent(riderId)}/resend-login-link`,
+      { method: "POST" },
+    ),
   getRiderOrders: (page = 1, pageSize = 20) =>
     request<PaginatedResponse<Order>>(`/rider/orders${paginationQuery(page, pageSize)}`),
   accessRider: (token: string) =>
@@ -161,8 +188,9 @@ export const api = {
     request<RiderReport>(`/public/delivery/${token}/report`, { method: "POST", body: JSON.stringify(payload) }),
   getRiderRatings: () => request<RiderRating[]>("/riders/me/ratings"),
   getRiderReports: () => request<RiderReport[]>("/riders/me/reports"),
-  getAdminRiderRatings: (riderId: string) => request<RiderRating[]>(`/admin/riders/${riderId}/ratings`),
-  getAdminRiderReports: (riderId: string) => request<RiderReport[]>(`/admin/riders/${riderId}/reports`),
-  getAdminRiderReportsList: () => request<RiderReport[]>("/admin/rider-reports"),
-  updateAdminReportStatus: (reportId: string, status: RiderReportStatus) => request<RiderReport>(`/admin/rider-reports/${reportId}/status`, { method: "PATCH", body: JSON.stringify({ status }) }),
+  getAdminRiderRatings: (riderId: string) => request<RiderRating[]>(`/orders/riders/${riderId}/ratings`),
+  getAdminRiderReports: (riderId: string) => request<RiderReport[]>(`/orders/riders/${riderId}/reports`),
+  getAdminRiderReportsList: async () =>
+    listFromResponse<RiderReport>(await request<unknown>("/orders/rider-reports")),
+  updateAdminReportStatus: (reportId: string, status: RiderReportStatus) => request<RiderReport>(`/orders/rider-reports/${reportId}/status`, { method: "PATCH", body: JSON.stringify({ status }) }),
 };

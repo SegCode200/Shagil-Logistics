@@ -132,7 +132,7 @@ export default function OwnerDashboard() {
                       <td className="muted">{formatDate(order.createdAt)}</td>
                       <td>
                         <Link
-                          href={`/owner/orders/${order.id}`}
+                          href={`/owner/orders/${order.orderId}`}
                           className="text-link"
                         >
                           Open

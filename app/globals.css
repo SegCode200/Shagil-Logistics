@@ -297,6 +297,7 @@ select {
   width: auto;
   min-width: 145px;
 }
+.edit-order-panel { margin-bottom: 18px; }
 .pagination {
   display: flex;
   align-items: center;
@@ -979,6 +980,7 @@ select {
   font-size: 12px;
   font-weight: 750;
 }
+.rider-access-button { width: 100%; margin-top: 14px; }
 .report-filter {
   width: auto;
 }

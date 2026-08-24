@@ -150,7 +150,7 @@ export default function OrdersPage() {
                         <td className="muted">{formatDate(order.createdAt)}</td>
                         <td>
                           <Link
-                            href={`/owner/orders/${order.id}`}
+                            href={`/owner/orders/${order.orderId}`}
                             className="text-link"
                           >
                             Open
@@ -174,7 +174,7 @@ export default function OrdersPage() {
                     <footer>
                       <span>{formatDate(order.createdAt)}</span>
                       <Link
-                        href={`/owner/orders/${order.id}`}
+                        href={`/owner/orders/${order.orderId}`}
                         className="text-link"
                       >
                         Open
