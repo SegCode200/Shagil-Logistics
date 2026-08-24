@@ -15,7 +15,30 @@ export type PaymentStatus = "UNPAID" | "PENDING" | "PAID";
 export type PickupMethod = "SENDER_DROPOFF" | "SENDER_DROP_OFF" | "RIDER_PICKUP";
 export type CustomerCollectionStatus = "NOT_COLLECTED" | "COLLECTED";
 
-export type OrderImage = { id?: string; url: string; name?: string };
+export type OrderImage = {
+  id?: string;
+  publicUrl?: string;
+  url?: string;
+  originalFilename?: string;
+  name?: string;
+};
+export type PublicSenderOrder = {
+  orderId: string;
+  senderName?: string | null;
+  senderPhoneNumber?: string | null;
+  receiverName?: string | null;
+  receiverPhoneNumber?: string | null;
+  orderDetails?: string | null;
+  deliveryAddress: string;
+  deliveryZone?: { name?: string | null } | null;
+  quantity?: number | null;
+  packageNotes?: string | null;
+  deliveryFee: number | string;
+  paymentMethod: PaymentMethod;
+  senderPaymentStatus: PaymentStatus;
+  status: OrderStatus;
+  images?: OrderImage[];
+};
 export type OrderEvent = { id: string; type: string; createdAt: string; createdBy?: User | null };
 export type Notification = { id: string; type: string; status: "SENT" | "FAILED"; createdAt: string };
 export type RiderRating = { id: string; orderId: string; riderId?: string; rating: number; comment?: string | null; createdAt: string };
@@ -68,6 +91,7 @@ export type Order = {
   companyDeliveryAmount?: number | string;
   publicToken?: string;
   deliveryToken?: string;
+  senderAccessToken?: string;
   approvalStatus?: "PENDING" | "APPROVED" | "REJECTED";
   approvedAt?: string | null;
   approvedBy?: User | null;

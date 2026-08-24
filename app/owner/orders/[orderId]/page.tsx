@@ -9,6 +9,8 @@ import {
   PackageCheck,
   Pencil,
   Save,
+  LoaderCircle,
+  Send,
 } from "lucide-react";
 import { use, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -54,7 +56,7 @@ export default function OrderDetailsPage({ params }: Props) {
       if (type === "cancel") return api.cancelOrder(orderId);
       if (type === "out") return api.markOutForDelivery(orderId);
       if (type === "received") return api.markPackageReceived(orderId);
-      return api.updateOrderStatus(orderId, "APPROVED");
+      return api.approveOrder(orderId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["order", orderId] });
@@ -99,6 +101,19 @@ export default function OrderDetailsPage({ params }: Props) {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
     },
   });
+  const assignRider = useMutation({
+    mutationFn: (riderId: string) => api.assignRider(orderId, riderId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["order", orderId] });
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+    },
+  });
+  const resendSenderAccess = useMutation({
+    mutationFn: () => api.resendSenderAccessToken(orderId),
+  });
+  const resendReceiverAccess = useMutation({
+    mutationFn: () => api.resendReceiverAccessToken(orderId),
+  });
   if (isLoading || !user || query.isLoading) return <LoadingState />;
   if (query.isError || !query.data)
     return (
@@ -117,6 +132,19 @@ export default function OrderDetailsPage({ params }: Props) {
     order.deliveryAddress &&
     order.paymentMethod &&
     order.deliveryFee != null,
+  );
+  const hasAssignedRider = Boolean(order.assignedRider?.id || order.rider?.id);
+  const isApproved = Boolean(
+    order.approvedAt ||
+      [
+        "APPROVED",
+        "WAITING_FOR_PACKAGE",
+        "PACKAGE_RECEIVED",
+        "ASSIGNED",
+        "PICKED_UP",
+        "OUT_FOR_DELIVERY",
+        "DELIVERED",
+      ].includes(order.status),
   );
   return (
     <AppShell role="OWNER">
@@ -404,19 +432,33 @@ export default function OrderDetailsPage({ params }: Props) {
                 <dd>{formatDate(order.createdAt)}</dd>
               </div>
             </dl>
-            {order.images?.length ? (
+            {order.images?.some((image) => image.publicUrl || image.url) ? (
               <>
                 <h2 className="section-gap">Product images</h2>
                 <div className="public-image-grid">
-                  {order.images.map((image) => (
-                    <Image
-                      key={image.id || image.url}
-                      src={image.url}
-                      alt={image.name || "Product"}
-                      width={240}
-                      height={240}
-                    />
-                  ))}
+                  {order.images.map((image) => {
+                    const imageUrl = image.publicUrl || image.url;
+                    if (!imageUrl) return null;
+                    return (
+                      <a
+                        className="product-image-link"
+                        href={imageUrl}
+                        key={image.id || imageUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        <Image
+                          className="product-image"
+                          src={imageUrl}
+                          alt={
+                            image.originalFilename || image.name || "Product"
+                          }
+                          width={720}
+                          height={540}
+                        />
+                      </a>
+                    );
+                  })}
                 </div>
               </>
             ) : null}
@@ -478,14 +520,64 @@ export default function OrderDetailsPage({ params }: Props) {
               )}
             </dl>
             <div className="action-stack section-gap">
-              {(order.status === "PENDING" ||
-                order.status === "PENDING_APPROVAL") && (
+              {isApproved && (
+                <div className="access-token-actions">
+                  <p className="action-label">Public access links</p>
+                  <button
+                    className="button button-secondary button-full"
+                    disabled={resendSenderAccess.isPending}
+                    onClick={() => resendSenderAccess.mutate()}
+                  >
+                    <Send size={16} />
+                    {resendSenderAccess.isPending
+                      ? "Sending sender link..."
+                      : "Resend sender access"}
+                  </button>
+                  {resendSenderAccess.isSuccess && (
+                    <p className="success-text" role="status">
+                      Sender access link sent.
+                    </p>
+                  )}
+                  {resendSenderAccess.isError && (
+                    <p className="form-error" role="alert">
+                      {resendSenderAccess.error instanceof Error
+                        ? resendSenderAccess.error.message
+                        : "Could not resend the sender access link."}
+                    </p>
+                  )}
+                  <button
+                    className="button button-secondary button-full"
+                    disabled={resendReceiverAccess.isPending}
+                    onClick={() => resendReceiverAccess.mutate()}
+                  >
+                    <Send size={16} />
+                    {resendReceiverAccess.isPending
+                      ? "Sending receiver link..."
+                      : "Resend receiver access"}
+                  </button>
+                  {resendReceiverAccess.isSuccess && (
+                    <p className="success-text" role="status">
+                      Receiver access link sent.
+                    </p>
+                  )}
+                  {resendReceiverAccess.isError && (
+                    <p className="form-error" role="alert">
+                      {resendReceiverAccess.error instanceof Error
+                        ? resendReceiverAccess.error.message
+                        : "Could not resend the receiver access link."}
+                    </p>
+                  )}
+                </div>
+              )}
+              {order.status === "PENDING_APPROVAL" && (
                 <button
                   className="button button-primary button-full"
-                  disabled={action.isPending || !canApprove}
+                  disabled={action.isPending || !canApprove || !hasAssignedRider}
                   title={
                     !canApprove
                       ? "Complete sender, receiver, payment, and delivery fee information first"
+                      : !hasAssignedRider
+                        ? "Assign a rider before approval"
                       : undefined
                   }
                   onClick={() => {
@@ -532,15 +624,15 @@ export default function OrderDetailsPage({ params }: Props) {
                 <select
                   className="select"
                   id="assign-rider"
-                  value={order.assignedRider?.id || order.rider?.id || ""}
+                  disabled={assignRider.isPending}
+                  value={
+                    assignRider.isPending
+                      ? assignRider.variables
+                      : order.assignedRider?.id || order.rider?.id || ""
+                  }
                   onChange={(event) => {
                     if (event.target.value)
-                      api.assignRider(orderId, event.target.value).then(() => {
-                        queryClient.invalidateQueries({
-                          queryKey: ["order", orderId],
-                        });
-                        queryClient.invalidateQueries({ queryKey: ["orders"] });
-                      });
+                      assignRider.mutate(event.target.value);
                   }}
                 >
                   <option value="">Unassigned</option>
@@ -550,6 +642,16 @@ export default function OrderDetailsPage({ params }: Props) {
                     </option>
                   ))}
                 </select>
+                {assignRider.isPending && (
+                  <p className="assignment-status" role="status">
+                    <LoaderCircle size={14} className="spin" /> Assigning rider...
+                  </p>
+                )}
+                {assignRider.isError && (
+                  <p className="form-error" role="alert">
+                    Rider assignment failed. Please try again.
+                  </p>
+                )}
               </div>
               {order.status === "OUT_FOR_DELIVERY" && (
                 <button
@@ -562,16 +664,20 @@ export default function OrderDetailsPage({ params }: Props) {
               )}
             </div>
             {!canApprove &&
-              (order.status === "PENDING" ||
-                order.status === "PENDING_APPROVAL") && (
+              order.status === "PENDING_APPROVAL" && (
                 <p className="form-error">
                   Complete the required order and delivery fee information
                   before approval.
                 </p>
               )}
+            {order.status === "PENDING_APPROVAL" && !hasAssignedRider && (
+              <p className="form-error">Assign a rider before approval.</p>
+            )}
             {action.isError && (
               <p className="form-error">
-                That action could not be completed. Please try again.
+                {action.error instanceof Error
+                  ? action.error.message
+                  : "That action could not be completed. Please try again."}
               </p>
             )}
           </aside>
