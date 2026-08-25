@@ -14,6 +14,11 @@ export type PaymentMethod = "ALREADY_PAID" | "PAYMENT_ON_DELIVERY";
 export type PaymentStatus = "UNPAID" | "PENDING" | "PAID";
 export type PickupMethod = "SENDER_DROPOFF" | "SENDER_DROP_OFF" | "RIDER_PICKUP";
 export type CustomerCollectionStatus = "NOT_COLLECTED" | "COLLECTED";
+export type AccountDetails = {
+  accountName: string;
+  accountNumber: string;
+  bankName: string;
+};
 
 export type OrderImage = {
   id?: string;
@@ -35,8 +40,15 @@ export type PublicSenderOrder = {
   packageNotes?: string | null;
   deliveryFee: number | string;
   paymentMethod: PaymentMethod;
+  assignedRiderId?: string | null;
   senderPaymentStatus: PaymentStatus;
   status: OrderStatus;
+  assignedRider?: {
+    id?: string;
+    name?: string | null;
+    phone?: string | null;
+  } | null;
+  accountDetails?: AccountDetails | null;
   images?: OrderImage[];
 };
 export type OrderEvent = { id: string; type: string; createdAt: string; createdBy?: User | null };
@@ -51,6 +63,10 @@ export type User = {
   phone?: string;
   email?: string;
   role: Role;
+  accountDetails?: AccountDetails | null;
+  accountName?: string;
+  accountNumber?: string;
+  bankName?: string;
 };
 
 export type Order = {
@@ -105,6 +121,9 @@ export type Order = {
   riderRating?: RiderRating | null;
   report?: RiderReport | null;
   riderReport?: RiderReport | null;
+  companyAccountName: string | null;
+  companyAccountNumber: string | null;
+  companyBankName: string | null;
 };
 
 export type DeliveryZone = { id: string; name: string; fee: number | string; active: boolean; updatedAt?: string };

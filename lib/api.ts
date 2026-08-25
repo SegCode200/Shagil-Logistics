@@ -4,6 +4,7 @@ import type {
   LoginResponse,
   Order,
   OrderStatus,
+    AccountDetails,
   PublicSenderOrder,
   Rider,
   User,
@@ -132,6 +133,12 @@ export const api = {
       method: "PATCH",
       body: JSON.stringify(normalizePhoneFields(payload)),
     }),
+  updateAccountDetails: (payload: AccountDetails) =>
+    request<User>("/auth/account-details", {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    }),
+  getAccountDetails: () => request<AccountDetails | null>("/auth/account-details"),
   approveOrder: (orderId: string) =>
     request<Order>(`/orders/${orderId}/approve`, { method: "POST" }),
   resendSenderAccessToken: (orderId: string) =>
@@ -223,6 +230,20 @@ export const api = {
     request<Order>(`/public/delivery/${token}`),
   getPublicSender: (token: string) =>
     request<PublicSenderOrder>(`/public/sender/${encodeURIComponent(token)}`),
+  senderPaid: (orderId: string) =>
+    request<PublicSenderOrder>(`/orders/${encodeURIComponent(orderId)}/sender-payment`, {
+      method: "POST",
+    }),
+  senderPickedUp: (orderId: string, riderId: string) =>
+    request<PublicSenderOrder>(`/riders/orders/${encodeURIComponent(orderId)}/picked-up`, {
+      method: "POST",
+      body: JSON.stringify({ riderId }),
+    }),
+  resendReceiverDeliveryCode: (token: string) =>
+    request<{ notificationStatus?: string }>(
+      `/public/delivery/${encodeURIComponent(token)}/resend-code`,
+      { method: "POST" },
+    ),
   submitDeliveryRating: (
     token: string,
     payload: { rating: number; comment?: string },

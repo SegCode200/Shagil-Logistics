@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 import { use, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { CheckCircle2, PackageCheck, Send } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { LoadingState } from "@/components/ui/primitives";
 
@@ -23,9 +24,22 @@ const labels: Record<string, string> = {
 
 export default function SenderAccessPage({ params }: Props) {
   const { token } = use(params);
+  const queryClient = useQueryClient();
   const query = useQuery({
     queryKey: ["public-sender", token],
     queryFn: () => api.getPublicSender(token),
+  });
+  const senderPaid = useMutation({
+    mutationFn: () => api.senderPaid(query.data?.orderId || ""),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["public-sender", token] }),
+  });
+  const pickedUp = useMutation({
+    mutationFn: () =>
+      api.senderPickedUp(query.data?.orderId || "", query.data?.assignedRiderId || ""),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["public-sender", token] }),
+  });
+  const resendCode = useMutation({
+    mutationFn: () => api.resendReceiverDeliveryCode(token),
   });
 
   useEffect(() => {
@@ -48,6 +62,8 @@ export default function SenderAccessPage({ params }: Props) {
   const images = (order.images || []).filter(
     (image) => image.publicUrl || image.url,
   );
+  console.log("query", order);
+  const canMarkPickedUp = ["ASSIGNED", "APPROVED"].includes(order.status);
 
   return (
     <main className="public-page">
@@ -62,6 +78,98 @@ export default function SenderAccessPage({ params }: Props) {
             Keep track of the package details and delivery progress here.
           </p>
         </header>
+
+            <section className="sender-actions" aria-label="Sender actions">
+          <div className="sender-action-card sender-payment-action">
+            <div className="sender-action-heading">
+              <CheckCircle2 size={20} />
+              <div>
+                <h2>Payment received</h2>
+                <p>
+                  Status: <strong>{order.senderPaymentStatus || "PENDING"}</strong>
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              className="button button-success button-full"
+              disabled={order.senderPaymentStatus === "PAID" || senderPaid.isPending}
+              onClick={() => {
+                if (window.confirm("Are you sure you have received your payment?"))
+                  senderPaid.mutate();
+              }}
+            >
+              <CheckCircle2 size={16} />
+              {senderPaid.isPending
+                ? "Updating payment..."
+                : order.senderPaymentStatus === "PAID"
+                  ? "Payment received"
+                  : "Confirm payment received"}
+            </button>
+            {senderPaid.isError && (
+              <p className="form-error" role="alert">
+                {senderPaid.error instanceof Error
+                  ? senderPaid.error.message
+                  : "Could not update payment status."}
+              </p>
+            )}
+          </div>
+
+          <div className="sender-action-card sender-pickup-action">
+            <div className="sender-action-heading">
+              <PackageCheck size={20} />
+              <div>
+                <h2>Shipment picked up</h2>
+                <p>Mark the shipment as collected by the assigned rider.</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              className={`button button-info button-full${!canMarkPickedUp ? " button-loading" : ""}`}
+              disabled={!canMarkPickedUp }
+              onClick={() => pickedUp.mutate()}
+            >
+              <PackageCheck size={16} />
+              {pickedUp.isPending ? "Updating shipment..." : "Shipment picked up"}
+            </button>
+            {pickedUp.isError && (
+              <p className="form-error" role="alert">
+                {pickedUp.error instanceof Error
+                  ? pickedUp.error.message
+                  : "Could not update shipment status."}
+              </p>
+            )}
+          </div>
+
+          <div className="sender-action-card sender-code-action">
+            <div className="sender-action-heading">
+              <Send size={20} />
+              <div>
+                <h2>Receiver delivery code</h2>
+                <p>Send the delivery code to the receiver again.</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              className="button button-warning button-full"
+              disabled={resendCode.isPending}
+              onClick={() => resendCode.mutate()}
+            >
+              <Send size={16} />
+              {resendCode.isPending ? "Sending code..." : "Resend code to receiver"}
+            </button>
+            {resendCode.isSuccess && (
+              <p className="success-text" role="status">Delivery code sent to receiver.</p>
+            )}
+            {resendCode.isError && (
+              <p className="form-error" role="alert">
+                {resendCode.error instanceof Error
+                  ? resendCode.error.message
+                  : "Could not resend the delivery code."}
+              </p>
+            )}
+          </div>
+        </section>
 
         <div className="public-facts">
           <div>
@@ -110,6 +218,8 @@ export default function SenderAccessPage({ params }: Props) {
             </strong>
           </div>
         </div>
+
+    
 
         {order.packageNotes && (
           <section className="public-note">
