@@ -173,7 +173,7 @@ export default function CustomerDeliveryPage({
             <div>
               <span>Payment</span>
               <strong>
-                {order.customerCollectionStatus === "COLLECTED"
+                {order.receiverCollectionStatus === "COLLECTED"
                   ? "PAID ✓"
                   : order.paymentMethod === "PAYMENT_ON_DELIVERY"
                     ? "Payment on delivery"
@@ -181,7 +181,7 @@ export default function CustomerDeliveryPage({
               </strong>
             </div>
             {order.paymentMethod === "PAYMENT_ON_DELIVERY" &&
-              order.customerCollectionStatus !== "COLLECTED" && (
+              order.receiverCollectionStatus !== "COLLECTED" && (
                 <div>
                   <span>Amount to pay</span>
                   <strong>₦{Number(amount || 0).toLocaleString()}</strong>

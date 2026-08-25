@@ -1128,10 +1128,24 @@ select {
   border-radius: 12px;
   color: white;
   background: var(--navy);
+  box-shadow: 0 18px 42px #183b5626;
+}
+.confirm-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #f6b29e;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.confirm-kicker svg {
+  color: #f6b29e;
 }
 .confirm-box h2 {
   margin: 8px 0 7px;
-  font-size: 22px;
+  font-size: 29px;
 }
 .confirm-box .subtext {
   color: #b7cedb;
@@ -1151,6 +1165,51 @@ select {
   border-top: 1px solid #31556b;
   border-bottom: 1px solid #31556b;
 }
+.delivery-summary-card {
+  gap: 12px;
+  margin: 24px 0;
+  padding: 17px;
+  border: 1px solid #31556b;
+  border-radius: 10px;
+  background: #204861;
+}
+.receiver-heading {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+.receiver-heading > div {
+  display: grid;
+  gap: 4px;
+}
+.receiver-heading > div span {
+  color: #b7cedb;
+  font-size: 12px;
+}
+.receiver-avatar {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--navy);
+  background: #f6b29e;
+  font-size: 16px;
+  font-weight: 800;
+}
+.delivery-summary-card .rider-phone-link {
+  color: #fff;
+}
+.delivery-summary-card .rider-phone-link svg {
+  color: #f6b29e;
+}
+.delivery-address {
+  padding-top: 2px;
+}
+.collection-line {
+  color: #f6d5c9 !important;
+  font-weight: 700;
+}
 .delivery-summary span,
 .delivery-summary p {
   margin: 0;
@@ -1160,6 +1219,43 @@ select {
 .confirm-form {
   display: grid;
   gap: 16px;
+}
+.code-confirmation {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  border-radius: 10px;
+  background: #f8fbfc;
+}
+.code-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--navy);
+}
+.code-heading h3 {
+  margin: 3px 0 0;
+  font-size: 17px;
+}
+.code-heading svg {
+  color: var(--brand-dark);
+}
+.code-eyebrow {
+  color: var(--brand-dark);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.code-confirmation > p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+.code-confirmation .field label {
+  color: var(--foreground);
 }
 .payment-check {
   display: grid;
@@ -1519,6 +1615,34 @@ select {
 }
 .button-warning:hover {
   background: var(--brand-dark);
+}
+.button-whatsapp {
+  color: white;
+  background: #25d366;
+}
+.button-whatsapp:hover {
+  background: #1da851;
+}
+.rider-action-stack {
+  display: grid;
+  gap: 10px;
+  margin: 20px 0;
+}
+.action-section-label {
+  margin: 0 0 1px;
+  color: #a9c3d0;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.rider-phone-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--brand-dark);
+  font-size: 13px;
+  font-weight: 750;
 }
 .phone-actions {
   display: flex;

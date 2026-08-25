@@ -11,9 +11,11 @@ export type OrderStatus =
   | "DELIVERED"
   | "CANCELLED";
 export type PaymentMethod = "ALREADY_PAID" | "PAYMENT_ON_DELIVERY";
-export type PaymentStatus = "UNPAID" | "PENDING" | "PAID";
-export type PickupMethod = "SENDER_DROPOFF" | "SENDER_DROP_OFF" | "RIDER_PICKUP";
-export type CustomerCollectionStatus = "NOT_COLLECTED" | "COLLECTED";
+export type PaymentStatus = "NOT_REQUIRED" | "PENDING" | "PAID";
+export type CompanyPaymentStatus = "PENDING" | "PAID";
+export type SenderPaymentStatus = "PENDING" | "PAID";
+export type ReceiverCollectionStatus = "NOT_COLLECTED" | "COLLECTED";
+export type PickupMethod = "SENDER_DROPOFF" | "RIDER_PICKUP";
 export type AccountDetails = {
   accountName: string;
   accountNumber: string;
@@ -41,7 +43,7 @@ export type PublicSenderOrder = {
   deliveryFee: number | string;
   paymentMethod: PaymentMethod;
   assignedRiderId?: string | null;
-  senderPaymentStatus: PaymentStatus;
+  senderPaymentStatus: SenderPaymentStatus;
   status: OrderStatus;
   assignedRider?: {
     id?: string;
@@ -108,12 +110,14 @@ export type Order = {
   publicToken?: string;
   deliveryToken?: string;
   senderAccessToken?: string;
+  receiverAccessToken?: string;
+  assignedRiderId?: string | null;
   approvalStatus?: "PENDING" | "APPROVED" | "REJECTED";
   approvedAt?: string | null;
   approvedBy?: User | null;
-  companyPaymentStatus?: PaymentStatus;
-  senderPaymentStatus?: PaymentStatus;
-  customerCollectionStatus?: CustomerCollectionStatus;
+  companyPaymentStatus?: CompanyPaymentStatus;
+  senderPaymentStatus?: SenderPaymentStatus;
+  receiverCollectionStatus?: ReceiverCollectionStatus;
   images?: OrderImage[];
   events?: OrderEvent[];
   notifications?: Notification[];
@@ -121,9 +125,9 @@ export type Order = {
   riderRating?: RiderRating | null;
   report?: RiderReport | null;
   riderReport?: RiderReport | null;
-  companyAccountName: string | null;
-  companyAccountNumber: string | null;
-  companyBankName: string | null;
+  companyAccountName?: string | null;
+  companyAccountNumber?: string | null;
+  companyBankName?: string | null;
 };
 
 export type DeliveryZone = { id: string; name: string; fee: number | string; active: boolean; updatedAt?: string };

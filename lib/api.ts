@@ -186,11 +186,23 @@ export const api = {
     }),
   markPackageReceived: (orderId: string) =>
     request<Order>(`/orders/${orderId}/package-received`, { method: "POST" }),
-  confirmPayment: (orderId: string, amountReceived: number) =>
-    request<Order>(`/rider/orders/${orderId}/confirm-payment`, {
+  companyPaid: (orderId: string) =>
+    request<Order>(`/orders/${encodeURIComponent(orderId)}/company-payment`, {
       method: "POST",
-      body: JSON.stringify({ amountReceived }),
     }),
+  resendReceiverDeliveryCodeForUser: (orderId: string) =>
+    request<{ notificationStatus?: string }>(
+      `/riders/orders/${encodeURIComponent(orderId)}/resend-delivery-code`,
+      { method: "POST" },
+    ),
+  riderOutForDelivery: (orderId: string, riderId: string) =>
+    request<Order>(
+      `/riders/orders/${encodeURIComponent(orderId)}/out-for-delivery`,
+      {
+        method: "POST",
+        body: JSON.stringify({ riderId }),
+      },
+    ),
   confirmDelivery: (payload: { orderId: string; deliveryCode: string }) =>
     request<Order>("/rider/confirm-delivery", {
       method: "POST",

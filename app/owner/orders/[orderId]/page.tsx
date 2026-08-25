@@ -487,7 +487,7 @@ export default function OrderDetailsPage({ params }: Props) {
               <div>
                 <dt>Customer collection</dt>
                 <dd>
-                  {order.customerCollectionStatus === "COLLECTED"
+                  {order.receiverCollectionStatus === "COLLECTED"
                     ? "COLLECTED"
                     : "NOT COLLECTED"}
                 </dd>

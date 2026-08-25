@@ -95,7 +95,7 @@ export default function SenderAccessPage({ params }: Props) {
               className="button button-success button-full"
               disabled={order.senderPaymentStatus === "PAID" || senderPaid.isPending}
               onClick={() => {
-                if (window.confirm("Are you sure you have received your payment?"))
+                if (window.confirm("Are you sure the payment has been received?"))
                   senderPaid.mutate();
               }}
             >

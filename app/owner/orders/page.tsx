@@ -29,20 +29,32 @@ export default function OrdersPage() {
   const [rider, setRider] = useState("ALL");
   const [date, setDate] = useState("");
   const [sort, setSort] = useState("newest");
-  const riders = useQuery({ queryKey: ["riders"], queryFn: api.getRiders, enabled: Boolean(user) });
+  const riders = useQuery({
+    queryKey: ["riders"],
+    queryFn: api.getRiders,
+    enabled: Boolean(user),
+  });
   const filtered = useMemo(
     () =>
-      (query.data?.items || []).filter(
-        (order) =>
-          `${order.orderId} ${order.customerName} ${order.senderName || ""} ${order.receiverName || ""} ${order.receiverPhoneNumber || ""} ${order.rider?.name || order.assignedRider?.name || ""}`
-            .toLowerCase()
-            .includes(search.toLowerCase()) &&
-          (status === "ALL" || order.status === status) &&
-          (payment === "ALL" || order.paymentMethod === payment) &&
-              (rider === "ALL" || order.assignedRider?.id === rider || order.rider?.id === rider) &&
-              (!date || order.createdAt.slice(0, 10) === date),
-            ).sort((left, right) => sort === "oldest" ? left.createdAt.localeCompare(right.createdAt) : right.createdAt.localeCompare(left.createdAt)),
-            [query.data, search, status, payment, rider, date, sort],
+      (query.data?.items || [])
+        .filter(
+          (order) =>
+            `${order.orderId} ${order.customerName} ${order.senderName || ""} ${order.receiverName || ""} ${order.receiverPhoneNumber || ""} ${order.rider?.name || order.assignedRider?.name || ""}`
+              .toLowerCase()
+              .includes(search.toLowerCase()) &&
+            (status === "ALL" || order.status === status) &&
+            (payment === "ALL" || order.paymentMethod === payment) &&
+            (rider === "ALL" ||
+              order.assignedRider?.id === rider ||
+              order.rider?.id === rider) &&
+            (!date || order.createdAt.slice(0, 10) === date),
+        )
+        .sort((left, right) =>
+          sort === "oldest"
+            ? left.createdAt.localeCompare(right.createdAt)
+            : right.createdAt.localeCompare(left.createdAt),
+        ),
+    [query.data, search, status, payment, rider, date, sort],
   );
   if (authLoading || !user) return <LoadingState />;
   return (
@@ -88,17 +100,40 @@ export default function OrdersPage() {
                 <option value="DELIVERED">Delivered</option>
                 <option value="CANCELLED">Cancelled</option>
               </select>
-              <select className="select filter-select" value={payment} onChange={(e) => setPayment(e.target.value)}>
+              <select
+                className="select filter-select"
+                value={payment}
+                onChange={(e) => setPayment(e.target.value)}
+              >
                 <option value="ALL">All payments</option>
                 <option value="ALREADY_PAID">Already paid</option>
                 <option value="PAYMENT_ON_DELIVERY">Payment on delivery</option>
               </select>
-              <select className="select filter-select" value={rider} onChange={(e) => setRider(e.target.value)}>
+              <select
+                className="select filter-select"
+                value={rider}
+                onChange={(e) => setRider(e.target.value)}
+              >
                 <option value="ALL">All riders</option>
-                {(riders.data || []).map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+                {(riders.data || []).map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.name}
+                  </option>
+                ))}
               </select>
-              <input className="input filter-date" type="date" aria-label="Filter by date" value={date} onChange={(e) => setDate(e.target.value)} />
-              <select className="select filter-select" value={sort} onChange={(e) => setSort(e.target.value)} aria-label="Sort orders">
+              <input
+                className="input filter-date"
+                type="date"
+                aria-label="Filter by date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+              />
+              <select
+                className="select filter-select"
+                value={sort}
+                onChange={(e) => setSort(e.target.value)}
+                aria-label="Sort orders"
+              >
                 <option value="newest">Newest first</option>
                 <option value="oldest">Oldest first</option>
               </select>
@@ -137,13 +172,39 @@ export default function OrdersPage() {
                         <td className="order-ref">
                           {order.orderId || order.id}
                         </td>
-                        <td>{order.senderName || order.customerName}<small className="muted block">{order.senderPhoneNumber || order.customerPhone}</small></td>
-                        <td>{order.receiverName || order.customerName}<small className="muted block">{order.receiverPhoneNumber || order.customerPhone}</small></td>
-                        <td className="location-cell"><strong>{order.deliveryAddress}</strong><small className="muted block">{order.deliveryFee != null ? ` · ₦${Number(order.deliveryFee).toLocaleString()}` : ""}</small></td>
+                        <td>
+                          {order.senderName || order.customerName}
+                          <small className="muted block">
+                            {order.senderPhoneNumber || order.customerPhone}
+                          </small>
+                        </td>
+                        <td>
+                          {order.receiverName || order.customerName}
+                          <small className="muted block">
+                            {order.receiverPhoneNumber || order.customerPhone}
+                          </small>
+                        </td>
+                        <td className="location-cell">
+                          <strong>{order.deliveryAddress}</strong>
+                          <small className="muted block">
+                            {order.deliveryFee != null
+                              ? ` · ₦${Number(order.deliveryFee).toLocaleString()}`
+                              : ""}
+                          </small>
+                        </td>
                         <td className="muted">
                           {order.rider?.name || "Unassigned"}
                         </td>
-                        <td>{order.paymentMethod === "PAYMENT_ON_DELIVERY" ? "COD" : "Paid"}<small className="muted block">{order.companyDeliveryAmount == null ? "—" : `₦${Number(order.companyDeliveryAmount).toLocaleString()}`}</small></td>
+                        <td>
+                          {order.paymentMethod === "PAYMENT_ON_DELIVERY"
+                            ? "COD"
+                            : "Paid"}
+                          <small className="muted block">
+                            {order.companyDeliveryAmount == null
+                              ? "—"
+                              : `₦${Number(order.companyDeliveryAmount).toLocaleString()}`}
+                          </small>
+                        </td>
                         <td>
                           <OrderStatusBadge status={order.status} />
                         </td>
@@ -187,7 +248,28 @@ export default function OrdersPage() {
           )}
         </section>
         {query.data && query.data.pagination.totalPages > 1 && (
-          <div className="pagination"><button className="button button-secondary" disabled={page === 1 || query.isFetching} onClick={() => setPage((current) => current - 1)}>Previous</button><span>Page {page} of {query.data.pagination.totalPages} · {query.data.pagination.total} orders</span><button className="button button-secondary" disabled={page >= query.data.pagination.totalPages || query.isFetching} onClick={() => setPage((current) => current + 1)}>Next</button></div>
+          <div className="pagination">
+            <button
+              className="button button-secondary"
+              disabled={page === 1 || query.isFetching}
+              onClick={() => setPage((current) => current - 1)}
+            >
+              Previous
+            </button>
+            <span>
+              Page {page} of {query.data.pagination.totalPages} ·{" "}
+              {query.data.pagination.total} orders
+            </span>
+            <button
+              className="button button-secondary"
+              disabled={
+                page >= query.data.pagination.totalPages || query.isFetching
+              }
+              onClick={() => setPage((current) => current + 1)}
+            >
+              Next
+            </button>
+          </div>
         )}
       </div>
     </AppShell>
