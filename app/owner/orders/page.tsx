@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { Plus, Search } from "lucide-react";
-import { useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/app-shell";
 import { useRoleRedirect } from "@/components/auth/auth-provider";
@@ -15,7 +16,7 @@ import {
   formatDate,
 } from "@/components/ui/primitives";
 
-export default function OrdersPage() {
+function OrdersContent() {
   const { user, isLoading: authLoading } = useRoleRedirect("OWNER");
   const [page, setPage] = useState(1);
   const query = useQuery({
@@ -29,6 +30,13 @@ export default function OrdersPage() {
   const [rider, setRider] = useState("ALL");
   const [date, setDate] = useState("");
   const [sort, setSort] = useState("newest");
+  const searchParams = useSearchParams();
+  const requestedStatus = searchParams.get("status");
+  const requestedPayment = searchParams.get("payment");
+  const requestedPaymentStatus = searchParams.get("paymentStatus");
+  const activeStatus = status === "ALL" && requestedStatus ? requestedStatus : status;
+  const activePayment = payment === "ALL" && requestedPayment ? requestedPayment : payment;
+  const activePaymentStatus = requestedPaymentStatus || "ALL";
   const riders = useQuery({
     queryKey: ["riders"],
     queryFn: api.getRiders,
@@ -42,8 +50,12 @@ export default function OrdersPage() {
             `${order.orderId} ${order.customerName} ${order.senderName || ""} ${order.receiverName || ""} ${order.receiverPhoneNumber || ""} ${order.rider?.name || order.assignedRider?.name || ""}`
               .toLowerCase()
               .includes(search.toLowerCase()) &&
-            (status === "ALL" || order.status === status) &&
-            (payment === "ALL" || order.paymentMethod === payment) &&
+            (activeStatus === "ALL" || order.status === activeStatus) &&
+            (activePayment === "ALL" || order.paymentMethod === activePayment) &&
+            (activePaymentStatus === "ALL" ||
+              order.paymentStatus === activePaymentStatus ||
+              order.companyPaymentStatus === activePaymentStatus ||
+              order.senderPaymentStatus === activePaymentStatus) &&
             (rider === "ALL" ||
               order.assignedRider?.id === rider ||
               order.rider?.id === rider) &&
@@ -54,7 +66,7 @@ export default function OrdersPage() {
             ? left.createdAt.localeCompare(right.createdAt)
             : right.createdAt.localeCompare(left.createdAt),
         ),
-    [query.data, search, status, payment, rider, date, sort],
+    [query.data, search, activeStatus, activePayment, activePaymentStatus, rider, date, sort],
   );
   if (authLoading || !user) return <LoadingState />;
   return (
@@ -84,23 +96,7 @@ export default function OrdersPage() {
                   onChange={(e) => setSearch(e.target.value)}
                 />
               </div>
-              <select
-                className="select filter-select"
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-              >
-                <option value="ALL">All statuses</option>
-                <option value="PENDING">Pending</option>
-                <option value="PENDING_APPROVAL">Pending approval</option>
-                <option value="WAITING_FOR_PACKAGE">Waiting for package</option>
-                <option value="PACKAGE_RECEIVED">Package received</option>
-                <option value="ASSIGNED">Assigned</option>
-                <option value="PICKED_UP">Picked up</option>
-                <option value="OUT_FOR_DELIVERY">Out for delivery</option>
-                <option value="DELIVERED">Delivered</option>
-                <option value="CANCELLED">Cancelled</option>
-              </select>
-              <select
+              {/* <select
                 className="select filter-select"
                 value={payment}
                 onChange={(e) => setPayment(e.target.value)}
@@ -136,7 +132,7 @@ export default function OrdersPage() {
               >
                 <option value="newest">Newest first</option>
                 <option value="oldest">Oldest first</option>
-              </select>
+              </select> */}
             </div>
             <span className="muted count-label">{filtered.length} orders</span>
           </div>
@@ -273,5 +269,13 @@ export default function OrdersPage() {
         )}
       </div>
     </AppShell>
+  );
+}
+
+export default function OrdersPage() {
+  return (
+    <Suspense fallback={<LoadingState label="Loading orders" />}>
+      <OrdersContent />
+    </Suspense>
   );
 }

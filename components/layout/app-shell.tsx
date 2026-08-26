@@ -14,6 +14,7 @@ import {
   X,
   MapPinned,
   Flag,
+  Building2,
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
@@ -26,10 +27,16 @@ const ownerLinks = [
   { href: "/owner/riders", label: "Riders", icon: Users },
   { href: "/owner/zones", label: "Delivery zones", icon: MapPinned },
   { href: "/owner/rider-reports", label: "Rider reports", icon: Flag },
+  { href: "/owner/stations", label: "Stations", icon: Building2 },
+  { href: "/owner/users", label: "Users", icon: Users },
 ];
 const riderLinks = [
   { href: "/rider/dashboard", label: "My deliveries", icon: Truck },
   { href: "/rider/profile", label: "Profile", icon: Settings },
+];
+const managerLinks = [
+  { href: "/manager/dashboard", label: "Dashboard", icon: Home },
+  { href: "/manager/orders", label: "Orders", icon: Package },
 ];
 
 export function AppShell({
@@ -37,13 +44,13 @@ export function AppShell({
   role,
 }: {
   children: React.ReactNode;
-  role: "OWNER" | "RIDER";
+  role: "OWNER" | "STATION_MANAGER" | "RIDER";
 }) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuth();
   const [open, setOpen] = useState(false);
-  const links = role === "OWNER" ? ownerLinks : riderLinks;
+  const links = role === "OWNER" ? ownerLinks : role === "STATION_MANAGER" ? managerLinks : riderLinks;
   async function signOut() {
     await logout();
     router.replace("/login");
@@ -64,7 +71,7 @@ export function AppShell({
             </button>
           )}
         </div>
-        <div className="workspace-label">{role === "OWNER" ? "Workspace" : "Delivery mode"}</div>
+        <div className="workspace-label">{role === "OWNER" ? "Workspace" : role === "STATION_MANAGER" ? "Station operations" : "Delivery mode"}</div>
         <nav className="primary-nav">
           {links.map(({ href, label, icon: Icon }) => (
             <Link
@@ -90,7 +97,7 @@ export function AppShell({
             </span>
             <span>
               <strong>{user?.name || "Account"}</strong>
-              <small>{role === "OWNER" ? "Owner" : "Rider"}</small>
+              <small>{role === "OWNER" ? "Owner" : role === "STATION_MANAGER" ? "Station manager" : "Rider"}</small>
             </span>
           </div>
           <button className="nav-link logout" onClick={signOut}>
@@ -116,14 +123,14 @@ export function AppShell({
             <Menu size={22} />
           </button>
           <Link
-            href={role === "OWNER" ? "/owner/dashboard" : "/rider/dashboard"}
+            href={role === "OWNER" ? "/owner/dashboard" : role === "STATION_MANAGER" ? "/manager/dashboard" : "/rider/dashboard"}
             className="brand"
           >
             <span className="brand-mark">S</span>
             <span>Shagil</span>
           </Link>
           <span className="header-role">
-            {role === "OWNER" ? "Owner" : "Rider"}
+            {role === "OWNER" ? "Owner" : role === "STATION_MANAGER" ? "Manager" : "Rider"}
           </span>
         </header>
         {children}

@@ -15,13 +15,16 @@ export default function PublicOrderPage({ params }: Props) {
     queryKey: ["delivery-zones"],
     queryFn: api.getDeliveryZones,
   });
+  const stations = useQuery({
+    queryKey: ["public-stations"],
+    queryFn: api.getPublicStations,
+  });
   const [values, setValues] = useState({
     senderName: "",
     senderPhone: "",
     receiverName: "",
     receiverPhone: "",
-    packageDescription: "",
-    quantity: "1",
+    stationId: "",
     pickupMethod: "SENDER_DROP_OFF",
     pickupAddress: "",
     pickupInstructions: "",
@@ -37,7 +40,6 @@ export default function PublicOrderPage({ params }: Props) {
         ...values,
         senderPhone: normalizeNigerianPhone(values.senderPhone),
         receiverPhone: normalizeNigerianPhone(values.receiverPhone),
-        quantity: Number(values.quantity),
         orderAmount: values.orderAmount
           ? Number(values.orderAmount)
           : undefined,
@@ -121,17 +123,6 @@ export default function PublicOrderPage({ params }: Props) {
             <legend>3. Package information</legend>
             <div className="form-grid">
               <Field
-                label="Product / package description"
-                value={values.packageDescription}
-                onChange={(v) => set("packageDescription", v)}
-              />
-              <Field
-                label="Quantity"
-                type="number"
-                value={values.quantity}
-                onChange={(v) => set("quantity", v)}
-              />
-              <Field
                 label="Notes"
                 value={values.notes}
                 onChange={(v) => set("notes", v)}
@@ -173,6 +164,23 @@ export default function PublicOrderPage({ params }: Props) {
                 value={values.deliveryAddress}
                 onChange={(v) => set("deliveryAddress", v)}
               />
+              <div className="field">
+                <label htmlFor="public-station">Station</label>
+                <select
+                  className="select"
+                  id="public-station"
+                  required
+                  value={values.stationId}
+                  onChange={(event) => set("stationId", event.target.value)}
+                >
+                  <option value="">Select a station</option>
+                  {(stations.data || []).map((station) => (
+                    <option key={station.id} value={station.id}>
+                      {station.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <div className="field">
                 <label htmlFor="public-area">Area</label>
                 <select

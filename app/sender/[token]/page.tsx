@@ -13,11 +13,8 @@ const labels: Record<string, string> = {
   PENDING: "Pending review",
   PENDING_APPROVAL: "Pending review",
   APPROVED: "Approved",
-  WAITING_FOR_PACKAGE: "Waiting for package",
-  PACKAGE_RECEIVED: "Package received",
   ASSIGNED: "Rider assigned",
   PICKED_UP: "Picked up",
-  OUT_FOR_DELIVERY: "Out for delivery",
   DELIVERED: "Delivered",
   CANCELLED: "Cancelled",
 };
@@ -28,6 +25,10 @@ export default function SenderAccessPage({ params }: Props) {
   const query = useQuery({
     queryKey: ["public-sender", token],
     queryFn: () => api.getPublicSender(token),
+  });
+  const senderOrders = useQuery({
+    queryKey: ["public-sender-orders", token],
+    queryFn: () => api.getPublicSenderOrders(token),
   });
   const senderPaid = useMutation({
     mutationFn: () => api.senderPaid(query.data?.orderId || ""),
@@ -64,6 +65,8 @@ export default function SenderAccessPage({ params }: Props) {
   );
   console.log("query", order);
   const canMarkPickedUp = ["ASSIGNED", "APPROVED"].includes(order.status);
+  const receiverPaymentCollected =
+    order.receiverCollectionStatus === "COLLECTED";
 
   return (
     <main className="public-page">
@@ -93,7 +96,11 @@ export default function SenderAccessPage({ params }: Props) {
             <button
               type="button"
               className="button button-success button-full"
-              disabled={order.senderPaymentStatus === "PAID" || senderPaid.isPending}
+              disabled={
+                order.senderPaymentStatus === "PAID" ||
+                !receiverPaymentCollected ||
+                senderPaid.isPending
+              }
               onClick={() => {
                 if (window.confirm("Are you sure the payment has been received?"))
                   senderPaid.mutate();
@@ -106,6 +113,9 @@ export default function SenderAccessPage({ params }: Props) {
                   ? "Payment received"
                   : "Confirm payment received"}
             </button>
+            {!receiverPaymentCollected && order.senderPaymentStatus !== "PAID" && (
+              <p className="muted">Waiting for the receiver to confirm payment collection.</p>
+            )}
             {senderPaid.isError && (
               <p className="form-error" role="alert">
                 {senderPaid.error instanceof Error
@@ -189,14 +199,6 @@ export default function SenderAccessPage({ params }: Props) {
             <strong>{order.receiverPhoneNumber || "—"}</strong>
           </div>
           <div>
-            <span>Product details</span>
-            <strong>{order.orderDetails || "—"}</strong>
-          </div>
-          <div>
-            <span>Quantity</span>
-            <strong>{order.quantity || 1}</strong>
-          </div>
-          <div>
             <span>Delivery address</span>
             <strong>{order.deliveryAddress}</strong>
           </div>
@@ -257,6 +259,20 @@ export default function SenderAccessPage({ params }: Props) {
           </section>
         )}
         <p className="public-refresh">This information is read-only.</p>
+        {senderOrders.data && senderOrders.data.length > 0 && (
+          <section className="public-info-section sender-order-history">
+            <h2>Your orders</h2>
+            <div className="stack-list">
+              {senderOrders.data.map((senderOrder) => (
+                <div className="detail-card" key={senderOrder.orderId}>
+                  <strong>{senderOrder.orderId}</strong>
+                  <span>{senderOrder.deliveryZone?.name || senderOrder.deliveryAddress}</span>
+                  <span>{labels[senderOrder.status] || senderOrder.status}</span>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
       </div>
     </main>
   );

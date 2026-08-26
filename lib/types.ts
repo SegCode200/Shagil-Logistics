@@ -1,13 +1,11 @@
-export type Role = "OWNER" | "RIDER";
+export type Role = "OWNER" | "STATION_MANAGER" | "RIDER";
+export type StationStatus = "ACTIVE" | "INACTIVE";
 export type OrderStatus =
   | "PENDING"
   | "PENDING_APPROVAL"
-  | "WAITING_FOR_PACKAGE"
   | "APPROVED"
-  | "PACKAGE_RECEIVED"
   | "ASSIGNED"
   | "PICKED_UP"
-  | "OUT_FOR_DELIVERY"
   | "DELIVERED"
   | "CANCELLED";
 export type PaymentMethod = "ALREADY_PAID" | "PAYMENT_ON_DELIVERY";
@@ -35,15 +33,14 @@ export type PublicSenderOrder = {
   senderPhoneNumber?: string | null;
   receiverName?: string | null;
   receiverPhoneNumber?: string | null;
-  orderDetails?: string | null;
   deliveryAddress: string;
   deliveryZone?: { name?: string | null } | null;
-  quantity?: number | null;
   packageNotes?: string | null;
   deliveryFee: number | string;
   paymentMethod: PaymentMethod;
   assignedRiderId?: string | null;
   senderPaymentStatus: SenderPaymentStatus;
+  receiverCollectionStatus?: ReceiverCollectionStatus;
   status: OrderStatus;
   assignedRider?: {
     id?: string;
@@ -53,6 +50,7 @@ export type PublicSenderOrder = {
   accountDetails?: AccountDetails | null;
   images?: OrderImage[];
 };
+export type PublicStation = { id: string; name: string; address?: string | null };
 export type OrderEvent = { id: string; type: string; createdAt: string; createdBy?: User | null };
 export type Notification = { id: string; type: string; status: "SENT" | "FAILED"; createdAt: string };
 export type RiderRating = { id: string; orderId: string; riderId?: string; rating: number; comment?: string | null; createdAt: string };
@@ -65,10 +63,48 @@ export type User = {
   phone?: string;
   email?: string;
   role: Role;
+  stationId?: string | null;
   accountDetails?: AccountDetails | null;
   accountName?: string;
   accountNumber?: string;
   bankName?: string;
+};
+
+export type Station = {
+  id: string;
+  stationCode: string;
+  name: string;
+  address?: string | null;
+  status: StationStatus;
+  zones?: DeliveryZone[];
+  managers?: StationManager[];
+  riders?: StationRider[];
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type StationManager = {
+  id: string;
+  userId?: string;
+  stationId?: string | null;
+  station?: Station | null;
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  active?: boolean;
+  status?: "ACTIVE" | "INACTIVE";
+  assignedAt?: string;
+  currentOrders?: number;
+};
+
+export type StationRider = {
+  id: string;
+  riderId: string;
+  name: string;
+  phone?: string | null;
+  status: string;
+  rating?: number;
+  assignedOrders?: number;
 };
 
 export type Order = {
@@ -76,7 +112,6 @@ export type Order = {
   orderId: string;
   customerName: string;
   customerPhone?: string;
-  orderDetails: string;
   deliveryAddress: string;
   amount?: number | string;
   deliveryCode?: string;
@@ -93,13 +128,16 @@ export type Order = {
   receiverPhoneNumber?: string;
   receiverPhone?: string;
   packageDescription?: string;
-  quantity?: number;
   notes?: string;
   packageNotes?: string;
   pickupMethod?: PickupMethod;
   pickupAddress?: string;
   pickupInstructions?: string;
   deliveryZoneId?: string;
+  stationId?: string;
+  deliveryZone?: DeliveryZone | null;
+  station?: Station | null;
+  managedBy?: User | null;
   paymentMethod?: PaymentMethod;
   paymentStatus?: PaymentStatus;
   orderAmount?: number | string;
@@ -130,13 +168,16 @@ export type Order = {
   companyBankName?: string | null;
 };
 
-export type DeliveryZone = { id: string; name: string; fee: number | string; active: boolean; updatedAt?: string };
+export type DeliveryZone = { id: string; name: string; fee: number | string; active: boolean; station?: Station | null; stationId?: string | null; updatedAt?: string };
 export type DeliveryZoneImportRow = { locationCode: string; locationName: string; deliveryFee: number | string; status: "ACTIVE" | "INACTIVE" };
 export type DeliveryZoneImportChange = { locationId: string; location: string; oldFee: number | string; newFee: number | string; changeType: "UPDATED" };
 export type DeliveryZoneImportError = { row: number; locationId?: string; errors: string[] };
 export type DeliveryZoneImport = { importId: string; summary: { total: number; updated: number; unchanged: number; invalid: number }; changes: DeliveryZoneImportChange[]; errors: DeliveryZoneImportError[]; applied: boolean };
 
 export type Rider = User & {
+  stationId?: string | null;
+  zoneIds?: string[];
+  zones?: DeliveryZone[];
   active?: boolean;
   assignedOrders?: number;
   averageRating?: number;

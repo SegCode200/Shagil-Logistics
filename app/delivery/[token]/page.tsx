@@ -3,7 +3,7 @@
 import { CheckCircle2, Circle, Copy, Phone } from "lucide-react";
 import { use, useEffect, useState } from "react";
 import Image from "next/image";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { LoadingState } from "@/components/ui/primitives";
 import { DeliveryFeedback } from "@/components/feedback/delivery-feedback";
@@ -11,17 +11,13 @@ import { DeliveryFeedback } from "@/components/feedback/delivery-feedback";
 const timeline = [
   "PENDING",
   "APPROVED",
-  "PACKAGE_RECEIVED",
   "PICKED_UP",
-  "OUT_FOR_DELIVERY",
   "DELIVERED",
 ];
 const labels: Record<string, string> = {
   PENDING: "Order created",
   APPROVED: "Approved",
-  PACKAGE_RECEIVED: "Package received",
   PICKED_UP: "Package picked up",
-  OUT_FOR_DELIVERY: "Out for delivery",
   DELIVERED: "Delivered",
 };
 export default function CustomerDeliveryPage({
@@ -30,10 +26,16 @@ export default function CustomerDeliveryPage({
   params: Promise<{ token: string }>;
 }) {
   const { token } = use(params);
+  const queryClient = useQueryClient();
   const query = useQuery({
     queryKey: ["customer-delivery", token],
     queryFn: () => api.getCustomerDelivery(token),
     refetchInterval: 30000,
+  });
+  const confirmPayment = useMutation({
+    mutationFn: () => api.confirmReceiverPayment(token),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["customer-delivery", token] }),
   });
   useEffect(() => {
     document.title = "Track your Shagil delivery";
@@ -121,16 +123,7 @@ export default function CustomerDeliveryPage({
 
         <section className="public-info-section">
           <h2>Product information</h2>
-          <div className="public-facts">
-            <div>
-              <span>Product</span>
-              <strong>{order.packageDescription || order.orderDetails || "—"}</strong>
-            </div>
-            <div>
-              <span>Quantity</span>
-              <strong>{order.quantity || 1}</strong>
-            </div>
-          </div>
+          
           {order.packageNotes && (
             <div className="public-note">
               <span>Package notes</span>
@@ -188,6 +181,34 @@ export default function CustomerDeliveryPage({
                 </div>
               )}
           </div>
+          {order.paymentMethod === "PAYMENT_ON_DELIVERY" && (
+            <div className="public-action">
+              <button
+                type="button"
+                className="button button-success button-full"
+                disabled={
+                  order.receiverCollectionStatus === "COLLECTED" ||
+                  confirmPayment.isPending
+                }
+                onClick={() => {
+                  if (window.confirm("Confirm that payment has been collected?"))
+                    confirmPayment.mutate();
+                }}
+              >
+                <CheckCircle2 size={16} />
+                {confirmPayment.isPending
+                  ? "Confirming payment..."
+                  : order.receiverCollectionStatus === "COLLECTED"
+                    ? "Payment collected"
+                    : "Confirm payment collected"}
+              </button>
+              {confirmPayment.isError && (
+                <p className="form-error" role="alert">
+                  Could not confirm payment collection. Please try again.
+                </p>
+              )}
+            </div>
+          )}
         </section>
         <div className="timeline">
           {timeline.map((status, index) => (

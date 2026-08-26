@@ -4,7 +4,7 @@ import type {
   LoginResponse,
   Order,
   OrderStatus,
-    AccountDetails,
+  AccountDetails,
   PublicSenderOrder,
   Rider,
   User,
@@ -12,6 +12,12 @@ import type {
   RiderReport,
   RiderReportStatus,
   PaginatedResponse,
+  Station,
+  StationManager,
+  StationRider,
+  PublicStation,
+  PaymentStatus,
+  ReceiverCollectionStatus,
 } from "@/lib/types";
 import { normalizeNigerianPhone } from "@/lib/phone";
 
@@ -138,7 +144,8 @@ export const api = {
       method: "PATCH",
       body: JSON.stringify(payload),
     }),
-  getAccountDetails: () => request<AccountDetails | null>("/auth/account-details"),
+  getAccountDetails: () =>
+    request<AccountDetails | null>("/auth/account-details"),
   approveOrder: (orderId: string) =>
     request<Order>(`/orders/${orderId}/approve`, { method: "POST" }),
   resendSenderAccessToken: (orderId: string) =>
@@ -151,15 +158,26 @@ export const api = {
       `/orders/${orderId}/resend-receiver-access-token`,
       { method: "POST" },
     ),
-  markOutForDelivery: (orderId: string) =>
-    request<Order>(`/orders/${orderId}/out-for-delivery`, { method: "POST" }),
   cancelOrder: (orderId: string) =>
     request<Order>(`/orders/${orderId}/cancel`, { method: "POST" }),
   getRiders: () => request<Rider[]>("/riders"),
-  createRider: (payload: Pick<Rider, "name" | "phone">) =>
+  createRider: (payload: {
+    name: string;
+    phone: string;
+    stationId: string;
+    zoneIds: string[];
+  }) =>
     request<Rider>("/riders", {
       method: "POST",
       body: JSON.stringify(normalizePhoneFields(payload)),
+    }),
+  updateRider: (
+    riderId: string,
+    payload: { name: string; stationId: string; zoneIds: string[] },
+  ) =>
+    request<Rider>(`/riders/${encodeURIComponent(riderId)}`, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
     }),
   resendRiderAccess: (riderId: string) =>
     request<{ notificationStatus: string }>(
@@ -184,8 +202,6 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ riderId }),
     }),
-  markPackageReceived: (orderId: string) =>
-    request<Order>(`/orders/${orderId}/package-received`, { method: "POST" }),
   companyPaid: (orderId: string) =>
     request<Order>(`/orders/${encodeURIComponent(orderId)}/company-payment`, {
       method: "POST",
@@ -195,20 +211,84 @@ export const api = {
       `/riders/orders/${encodeURIComponent(orderId)}/resend-delivery-code`,
       { method: "POST" },
     ),
-  riderOutForDelivery: (orderId: string, riderId: string) =>
-    request<Order>(
-      `/riders/orders/${encodeURIComponent(orderId)}/out-for-delivery`,
-      {
-        method: "POST",
-        body: JSON.stringify({ riderId }),
-      },
-    ),
   confirmDelivery: (payload: { orderId: string; deliveryCode: string }) =>
     request<Order>("/rider/confirm-delivery", {
       method: "POST",
       body: JSON.stringify(payload),
     }),
   getDeliveryZones: () => request<DeliveryZone[]>("/orders/zones"),
+  getStations: async () =>
+    listFromResponse<Station>(await request<unknown>("/stations")),
+  getStation: (stationId: string) =>
+    request<Station>(`/stations/${encodeURIComponent(stationId)}`),
+  createStation: (payload: {
+    name: string;
+    address?: string;
+  }) =>
+    request<Station>("/stations", {
+      method: "POST",
+      body: JSON.stringify(normalizePhoneFields(payload)),
+    }),
+  updateStation: (
+    stationId: string,
+    payload: Pick<Station, "name" | "address">,
+  ) =>
+    request<Station>(`/stations/${encodeURIComponent(stationId)}`, {
+      method: "PATCH",
+      body: JSON.stringify(normalizePhoneFields(payload)),
+    }),
+  getStationManagers: (stationId: string) =>
+    request<StationManager[]>(
+      `/stations/${encodeURIComponent(stationId)}/managers`,
+    ),
+  getManagers: async (): Promise<StationManager[]> =>
+    listFromResponse<StationManager>(await request<unknown>("/stations/managers")),
+  createManager: (payload: {
+    name: string;
+    phone: string;
+    password: string;
+    stationId: string;
+  }) =>
+    request<StationManager>("/stations/managers", {
+      method: "POST",
+      body: JSON.stringify(normalizePhoneFields(payload)),
+    }),
+  assignManagerToStation: (stationId: string, userId: string) =>
+    request<StationManager>(
+      `/stations/${encodeURIComponent(stationId)}/managers`,
+      { method: "POST", body: JSON.stringify({ userId }) },
+    ),
+  removeManagerFromStation: (stationId: string, userId: string) =>
+    request<void>(
+      `/stations/${encodeURIComponent(stationId)}/managers/${encodeURIComponent(userId)}`,
+      { method: "DELETE" },
+    ),
+  getStationRiders: (stationId: string) =>
+    request<StationRider[]>(
+      `/stations/${encodeURIComponent(stationId)}/riders`,
+    ),
+  assignRiderToStation: (stationId: string, riderId: string) =>
+    request<StationRider>(`/stations/${encodeURIComponent(stationId)}/riders`, {
+      method: "POST",
+      body: JSON.stringify({ riderId }),
+    }),
+  getManagerOrders: async () =>
+    listFromResponse<Order>(await request<unknown>("/stations/manager/orders")),
+  getManagerOrder: (orderId: string) =>
+    request<Order>(`/stations/manager/orders/${encodeURIComponent(orderId)}`),
+  updateManagerOrder: (
+    orderId: string,
+    payload: Record<string, unknown>,
+  ) =>
+    request<Order>(`/stations/manager/orders/${encodeURIComponent(orderId)}`, {
+      method: "PATCH",
+      body: JSON.stringify(normalizePhoneFields(payload)),
+    }),
+  approveManagerOrder: (orderId: string) =>
+    request<Order>(
+      `/stations/manager/orders/${encodeURIComponent(orderId)}/approve`,
+      { method: "POST" },
+    ),
   createDeliveryZone: (payload: Omit<DeliveryZone, "id">) =>
     request<DeliveryZone>("/orders/zones", {
       method: "POST",
@@ -240,17 +320,37 @@ export const api = {
     }),
   getCustomerDelivery: (token: string) =>
     request<Order>(`/public/delivery/${token}`),
+  getPublicStations: async () =>
+    listFromResponse<PublicStation>(await request<unknown>("/public/stations")),
+  getPublicSenderOrders: async (token: string) =>
+    listFromResponse<PublicSenderOrder>(
+      await request<unknown>(`/public/sender-orders/${encodeURIComponent(token)}`),
+    ),
+  confirmReceiverPayment: (token: string) =>
+    request<{
+      orderId: string;
+      paymentStatus?: PaymentStatus;
+      receiverCollectionStatus?: ReceiverCollectionStatus;
+    }>(`/public/delivery/${encodeURIComponent(token)}/confirm-payment`, {
+      method: "POST",
+    }),
   getPublicSender: (token: string) =>
     request<PublicSenderOrder>(`/public/sender/${encodeURIComponent(token)}`),
   senderPaid: (orderId: string) =>
-    request<PublicSenderOrder>(`/orders/${encodeURIComponent(orderId)}/sender-payment`, {
-      method: "POST",
-    }),
+    request<PublicSenderOrder>(
+      `/orders/${encodeURIComponent(orderId)}/sender-payment`,
+      {
+        method: "POST",
+      },
+    ),
   senderPickedUp: (orderId: string, riderId: string) =>
-    request<PublicSenderOrder>(`/riders/orders/${encodeURIComponent(orderId)}/picked-up`, {
-      method: "POST",
-      body: JSON.stringify({ riderId }),
-    }),
+    request<PublicSenderOrder>(
+      `/riders/orders/${encodeURIComponent(orderId)}/picked-up`,
+      {
+        method: "POST",
+        body: JSON.stringify({ riderId }),
+      },
+    ),
   resendReceiverDeliveryCode: (token: string) =>
     request<{ notificationStatus?: string }>(
       `/public/delivery/${encodeURIComponent(token)}/resend-code`,

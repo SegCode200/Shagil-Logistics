@@ -26,8 +26,13 @@ export default function LoginPage() {
     try {
       console.log("Attempting login with identifier:", identifier);
       const user = await login({ phone: identifier, password });
+      console.log("Login successful, user:", user);
       router.replace(
-        user.role === "OWNER" ? "/owner/dashboard" : "/rider/dashboard",
+        user.role === "OWNER"
+          ? "/owner/dashboard"
+          : user.role === "STATION_MANAGER"
+            ? "/manager/dashboard"
+            : "/rider/dashboard",
       );
     } catch {
       setError("Invalid login details.");

@@ -28,11 +28,8 @@ export default function OwnerDashboard() {
     pendingApproval: items.filter((o) =>
       ["PENDING", "PENDING_APPROVAL"].includes(o.status),
     ).length,
-    waiting: items.filter((o) => o.status === "WAITING_FOR_PACKAGE").length,
-    assigned: items.filter((o) =>
-      ["ASSIGNED", "PACKAGE_RECEIVED", "APPROVED"].includes(o.status),
-    ).length,
-    out: items.filter((o) => o.status === "OUT_FOR_DELIVERY").length,
+    assigned: items.filter((o) => ["ASSIGNED", "APPROVED"].includes(o.status)).length,
+    pickedUp: items.filter((o) => o.status === "PICKED_UP").length,
     delivered: items.filter((o) => o.status === "DELIVERED").length,
     cod: items.filter((o) => o.paymentMethod === "PAYMENT_ON_DELIVERY").length,
     approved: items.filter(
@@ -62,26 +59,51 @@ export default function OwnerDashboard() {
             ["Orders today", counts.total, ""],
             ["Pending approval", counts.pendingApproval, ""],
             ["Assigned", counts.assigned, "dot-blue"],
-            ["Out for delivery", counts.out, "dot-blue"],
+            ["Picked up", counts.pickedUp, "dot-blue"],
             ["Delivered", counts.delivered, "dot-green"],
           ].map(([label, value, dot]) => (
-            <div className="summary-card" key={label as string}>
+            <Link
+              className="summary-card summary-card-link"
+              href={
+                label === "Orders today"
+                  ? "/owner/orders"
+                  : label === "Pending approval"
+                    ? "/owner/orders?status=PENDING_APPROVAL"
+                    : label === "Assigned"
+                      ? "/owner/orders?status=ASSIGNED"
+                      : label === "Picked up"
+                        ? "/owner/orders?status=PICKED_UP"
+                        : "/owner/orders?status=DELIVERED"
+              }
+              key={label as string}
+            >
               <span className={`summary-dot ${dot}`} />
               <strong>{value}</strong>
               <span>{label}</span>
-            </div>
+              <ArrowUpRight className="summary-card-arrow" size={16} />
+            </Link>
           ))}
         </div>
         <div className="summary-grid summary-grid-secondary">
           {[
-            ["Waiting for package", counts.waiting],
             ["Pending company payments", counts.pendingCompany],
             ["Pending sender payments", counts.pendingSender],
           ].map(([label, value]) => (
-            <div className="summary-card summary-card-secondary" key={label}>
+            <Link
+              className="summary-card summary-card-secondary summary-card-link"
+              href={
+                label === "Picked up"
+                  ? "/owner/orders?status=PICKED_UP"
+                  : label === "Pending company payments"
+                    ? "/owner/orders?paymentStatus=PENDING"
+                    : "/owner/orders?paymentStatus=PENDING"
+              }
+              key={label}
+            >
               <span>{label}</span>
               <strong>{value}</strong>
-            </div>
+              <ArrowUpRight className="summary-card-arrow" size={16} />
+            </Link>
           ))}
         </div>
         <section className="panel">

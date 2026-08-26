@@ -24,13 +24,12 @@ const schema = z.object({
   senderPhone: z.string().min(7),
   receiverName: z.string().min(2),
   receiverPhone: z.string().min(7),
-  packageDescription: z.string().min(2),
-  quantity: z.coerce.number().int().positive(),
   notes: z.string().optional(),
   pickupMethod: z.enum(["SENDER_DROPOFF", "RIDER_PICKUP"]),
   pickupAddress: z.string().optional(),
   pickupInstructions: z.string().optional(),
   deliveryAddress: z.string().min(5),
+  stationId: z.string().min(1),
   deliveryZoneId: z.string().min(1),
   paymentMethod: z.enum(["ALREADY_PAID", "PAYMENT_ON_DELIVERY"]),
   orderAmount: z.coerce.number().nonnegative().optional(),
@@ -50,6 +49,11 @@ export default function NewOrderPage() {
     queryFn: api.getDeliveryZones,
     enabled: Boolean(user),
   });
+  const stations = useQuery({
+    queryKey: ["stations"],
+    queryFn: api.getStations,
+    enabled: Boolean(user),
+  });
   const queryClient = useQueryClient();
   const [created, setCreated] = useState<Awaited<
     ReturnType<typeof api.createOrder>
@@ -57,7 +61,6 @@ export default function NewOrderPage() {
   const form = useForm<FormValues>({
     resolver: zodResolver(schema) as Resolver<FormValues>,
     defaultValues: {
-      quantity: 1,
       pickupMethod: "SENDER_DROPOFF",
       paymentMethod: "PAYMENT_ON_DELIVERY",
     },
@@ -154,17 +157,6 @@ export default function NewOrderPage() {
                 onBlur={(event) => form.setValue("receiverPhone", normalizeNigerianPhone(event.target.value))}
               />
               <h2 className="field-span form-section-title">Package</h2>
-              <Field
-                form={form}
-                name="packageDescription"
-                label="Product / package description"
-              />
-              <Field
-                form={form}
-                name="quantity"
-                label="Quantity"
-                type="number"
-              />
               <Field form={form} name="notes" label="Notes" />
               <h2 className="field-span form-section-title">Pickup</h2>
               <div className="field">
@@ -174,7 +166,7 @@ export default function NewOrderPage() {
                   id="pickupMethod"
                   {...form.register("pickupMethod")}
                 >
-                  <option value="SENDER_DROP_OFF">
+                  <option value="SENDER_DROPOFF">
                     Sender will bring package to office
                   </option>
                   <option value="RIDER_PICKUP">
@@ -203,6 +195,18 @@ export default function NewOrderPage() {
                 label="Delivery address"
               />
               <div className="field">
+                <label htmlFor="stationId">Station</label>
+                <select className="select" id="stationId" {...form.register("stationId")}>
+                  <option value="">Select a station</option>
+                  {(stations.data || []).map((station) => (
+                    <option key={station.id} value={station.id}>{station.name}</option>
+                  ))}
+                </select>
+                {form.formState.errors.stationId && (
+                  <small>{String(form.formState.errors.stationId.message || "Select a station")}</small>
+                )}
+              </div>
+              <div className="field">
                 <label htmlFor="deliveryZoneId">Area</label>
                 <select
                   className="select"
@@ -218,6 +222,9 @@ export default function NewOrderPage() {
                       </option>
                     ))}
                 </select>
+                {form.formState.errors.deliveryZoneId && (
+                  <small>{String(form.formState.errors.deliveryZoneId.message || "Select a zone")}</small>
+                )}
               </div>
               <h2 className="field-span form-section-title">Payment</h2>
               <div className="field">

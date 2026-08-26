@@ -8,7 +8,6 @@ import {
   Phone,
   Send,
   ShieldCheck,
-  Truck,
 } from "lucide-react";
 import { use, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -47,10 +46,6 @@ export default function ConfirmDeliveryPage({ params }: Props) {
   });
   const resendCodeMutation = useMutation({
     mutationFn: () => api.resendReceiverDeliveryCodeForUser(routeOrderId),
-  });
-  const outForDeliveryMutation = useMutation({
-    mutationFn: () => api.riderOutForDelivery(routeOrderId, user?.id || ""),
-    onSuccess: () => deliveries.refetch(),
   });
   if (isLoading || !user || deliveries.isLoading) return <LoadingState />;
   if (deliveries.isError || !order)
@@ -154,26 +149,6 @@ export default function ConfirmDeliveryPage({ params }: Props) {
             </button>
             {companyPaymentMutation.isError && (
               <p className="form-error confirm-error">Company payment could not be updated.</p>
-            )}
-            <button
-              type="button"
-              className="button button-info button-full"
-              disabled={
-                outForDeliveryMutation.isPending ||
-                !order.rider?.id && !order.assignedRider?.id ||
-                ["OUT_FOR_DELIVERY", "DELIVERED"].includes(order.status)
-              }
-              onClick={() => outForDeliveryMutation.mutate()}
-            >
-              <Truck size={16} />
-              {outForDeliveryMutation.isPending
-                ? "Updating delivery status..."
-                : order.status === "OUT_FOR_DELIVERY"
-                  ? "Out for delivery"
-                  : "Confirm out for delivery"}
-            </button>
-            {outForDeliveryMutation.isError && (
-              <p className="form-error confirm-error">Could not update delivery status.</p>
             )}
             <button
               type="button"

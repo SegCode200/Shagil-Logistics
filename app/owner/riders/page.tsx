@@ -1,8 +1,8 @@
 "use client";
 
-import { Plus, Send, Users } from "lucide-react";
+import { Pencil, Plus, Send, Users } from "lucide-react";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/app-shell";
 import { useRoleRedirect } from "@/components/auth/auth-provider";
@@ -21,15 +21,47 @@ export default function RidersPage() {
     queryFn: api.getRiders,
     enabled: Boolean(user),
   });
+  const stations = useQuery({
+    queryKey: ["stations"],
+    queryFn: api.getStations,
+    enabled: Boolean(user),
+  });
+  const zones = useQuery({
+    queryKey: ["delivery-zones"],
+    queryFn: api.getDeliveryZones,
+    enabled: Boolean(user),
+  });
   const [showForm, setShowForm] = useState(false);
   const queryClient = useQueryClient();
-  const form = useForm({ defaultValues: { name: "", phone: "" } });
+  const form = useForm({
+    defaultValues: { name: "", phone: "", stationId: "", zoneIds: [] as string[] },
+  });
+  const selectedZoneIds = useWatch({
+    control: form.control,
+    name: "zoneIds",
+  });
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const editForm = useForm({
+    defaultValues: { name: "", stationId: "", zoneIds: [] as string[] },
+  });
+  const selectedEditZoneIds = useWatch({
+    control: editForm.control,
+    name: "zoneIds",
+  });
   const mutation = useMutation({
     mutationFn: api.createRider,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["riders"] });
       setShowForm(false);
       form.reset();
+    },
+  });
+  const update = useMutation({
+    mutationFn: (values: { name: string; stationId: string; zoneIds: string[] }) =>
+      api.updateRider(editingId as string, values),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["riders"] });
+      setEditingId(null);
     },
   });
   const resendAccess = useMutation({
@@ -69,7 +101,7 @@ export default function RidersPage() {
                     {...form.register("name")}
                   />
                 </div>
-                <div className="field">
+                                <div className="field">
                   <label htmlFor="rider-phone">Phone</label>
                   <input
                     className="input"
@@ -82,6 +114,45 @@ export default function RidersPage() {
                     })}
                   />
                 </div>
+                <div className="field">
+                  <label htmlFor="rider-station">Station</label>
+                  <select className="select" id="rider-station" required {...form.register("stationId")}>
+                    <option value="">Select a station</option>
+                    {(stations.data || []).map((station) => <option key={station.id} value={station.id}>{station.name}</option>)}
+                  </select>
+                </div>
+                <div className="field field-span">
+                  <span className="field-label">Delivery zones</span>
+                  <span className="field-hint">Select all zones this rider can serve.</span>
+                  <div className="rider-zone-picker">
+                    {(zones.data || []).filter((zone) => zone.active).map((zone) => {
+                      const selected = selectedZoneIds.includes(zone.id);
+                      return (
+                        <label className={`rider-zone-option${selected ? " selected" : ""}`} key={zone.id}>
+                          <input
+                            type="checkbox"
+                            checked={selected}
+                            onChange={(event) =>
+                              form.setValue(
+                                "zoneIds",
+                                event.target.checked
+                                  ? [...selectedZoneIds, zone.id]
+                                  : selectedZoneIds.filter((id) => id !== zone.id),
+                                { shouldDirty: true },
+                              )
+                            }
+                          />
+                          <span>{zone.name}</span>
+                          <small>₦{Number(zone.fee).toLocaleString()}</small>
+                        </label>
+                      );
+                    })}
+                  </div>
+                  {!zones.isLoading && !zones.isError && !(zones.data || []).some((zone) => zone.active) && (
+                    <span className="muted">No active delivery zones available.</span>
+                  )}
+                </div>
+
               </div>
               {mutation.isError && (
                 <p className="form-error">
@@ -141,6 +212,7 @@ export default function RidersPage() {
                 </header>
                 <h3>{rider.name}</h3>
                 <p>{rider.phone || rider.email || "No contact details"}</p>
+                <p className="muted">{rider.stationId ? stations.data?.find((station) => station.id === rider.stationId)?.name || "Assigned station" : "No station assigned"}</p>
                 <span className="rider-rating-summary">{rider.averageRating != null ? `★ ${rider.averageRating.toFixed(1)} · ${rider.totalRatings || 0} ratings` : "No ratings yet"}</span>
                 <span className="muted">
                   <Users size={14} /> {rider.assignedOrders || 0} assigned
@@ -154,6 +226,49 @@ export default function RidersPage() {
                   <Send size={15} />
                   {resendAccess.isPending ? "Sending..." : "Resend access link"}
                 </button>
+                <button
+                  className="button button-secondary rider-access-button"
+                  onClick={() => {
+                    setEditingId(rider.id);
+                    editForm.reset({ name: rider.name, stationId: rider.stationId || "", zoneIds: rider.zoneIds || [] });
+                  }}
+                >
+                  <Pencil size={15} /> Edit assignment
+                </button>
+                {editingId === rider.id && (
+                  <form className="rider-edit-form" onSubmit={editForm.handleSubmit((values) => update.mutate(values))}>
+                    <input className="input" aria-label="Rider name" {...editForm.register("name")} required />
+                    <select className="select" aria-label="Rider station" {...editForm.register("stationId")} required>
+                      <option value="">Select a station</option>
+                      {(stations.data || []).map((station) => <option key={station.id} value={station.id}>{station.name}</option>)}
+                    </select>
+                    <div className="rider-zone-picker">
+                      {(zones.data || []).filter((zone) => zone.active).map((zone) => {
+                        const selected = selectedEditZoneIds.includes(zone.id);
+                        return (
+                          <label className={`rider-zone-option${selected ? " selected" : ""}`} key={zone.id}>
+                            <input
+                              type="checkbox"
+                              checked={selected}
+                              onChange={(event) =>
+                                editForm.setValue(
+                                  "zoneIds",
+                                  event.target.checked
+                                    ? [...selectedEditZoneIds, zone.id]
+                                    : selectedEditZoneIds.filter((id) => id !== zone.id),
+                                  { shouldDirty: true },
+                                )
+                              }
+                            />
+                            <span>{zone.name}</span>
+                            <small>₦{Number(zone.fee).toLocaleString()}</small>
+                          </label>
+                        );
+                      })}
+                    </div>
+                    <button className="button button-primary" disabled={update.isPending}>{update.isPending ? "Saving..." : "Save changes"}</button>
+                  </form>
+                )}
                 {resendAccess.isSuccess && resendAccess.variables === rider.id && (
                   <p className="success-text">Access link sent successfully.</p>
                 )}

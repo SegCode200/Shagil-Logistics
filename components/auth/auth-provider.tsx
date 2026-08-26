@@ -73,7 +73,11 @@ export function useRoleRedirect(role?: User["role"]) {
     if (!user) router.replace("/login");
     else if (role && user.role !== role)
       router.replace(
-        user.role === "OWNER" ? "/owner/dashboard" : "/rider/dashboard",
+        user.role === "OWNER"
+          ? "/owner/dashboard"
+          : user.role === "STATION_MANAGER"
+            ? "/manager/dashboard"
+            : "/rider/dashboard",
       );
   }, [isLoading, role, router, user]);
   return { user, isLoading };

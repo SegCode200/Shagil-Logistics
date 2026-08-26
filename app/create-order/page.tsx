@@ -14,13 +14,11 @@ type Values = {
   receiverName: string;
   receiverPhoneNumber: string;
   deliveryAddress: string;
+  stationId: string;
   deliveryZoneId: string;
   pickupMethod: "SENDER_DROPOFF" | "RIDER_PICKUP";
   pickupAddress: string;
   pickupInstructions: string;
-  orderDetails: string;
-  quantity: string;
-  packageNotes: string;
   paymentMethod: "ALREADY_PAID" | "PAYMENT_ON_DELIVERY";
   orderAmount: string;
 };
@@ -30,13 +28,11 @@ const initialValues: Values = {
   receiverName: "",
   receiverPhoneNumber: "",
   deliveryAddress: "",
+  stationId: "",
   deliveryZoneId: "",
-  pickupMethod: "SENDER_DROPOFF",
+  pickupMethod: "RIDER_PICKUP",
   pickupAddress: "",
   pickupInstructions: "",
-  orderDetails: "",
-  quantity: "1",
-  packageNotes: "",
   paymentMethod: "PAYMENT_ON_DELIVERY",
   orderAmount: "",
 };
@@ -89,7 +85,12 @@ export default function CreateOrderPage() {
     queryKey: ["delivery-zones"],
     queryFn: api.getDeliveryZones,
   });
+  const stations = useQuery({
+    queryKey: ["public-stations"],
+    queryFn: api.getPublicStations,
+  });
   const [values, setValues] = useState(initialValues);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [images, setImages] = useState<{ file: File; url: string }[]>([]);
   const [cameraOpen, setCameraOpen] = useState(false);
   const [cameraError, setCameraError] = useState("");
@@ -110,7 +111,6 @@ export default function CreateOrderPage() {
               values.receiverPhoneNumber,
             ),
           }),
-          quantity: Number(values.quantity),
           orderAmount: values.orderAmount
             ? Number(values.orderAmount)
             : undefined,
@@ -120,7 +120,37 @@ export default function CreateOrderPage() {
     onSuccess: setCreated,
   });
   const set = <K extends keyof Values>(key: K, value: Values[K]) =>
-    setValues((current) => ({ ...current, [key]: value }));
+    (setValues((current) => ({ ...current, [key]: value })),
+    setErrors((current) => {
+      const next = { ...current };
+      delete next[key];
+      return next;
+    }));
+  function submitOrder(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const nextErrors: Record<string, string> = {};
+    const requiredFields: [keyof Values, string][] = [
+      ["senderName", "Enter the sender or business name."],
+      ["senderPhoneNumber", "Enter the sender phone number."],
+      ["pickupAddress", "Enter the sender pickup address."],
+      ["receiverName", "Enter the receiver name."],
+      ["receiverPhoneNumber", "Enter the receiver phone number."],
+      ["deliveryAddress", "Enter the delivery address."],
+      ["stationId", "Select a station."],
+      ["deliveryZoneId", "Select a delivery area."],
+      ["orderAmount", "Enter the value of the product."],
+    ];
+    requiredFields.forEach(([key, message]) => {
+      if (!values[key].trim()) nextErrors[key] = message;
+    });
+    if (values.senderPhoneNumber.trim() && values.senderPhoneNumber.trim().length < 7)
+      nextErrors.senderPhoneNumber = "Enter a valid sender phone number.";
+    if (values.receiverPhoneNumber.trim() && values.receiverPhoneNumber.trim().length < 7)
+      nextErrors.receiverPhoneNumber = "Enter a valid receiver phone number.";
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length) return;
+    mutation.mutate();
+  }
   async function openCamera() {
     setCameraError("");
     if (!navigator.mediaDevices?.getUserMedia) {
@@ -200,9 +230,9 @@ export default function CreateOrderPage() {
             Status: Pending Approval. The owner will review your order before
             delivery begins.
           </p>
-          <Link href="/create-order" className="button button-primary">
+          <a href="/create-order" className="button button-primary">
             Create another order
-          </Link>
+          </a>
         </div>
       </main>
     );
@@ -218,10 +248,8 @@ export default function CreateOrderPage() {
         </header>
         <form
           className="public-form"
-          onSubmit={(event) => {
-            event.preventDefault();
-            mutation.mutate();
-          }}
+          noValidate
+          onSubmit={submitOrder}
         >
           <Section title="1. Sender information">
             <div className="form-grid">
@@ -230,6 +258,7 @@ export default function CreateOrderPage() {
                 value={values.senderName}
                 required
                 onChange={(v) => set("senderName", v)}
+                error={errors.senderName}
               />
               <Field
                 label="Sender phone number"
@@ -243,7 +272,17 @@ export default function CreateOrderPage() {
                     normalizeNigerianPhone(values.senderPhoneNumber),
                   )
                 }
+                error={errors.senderPhoneNumber}
               />
+              <div className="form-grid">
+                <Field
+                  label="Sender address/  pickup address"
+                  required
+                  value={values.pickupAddress}
+                  onChange={(v) => set("pickupAddress", v)}
+                  error={errors.pickupAddress}
+                />
+              </div>
             </div>
           </Section>
           <Section title="2. Receiver information">
@@ -253,6 +292,7 @@ export default function CreateOrderPage() {
                 required
                 value={values.receiverName}
                 onChange={(v) => set("receiverName", v)}
+                error={errors.receiverName}
               />
               <Field
                 label="Receiver phone number"
@@ -266,15 +306,37 @@ export default function CreateOrderPage() {
                     normalizeNigerianPhone(values.receiverPhoneNumber),
                   )
                 }
+                error={errors.receiverPhoneNumber}
               />
               <Field
-                label="Receiver delivery address"
+                label="Receiver / Delivery address"
                 required
                 value={values.deliveryAddress}
                 onChange={(v) => set("deliveryAddress", v)}
+                error={errors.deliveryAddress}
               />
               <div className="field">
-                <label htmlFor="create-area">Area</label>
+                <label htmlFor="create-station">
+                  Shagil nearest branch to you
+                </label>
+                <select
+                  className="select"
+                  id="create-station"
+                  required
+                  value={values.stationId}
+                  onChange={(event) => set("stationId", event.target.value)}
+                >
+                  <option value="">Select Shagil nearest branch</option>
+                  {(stations.data || []).map((station) => (
+                    <option key={station.id} value={station.id}>
+                      {station.name}
+                    </option>
+                  ))}
+                </select>
+                {errors.stationId && <small>{errors.stationId}</small>}
+              </div>
+              <div className="field">
+                <label htmlFor="create-area">Delivery Area</label>
                 <select
                   className="select"
                   id="create-area"
@@ -287,69 +349,46 @@ export default function CreateOrderPage() {
                     .filter((zone) => zone.active)
                     .map((zone) => (
                       <option key={zone.id} value={zone.id}>
-                        {zone.name} · ₦{Number(zone.fee).toLocaleString()}
+                        {zone.name}
                       </option>
                     ))}
                 </select>
+                {errors.deliveryZoneId && <small>{errors.deliveryZoneId}</small>}
+              </div>
+              {/* Delivery Area fee when selected */}
+              <div className="field">
+                <span className="field-label">Delivery fee</span>
+                <div className="delivery-fee-card" aria-live="polite">
+                  <div>
+                    <span className="delivery-fee-caption">Current fee</span>
+                    <strong>
+                      {values.deliveryZoneId
+                        ? `₦${Number(
+                            zones.data?.find(
+                              (zone) => zone.id === values.deliveryZoneId,
+                            )?.fee || 0,
+                          ).toLocaleString()}`
+                        : "Select an area"}
+                    </strong>
+                  </div>
+                  <span className="delivery-fee-zone">
+                    {zones.data?.find(
+                      (zone) => zone.id === values.deliveryZoneId,
+                    )?.name || "Fee will appear here"}
+                  </span>
+                </div>
+                <p className="delivery-fee-note">
+                  This price is for regular parcel size. The picture of your
+                  package will be reviewed for actual price.
+                </p>
               </div>
             </div>
           </Section>
-          <Section title="3. Pickup">
-            <select
-              className="select"
-              value={values.pickupMethod}
-              onChange={(e) =>
-                set("pickupMethod", e.target.value as Values["pickupMethod"])
-              }
-            >
-              <option value="SENDER_DROPOFF">
-                Sender drops package at company office
-              </option>
-              <option value="RIDER_PICKUP">
-                Rider picks package from sender
-              </option>
-            </select>
-            {values.pickupMethod === "RIDER_PICKUP" ? (
-              <div className="form-grid public-followup">
-                <Field
-                  label="Pickup address"
-                  required
-                  value={values.pickupAddress}
-                  onChange={(v) => set("pickupAddress", v)}
-                />
-                <Field
-                  label="Pickup instructions"
-                  value={values.pickupInstructions}
-                  onChange={(v) => set("pickupInstructions", v)}
-                />
-              </div>
-            ) : (
-              <p className="form-hint">
-                After submitting, bring the package to the company office for
-                receiving.
-              </p>
-            )}
-          </Section>
           <Section title="4. Product">
             <div className="form-grid">
-              <Field
-                label="Product description"
-                required
-                value={values.orderDetails}
-                onChange={(v) => set("orderDetails", v)}
-              />
-              <Field
-                label="Quantity"
-                type="number"
-                required
-                value={values.quantity}
-                onChange={(v) => set("quantity", v)}
-              />
-              <Field
-                label="Package Notes"
-                value={values.packageNotes}
-                onChange={(v) => set("packageNotes", v)}
-              />
+              <p className="field-hint field-span">
+                Add a clear picture of the package for price review.
+              </p>
             </div>
             <button
               type="button"
@@ -403,15 +442,13 @@ export default function CreateOrderPage() {
               <option value="PAYMENT_ON_DELIVERY">Payment on delivery</option>
             </select>
             <Field
-              label="Order / product amount"
+              label="Value of product"
               type="number"
               required
               value={values.orderAmount}
               onChange={(v) => set("orderAmount", v)}
+              error={errors.orderAmount}
             />
-            <p className="form-hint text-red-600">
-              Delivery fee might change depending on the size of your goods.
-            </p>
           </Section>
           {mutation.isError && (
             <p className="form-error" role="alert">
@@ -505,6 +542,7 @@ function Field({
   type = "text",
   required = false,
   onBlur,
+  error,
 }: {
   label: string;
   value: string;
@@ -512,18 +550,20 @@ function Field({
   type?: string;
   required?: boolean;
   onBlur?: () => void;
+  error?: string;
 }) {
   return (
     <div className="field">
       <label>{label}</label>
       <input
         className="input"
-        required={required}
+        aria-required={required}
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onBlur={onBlur}
       />
+      {error && <small>{error}</small>}
     </div>
   );
 }

@@ -4,9 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import {
   ArrowLeft,
-  Truck,
   Ban,
-  PackageCheck,
   Pencil,
   Save,
   LoaderCircle,
@@ -52,10 +50,8 @@ export default function OrderDetailsPage({ params }: Props) {
   const [editing, setEditing] = useState(false);
   const [editValues, setEditValues] = useState<Record<string, string>>({});
   const action = useMutation({
-    mutationFn: (type: "approve" | "received" | "out" | "cancel") => {
+    mutationFn: (type: "approve" | "cancel") => {
       if (type === "cancel") return api.cancelOrder(orderId);
-      if (type === "out") return api.markOutForDelivery(orderId);
-      if (type === "received") return api.markPackageReceived(orderId);
       return api.approveOrder(orderId);
     },
     onSuccess: () => {
@@ -73,10 +69,8 @@ export default function OrderDetailsPage({ params }: Props) {
         pickupAddress: query.data?.pickupAddress || "",
         deliveryAddress: query.data?.deliveryAddress || "",
         packageNotes: query.data?.packageNotes || "",
-        quantity: String(query.data?.quantity || ""),
         pickupMethod: query.data?.pickupMethod || "SENDER_DROPOFF",
         paymentMethod: query.data?.paymentMethod || "PAYMENT_ON_DELIVERY",
-        orderDetails: query.data?.orderDetails || "",
         orderAmount: String(query.data?.orderAmount ?? query.data?.amount ?? ""),
         deliveryFee: String(query.data?.deliveryFee ?? ""),
         deliveryZoneId: query.data?.deliveryZoneId || "",
@@ -138,11 +132,8 @@ export default function OrderDetailsPage({ params }: Props) {
     order.approvedAt ||
       [
         "APPROVED",
-        "WAITING_FOR_PACKAGE",
-        "PACKAGE_RECEIVED",
         "ASSIGNED",
         "PICKED_UP",
-        "OUT_FOR_DELIVERY",
         "DELIVERED",
       ].includes(order.status),
   );
@@ -171,10 +162,8 @@ export default function OrderDetailsPage({ params }: Props) {
                   pickupAddress: order.pickupAddress || "",
                   deliveryAddress: order.deliveryAddress || "",
                   packageNotes: order.packageNotes || "",
-                  quantity: String(order.quantity || ""),
                   pickupMethod: order.pickupMethod || "SENDER_DROPOFF",
                   paymentMethod: order.paymentMethod || "PAYMENT_ON_DELIVERY",
-                  orderDetails: order.orderDetails || "",
                   orderAmount: String(order.orderAmount ?? order.amount ?? ""),
                   deliveryFee: String(order.deliveryFee ?? ""),
                   deliveryZoneId: order.deliveryZoneId || "",
@@ -229,25 +218,6 @@ export default function OrderDetailsPage({ params }: Props) {
               <EditField
                 label="Pickup address"
                 name="pickupAddress"
-                values={editValues}
-                setValues={setEditValues}
-              />
-              <EditField
-                label="Product details"
-                name="orderDetails"
-                values={editValues}
-                setValues={setEditValues}
-              />
-              <EditField
-                label="Package notes"
-                name="packageNotes"
-                values={editValues}
-                setValues={setEditValues}
-              />
-              <EditField
-                label="Quantity"
-                name="quantity"
-                type="number"
                 values={editValues}
                 setValues={setEditValues}
               />
@@ -377,14 +347,6 @@ export default function OrderDetailsPage({ params }: Props) {
                 <dd>{order.senderPhoneNumber || "—"}</dd>
               </div>
               <div>
-                <dt>Package</dt>
-                <dd>{order.packageDescription || order.orderDetails}</dd>
-              </div>
-              <div>
-                <dt>Quantity</dt>
-                <dd>{order.quantity || 1}</dd>
-              </div>
-              <div>
                 <dt>Pickup</dt>
                 <dd>
                   {order.pickupMethod === "RIDER_PICKUP"
@@ -395,10 +357,6 @@ export default function OrderDetailsPage({ params }: Props) {
             </dl>
             <h2 className="section-gap">Order information</h2>
             <dl className="detail-list">
-              <div>
-                <dt>Details</dt>
-                <dd>{order.orderDetails}</dd>
-              </div>
               <div>
                 <dt>Amount</dt>
                 <dd>
@@ -592,24 +550,8 @@ export default function OrderDetailsPage({ params }: Props) {
                   Approve order
                 </button>
               )}
-              {order.status === "WAITING_FOR_PACKAGE" && (
-                <button
-                  className="button button-primary button-full"
-                  disabled={action.isPending}
-                  onClick={() => action.mutate("received")}
-                >
-                  <PackageCheck size={17} /> Mark package received
-                </button>
-              )}
               {order.status === "PENDING" && (
                 <>
-                  <button
-                    className="button button-primary button-full"
-                    disabled={action.isPending}
-                    onClick={() => action.mutate("out")}
-                  >
-                    <Truck size={17} /> Mark out for delivery
-                  </button>
                   <button
                     className="button button-danger button-full"
                     disabled={action.isPending}
@@ -653,15 +595,6 @@ export default function OrderDetailsPage({ params }: Props) {
                   </p>
                 )}
               </div>
-              {order.status === "OUT_FOR_DELIVERY" && (
-                <button
-                  className="button button-danger button-full"
-                  disabled={action.isPending}
-                  onClick={() => action.mutate("cancel")}
-                >
-                  <Ban size={17} /> Cancel order
-                </button>
-              )}
             </div>
             {!canApprove &&
               order.status === "PENDING_APPROVAL" && (
