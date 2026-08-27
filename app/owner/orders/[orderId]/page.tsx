@@ -48,6 +48,7 @@ export default function OrderDetailsPage({ params }: Props) {
     (z) => z.id === query.data?.deliveryZoneId,
   )?.name;
   const [editing, setEditing] = useState(false);
+  const [replacementRiderId, setReplacementRiderId] = useState("");
   const [editValues, setEditValues] = useState<Record<string, string>>({});
   const action = useMutation({
     mutationFn: (type: "approve" | "cancel") => {
@@ -97,6 +98,20 @@ export default function OrderDetailsPage({ params }: Props) {
   });
   const assignRider = useMutation({
     mutationFn: (riderId: string) => api.assignRider(orderId, riderId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["order", orderId] });
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+    },
+  });
+  const reassignRider = useMutation({
+    mutationFn: (riderId: string) => api.reassignRider(orderId, riderId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["order", orderId] });
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+    },
+  });
+  const confirmReceiverPayment = useMutation({
+    mutationFn: () => api.confirmReceiverPaymentForUser(orderId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["order", orderId] });
       queryClient.invalidateQueries({ queryKey: ["orders"] });
@@ -562,19 +577,18 @@ export default function OrderDetailsPage({ params }: Props) {
                 </>
               )}
               <div className="field">
-                <label htmlFor="assign-rider">Assign rider</label>
+                <label htmlFor="assign-rider">
+                  {hasAssignedRider ? "Reassign rider" : "Assign rider"}
+                </label>
                 <select
                   className="select"
                   id="assign-rider"
-                  disabled={assignRider.isPending}
-                  value={
-                    assignRider.isPending
-                      ? assignRider.variables
-                      : order.assignedRider?.id || order.rider?.id || ""
-                  }
+                  disabled={assignRider.isPending || reassignRider.isPending}
+                  value={replacementRiderId || order.assignedRider?.id || order.rider?.id || ""}
                   onChange={(event) => {
-                    if (event.target.value)
+                    if (!hasAssignedRider && event.target.value)
                       assignRider.mutate(event.target.value);
+                    else setReplacementRiderId(event.target.value);
                   }}
                 >
                   <option value="">Unassigned</option>
@@ -584,17 +598,43 @@ export default function OrderDetailsPage({ params }: Props) {
                     </option>
                   ))}
                 </select>
+                {hasAssignedRider && (
+                  <button
+                    type="button"
+                    className="button button-secondary button-full"
+                    disabled={reassignRider.isPending || !replacementRiderId || replacementRiderId === (order.assignedRider?.id || order.rider?.id)}
+                    onClick={() => reassignRider.mutate(replacementRiderId)}
+                  >
+                    {reassignRider.isPending ? "Reassigning rider..." : "Reassign rider"}
+                  </button>
+                )}
                 {assignRider.isPending && (
                   <p className="assignment-status" role="status">
-                    <LoaderCircle size={14} className="spin" /> Assigning rider...
+                    <LoaderCircle size={14} className="spin" /> {hasAssignedRider ? "Reassigning rider..." : "Assigning rider..."}
                   </p>
                 )}
-                {assignRider.isError && (
+                {(assignRider.isError || reassignRider.isError) && (
                   <p className="form-error" role="alert">
                     Rider assignment failed. Please try again.
                   </p>
                 )}
               </div>
+              {order.status === "PICKED_UP" &&
+                order.paymentMethod === "PAYMENT_ON_DELIVERY" &&
+                order.receiverCollectionStatus !== "COLLECTED" && (
+                  <button
+                    className="button button-success button-full"
+                    disabled={confirmReceiverPayment.isPending}
+                    onClick={() => confirmReceiverPayment.mutate()}
+                  >
+                    {confirmReceiverPayment.isPending
+                      ? "Confirming payment..."
+                      : "Confirm receiver payment"}
+                  </button>
+                )}
+              {confirmReceiverPayment.isError && (
+                <p className="form-error">Receiver payment could not be confirmed.</p>
+              )}
             </div>
             {!canApprove &&
               order.status === "PENDING_APPROVAL" && (

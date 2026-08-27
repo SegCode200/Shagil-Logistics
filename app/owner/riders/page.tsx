@@ -21,9 +21,9 @@ export default function RidersPage() {
     queryFn: api.getRiders,
     enabled: Boolean(user),
   });
-  const stations = useQuery({
-    queryKey: ["stations"],
-    queryFn: api.getStations,
+  const bikes = useQuery({
+    queryKey: ["bikes"],
+    queryFn: api.getBikes,
     enabled: Boolean(user),
   });
   const zones = useQuery({
@@ -34,7 +34,7 @@ export default function RidersPage() {
   const [showForm, setShowForm] = useState(false);
   const queryClient = useQueryClient();
   const form = useForm({
-    defaultValues: { name: "", phone: "", stationId: "", zoneIds: [] as string[] },
+    defaultValues: { name: "", phone: "", zoneIds: [] as string[], bikeId: "" },
   });
   const selectedZoneIds = useWatch({
     control: form.control,
@@ -42,7 +42,7 @@ export default function RidersPage() {
   });
   const [editingId, setEditingId] = useState<string | null>(null);
   const editForm = useForm({
-    defaultValues: { name: "", stationId: "", zoneIds: [] as string[] },
+    defaultValues: { name: "", zoneIds: [] as string[] },
   });
   const selectedEditZoneIds = useWatch({
     control: editForm.control,
@@ -57,7 +57,7 @@ export default function RidersPage() {
     },
   });
   const update = useMutation({
-    mutationFn: (values: { name: string; stationId: string; zoneIds: string[] }) =>
+    mutationFn: (values: { name: string; zoneIds: string[] }) =>
       api.updateRider(editingId as string, values),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["riders"] });
@@ -115,11 +115,16 @@ export default function RidersPage() {
                   />
                 </div>
                 <div className="field">
-                  <label htmlFor="rider-station">Station</label>
-                  <select className="select" id="rider-station" required {...form.register("stationId")}>
-                    <option value="">Select a station</option>
-                    {(stations.data || []).map((station) => <option key={station.id} value={station.id}>{station.name}</option>)}
+                  <label htmlFor="rider-bike">Bike</label>
+                  <select className="select" id="rider-bike" required {...form.register("bikeId")}>
+                    <option value="">Select a bike</option>
+                    {(bikes.data || []).filter((bike) => bike.status !== "INACTIVE" && !bike.rider).map((bike) => (
+                      <option key={bike.id} value={bike.id}>{bike.bikeId}</option>
+                    ))}
                   </select>
+                  {!bikes.isLoading && (bikes.data || []).filter((bike) => bike.status !== "INACTIVE" && !bike.rider).length === 0 && (
+                    <span className="field-hint">Add an unassigned active bike first.</span>
+                  )}
                 </div>
                 <div className="field field-span">
                   <span className="field-label">Delivery zones</span>
@@ -212,7 +217,7 @@ export default function RidersPage() {
                 </header>
                 <h3>{rider.name}</h3>
                 <p>{rider.phone || rider.email || "No contact details"}</p>
-                <p className="muted">{rider.stationId ? stations.data?.find((station) => station.id === rider.stationId)?.name || "Assigned station" : "No station assigned"}</p>
+                <p className="muted">Bike: {bikes.data?.find((bike) => bike.id === rider.bikeId || bike.rider?.id === rider.id)?.bikeId || "No bike assigned"}</p>
                 <span className="rider-rating-summary">{rider.averageRating != null ? `★ ${rider.averageRating.toFixed(1)} · ${rider.totalRatings || 0} ratings` : "No ratings yet"}</span>
                 <span className="muted">
                   <Users size={14} /> {rider.assignedOrders || 0} assigned
@@ -230,7 +235,7 @@ export default function RidersPage() {
                   className="button button-secondary rider-access-button"
                   onClick={() => {
                     setEditingId(rider.id);
-                    editForm.reset({ name: rider.name, stationId: rider.stationId || "", zoneIds: rider.zoneIds || [] });
+                    editForm.reset({ name: rider.name, zoneIds: rider.zoneIds || [] });
                   }}
                 >
                   <Pencil size={15} /> Edit assignment
@@ -238,10 +243,6 @@ export default function RidersPage() {
                 {editingId === rider.id && (
                   <form className="rider-edit-form" onSubmit={editForm.handleSubmit((values) => update.mutate(values))}>
                     <input className="input" aria-label="Rider name" {...editForm.register("name")} required />
-                    <select className="select" aria-label="Rider station" {...editForm.register("stationId")} required>
-                      <option value="">Select a station</option>
-                      {(stations.data || []).map((station) => <option key={station.id} value={station.id}>{station.name}</option>)}
-                    </select>
                     <div className="rider-zone-picker">
                       {(zones.data || []).filter((zone) => zone.active).map((zone) => {
                         const selected = selectedEditZoneIds.includes(zone.id);

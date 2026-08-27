@@ -182,7 +182,7 @@ export default function StationsPage() {
                     <tr key={station.id}>
                       <td className="order-ref">{station.name}</td>
                       <td>{station.managers?.length ?? "-"}</td>
-                      <td>{station.riders?.length ?? "-"}</td>
+                      <td>{station.companyBikes?.filter((bike) => bike.rider).length ?? "-"}</td>
                       <td>
                         <span
                           className={`status status-${station.status.toLowerCase()}`}

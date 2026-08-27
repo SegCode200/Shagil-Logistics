@@ -60,7 +60,7 @@ export default function UsersPage() {
         <header className="page-header">
           <div>
             <p className="eyebrow">Team access</p>
-            <h1>Users</h1>
+            <h1>Station Managers</h1>
             <p className="subtext">
               Manage Station Managers and their station access.
             </p>

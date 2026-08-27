@@ -24,20 +24,26 @@ const ownerLinks = [
   { href: "/owner/orders", label: "Orders", icon: Package },
   { href: "/owner/profile", label: "Profile", icon: Settings },
   { href: "/create-order", label: "Create order", icon: Plus },
+  { href: "/owner/bike", label: "Bike", icon: Truck },
   { href: "/owner/riders", label: "Riders", icon: Users },
   { href: "/owner/zones", label: "Delivery zones", icon: MapPinned },
   { href: "/owner/rider-reports", label: "Rider reports", icon: Flag },
+  { href: "/owner/link-customer", label: "Link customer", icon: Plus },
   { href: "/owner/stations", label: "Stations", icon: Building2 },
-  { href: "/owner/users", label: "Users", icon: Users },
+  { href: "/owner/users", label: "Station Manager", icon: Users },
 ];
 const riderLinks = [
   { href: "/rider/dashboard", label: "My deliveries", icon: Truck },
-  { href: "/rider/profile", label: "Profile", icon: Settings },
+  { href: "/rider/profile", label: "Profile", icon: Settings }
+
 ];
 const managerLinks = [
   { href: "/manager/dashboard", label: "Dashboard", icon: Home },
   { href: "/manager/orders", label: "Orders", icon: Package },
+  {href: "/manager/riders", label: "Riders", icon: Users  },
+  {href: "/manager/link-customer", label: "Link customer", icon: Plus  }
 ];
+
 
 export function AppShell({
   children,

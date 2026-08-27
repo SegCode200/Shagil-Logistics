@@ -75,15 +75,14 @@ export default function StationDetailsPage({ params }: Props) {
         )}
       </>
     ) : tab === "Riders" ? (
-      data.riders?.length ? (
+      data.companyBikes?.filter((bike) => bike.rider).length ? (
         <div className="stack-list">
-          {data.riders.map((rider) => (
-            <div className="detail-card" key={rider.id}>
-              <strong>{rider.name}</strong>
-              <span>{rider.riderId}</span>
+          {data.companyBikes.filter((bike) => bike.rider).map((bike) => (
+            <div className="detail-card" key={bike.id}>
+              <strong>{bike.rider?.name}</strong>
+              <span>{bike.bikeId}</span>
               <span>
-                {rider.status} ·{" "}
-                {rider.rating ? `${rider.rating} rating` : "No rating"}
+                {bike.rider?.active === false ? "Inactive" : "Active"}
               </span>
             </div>
           ))}
@@ -91,7 +90,7 @@ export default function StationDetailsPage({ params }: Props) {
       ) : (
         <EmptyState
           title="No riders assigned to this station."
-          description="Assign riders to this station."
+          description="Assign riders to company bikes at this station."
         />
       )
     ) : (
@@ -106,7 +105,7 @@ export default function StationDetailsPage({ params }: Props) {
         </div>
         <div className="summary-card">
           <span>Riders</span>
-          <strong>{data.riders?.length ?? "-"}</strong>
+          <strong>{data.companyBikes?.filter((bike) => bike.rider).length ?? "-"}</strong>
         </div>
       </div>
     );

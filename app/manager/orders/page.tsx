@@ -21,6 +21,7 @@ function ManagerOrdersContent() {
   const params = useSearchParams();
   const requestedStatus = params.get("status");
   const assignment = params.get("assignment");
+  const riderId = params.get("riderId");
   const orders = useQuery({
     queryKey: ["managerOrders"],
     queryFn: api.getManagerOrders,
@@ -36,7 +37,9 @@ function ManagerOrdersContent() {
     const matchesAssignment =
       !assignment ||
       (assignment === "manager" ? !order.managedBy : !order.assignedRider && !order.rider);
-    return matchesSearch && matchesStatus && matchesAssignment;
+    const assignedRiderId = order.assignedRider?.id || order.rider?.id;
+    const matchesRider = !riderId || assignedRiderId === riderId;
+    return matchesSearch && matchesStatus && matchesAssignment && matchesRider;
   });
   return (
     <AppShell role="STATION_MANAGER">
@@ -79,7 +82,6 @@ function ManagerOrdersContent() {
                     <th>Station</th>
                     <th>Payment</th>
                     <th>Status</th>
-                    <th>Manager</th>
                     <th>Rider</th>
                     <th>Created</th>
                     <th />
@@ -103,7 +105,6 @@ function ManagerOrdersContent() {
                       <td>
                         <OrderStatusBadge status={order.status} />
                       </td>
-                      <td>{order.managedBy?.name || "Awaiting manager"}</td>
                       <td>
                         {order.assignedRider?.name ||
                           order.rider?.name ||

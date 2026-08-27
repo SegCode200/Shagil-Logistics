@@ -33,21 +33,21 @@ export default function ManagerDashboard() {
   const items = orders.data || [];
   const data = {
     totalOrders: items.length,
-    newOrders: items.filter((order) => ["PENDING", "PENDING_APPROVAL"].includes(order.status)).length,
-    awaitingManagerAction: items.filter((order) => !order.managedBy).length,
-    awaitingRiderAssignment: items.filter((order) => !order.assignedRider && !order.rider).length,
+    newOrders: items.filter((order) => ["PENDING_APPROVAL"].includes(order.status)).length,
+    alreadyPaid: items.filter((order) => order.paymentMethod === "ALREADY_PAID").length,
+    paymentonDelvery: items.filter((order) => order.paymentMethod === "PAYMENT_ON_DELIVERY").length,
+    totalTransactions: items.filter((order) => order.paymentMethod === "ALREADY_PAID" || order.paymentMethod === "PAYMENT_ON_DELIVERY").length,
     pickedUp: items.filter((order) => order.status === "PICKED_UP").length,
     delivered: items.filter((order) => order.status === "DELIVERED").length,
   };
   const metrics = [
     ["Total orders", data.totalOrders],
-    ["New orders", data.newOrders],
-    ["Awaiting manager action", data.awaitingManagerAction],
-    ["Awaiting rider assignment", data.awaitingRiderAssignment],
+    ["Pending Approval", data.newOrders],
+    ["Paid before Delivery", data.alreadyPaid],
+    ["Payment on Delivery", data.paymentonDelvery],
+    ["Total Transactions", data.totalTransactions],
     ["Picked up", data.pickedUp],
     ["Delivered", data.delivered],
-    ["Active riders", "-"],
-    ["Active zones", "-"],
   ];
   return (
     <AppShell role="STATION_MANAGER">
@@ -71,13 +71,11 @@ export default function ManagerDashboard() {
               href={
                 label === "Total orders"
                   ? "/manager/orders"
-                  : label === "New orders"
-                    ? "/manager/orders?status=PENDING"
-                    : label === "Awaiting manager action"
-                      ? "/manager/orders?assignment=manager"
-                      : label === "Awaiting rider assignment"
-                        ? "/manager/orders?assignment=rider"
+                  : label === "Pending Approval"
+                    ? "/manager/orders?status=PENDING_APPROVAL"
                         : label === "Picked up"
+                        ? "/manager/payment?:paymentMethod=PAYMENT_ON_DELIVERY"
+                        : label === ""
                           ? "/manager/orders?status=PICKED_UP"
                           : label === "Delivered"
                             ? "/manager/orders?status=DELIVERED"

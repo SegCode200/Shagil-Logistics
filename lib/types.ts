@@ -19,6 +19,24 @@ export type AccountDetails = {
   accountNumber: string;
   bankName: string;
 };
+export type Sender = {
+  id: string;
+  name: string;
+  phone: string;
+  accessToken?: string;
+  active: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+};
+export type CompanyBike = {
+  id: string;
+  bikeId: string;
+  companyPhoneNumber: string;
+  status?: "ACTIVE" | "INACTIVE";
+  rider?: { id: string; name: string; phone?: string; active?: boolean } | null;
+  station?: { id: string; name: string; stationCode: string } | null;
+  bikeAccountDetails?: AccountDetails | null;
+};
 
 export type OrderImage = {
   id?: string;
@@ -79,6 +97,7 @@ export type Station = {
   zones?: DeliveryZone[];
   managers?: StationManager[];
   riders?: StationRider[];
+  companyBikes?: CompanyBike[];
   createdAt?: string;
   updatedAt?: string;
 };
@@ -103,8 +122,12 @@ export type StationRider = {
   name: string;
   phone?: string | null;
   status: string;
-  rating?: number;
   assignedOrders?: number;
+  active?: boolean | null;
+  riderZones?: DeliveryZone[];
+  bikeId?: string | null;
+  companyBikeId?: string | null;
+  ratingsReceived?: RiderRating[];
 };
 
 export type Order = {
@@ -137,6 +160,8 @@ export type Order = {
   stationId?: string;
   deliveryZone?: DeliveryZone | null;
   station?: Station | null;
+    bikeId?: string | null;
+    companyBikeId?: string | null;
   managedBy?: User | null;
   paymentMethod?: PaymentMethod;
   paymentStatus?: PaymentStatus;
@@ -174,8 +199,7 @@ export type DeliveryZoneImportChange = { locationId: string; location: string; o
 export type DeliveryZoneImportError = { row: number; locationId?: string; errors: string[] };
 export type DeliveryZoneImport = { importId: string; summary: { total: number; updated: number; unchanged: number; invalid: number }; changes: DeliveryZoneImportChange[]; errors: DeliveryZoneImportError[]; applied: boolean };
 
-export type Rider = User & {
-  stationId?: string | null;
+export type Rider = Omit<User, "stationId"> & {
   zoneIds?: string[];
   zones?: DeliveryZone[];
   active?: boolean;
@@ -183,6 +207,7 @@ export type Rider = User & {
   averageRating?: number;
   totalRatings?: number;
   totalDeliveries?: number;
+  bikeId?: string | null;
   ratingDistribution?: Partial<Record<1 | 2 | 3 | 4 | 5, number>>;
 };
 

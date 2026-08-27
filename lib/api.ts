@@ -5,6 +5,7 @@ import type {
   Order,
   OrderStatus,
   AccountDetails,
+  CompanyBike,
   PublicSenderOrder,
   Rider,
   User,
@@ -18,6 +19,7 @@ import type {
   PublicStation,
   PaymentStatus,
   ReceiverCollectionStatus,
+  Sender,
 } from "@/lib/types";
 import { normalizeNigerianPhone } from "@/lib/phone";
 
@@ -52,10 +54,12 @@ function listFromResponse<T>(value: unknown): T[] {
     const result = value as {
       items?: unknown;
       reports?: unknown;
+      riders?: unknown;
       data?: unknown;
     };
     if (Array.isArray(result.items)) return result.items as T[];
     if (Array.isArray(result.reports)) return result.reports as T[];
+    if (Array.isArray(result.riders)) return result.riders as T[];
     if (Array.isArray(result.data)) return result.data as T[];
   }
   return [];
@@ -161,11 +165,34 @@ export const api = {
   cancelOrder: (orderId: string) =>
     request<Order>(`/orders/${orderId}/cancel`, { method: "POST" }),
   getRiders: () => request<Rider[]>("/riders"),
+  getBikes: async () =>
+    listFromResponse<CompanyBike>(await request<unknown>("/bikes")),
+  createBike: (payload: {
+    bikeId: string;
+    companyPhoneNumber: string;
+    stationId?: string;
+    accountName: string;
+    accountNumber: string;
+    bankName: string;
+  }) =>
+    request<CompanyBike>("/bikes", {
+      method: "POST",
+      body: JSON.stringify(normalizePhoneFields(payload)),
+    }),
+  assignBike: (bikeId: string, riderId: string) =>
+    request<CompanyBike>(
+      `/bikes/${encodeURIComponent(bikeId)}/riders/${encodeURIComponent(riderId)}`,
+      { method: "POST" },
+    ),
+  removeBikeRider: (bikeId: string) =>
+    request<CompanyBike>(`/bikes/${encodeURIComponent(bikeId)}/rider`, {
+      method: "DELETE",
+    }),
   createRider: (payload: {
     name: string;
     phone: string;
-    stationId: string;
     zoneIds: string[];
+    bikeId: string;
   }) =>
     request<Rider>("/riders", {
       method: "POST",
@@ -173,7 +200,7 @@ export const api = {
     }),
   updateRider: (
     riderId: string,
-    payload: { name: string; stationId: string; zoneIds: string[] },
+    payload: { name: string; zoneIds: string[] },
   ) =>
     request<Rider>(`/riders/${encodeURIComponent(riderId)}`, {
       method: "PATCH",
@@ -202,6 +229,16 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ riderId }),
     }),
+  reassignRider: (orderId: string, riderId: string) =>
+    request<Order>(`/orders/${encodeURIComponent(orderId)}/reassign-rider`, {
+      method: "POST",
+      body: JSON.stringify({ riderId }),
+    }),
+  confirmReceiverPaymentForUser: (orderId: string) =>
+    request<Order>(
+      `/orders/${encodeURIComponent(orderId)}/confirm-receiver-payment`,
+      { method: "POST" },
+    ),
   companyPaid: (orderId: string) =>
     request<Order>(`/orders/${encodeURIComponent(orderId)}/company-payment`, {
       method: "POST",
@@ -263,9 +300,9 @@ export const api = {
       `/stations/${encodeURIComponent(stationId)}/managers/${encodeURIComponent(userId)}`,
       { method: "DELETE" },
     ),
-  getStationRiders: (stationId: string) =>
-    request<StationRider[]>(
-      `/stations/${encodeURIComponent(stationId)}/riders`,
+  getStationRiders: async () =>
+    listFromResponse<StationRider>(
+      await request<unknown>("/stations/manager/riders"),
     ),
   assignRiderToStation: (stationId: string, riderId: string) =>
     request<StationRider>(`/stations/${encodeURIComponent(stationId)}/riders`, {
@@ -387,4 +424,19 @@ export const api = {
       method: "PATCH",
       body: JSON.stringify({ status }),
     }),
-};
+  getSenders: async () =>
+    listFromResponse<Sender>(await request<unknown>("/senders/")),
+  createSenderAccess: (payload: { name: string; phone: string }) =>
+  request<Sender>('/senders/', {
+    method: "POST",
+    body: JSON.stringify(normalizePhoneFields(payload)),
+  }),
+  resendSenderAccess: (senderId: string) =>
+    request<{ notificationStatus?: string }>(
+      `/senders/${encodeURIComponent(senderId)}/resend-access-token`,
+      { method: "POST" },
+    ),
+}
+
+
+
