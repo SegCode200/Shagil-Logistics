@@ -113,6 +113,7 @@ export default function CreateOrderPage() {
       Number(settings.data?.variableDeliveryRate || 0) * Number(selectedDistance.distanceKm)
     : undefined;
 
+    // console.log("deliveryFee", deliveryFee, selectedDistance, settings.data?.fixedDeliveryRate, settings.data?.variableDeliveryRate)
   const mutation = useMutation({
     mutationFn: () =>
       api.createOrder(

@@ -39,6 +39,7 @@ export default function PublicOrderPage({ params }: Props) {
     orderAmount: "",
     notes: "",
   });
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const selectedDistance = stations.data
     ?.find((station) => station.id === values.stationId)
     ?.zoneDistances?.find((distance) => distance.deliveryZoneId === values.deliveryZoneId);
@@ -58,8 +59,37 @@ export default function PublicOrderPage({ params }: Props) {
         deliveryFee,
       }),
   });
-  const set = <K extends keyof typeof values>(key: K, value: (typeof values)[K]) =>
+  const set = <K extends keyof typeof values>(key: K, value: (typeof values)[K]) => {
     setValues((current) => ({ ...current, [key]: value }));
+    setErrors((current) => {
+      const next = { ...current };
+      delete next[key];
+      return next;
+    });
+  };
+  function submitOrder(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const requiredFields: [keyof typeof values, string][] = [
+      ["senderName", "Enter the sender or business name."],
+      ["senderPhone", "Enter the sender phone number."],
+      ["receiverName", "Enter the receiver name."],
+      ["receiverPhone", "Enter the receiver phone number."],
+      ["pickupAddress", "Enter the sender pickup address."],
+      ["deliveryAddress", "Enter the delivery address."],
+      ["stationId", "Select a station."],
+      ["deliveryZoneId", "Select a delivery area."],
+      ["orderAmount", "Enter the value of the product."],
+    ];
+    const nextErrors: Record<string, string> = {};
+    requiredFields.forEach(([key, message]) => {
+      if (typeof values[key] === "string" && !values[key].trim()) nextErrors[key] = message;
+    });
+    if (values.senderPhone.trim().length < 7) nextErrors.senderPhone = "Enter a valid sender phone number.";
+    if (values.receiverPhone.trim().length < 7) nextErrors.receiverPhone = "Enter a valid receiver phone number.";
+    if (deliveryFee == null) nextErrors.deliveryZoneId = "Select an area with a configured station distance.";
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length === 0) mutation.mutate();
+  }
   if (mutation.data)
     return (
       <main className="public-page">
@@ -91,13 +121,7 @@ export default function PublicOrderPage({ params }: Props) {
             Tell us where the package should go. No account needed.
           </p>
         </header>
-        <form
-          className="public-form"
-          onSubmit={(event) => {
-            event.preventDefault();
-            mutation.mutate();
-          }}
-        >
+        <form className="public-form" noValidate onSubmit={submitOrder}>
           <fieldset>
             <legend>1. Sender information</legend>
             <div className="form-grid">
@@ -105,6 +129,7 @@ export default function PublicOrderPage({ params }: Props) {
                 label="Sender / business name"
                 value={values.senderName}
                 onChange={(v) => set("senderName", v)}
+                error={errors.senderName}
               />
               <Field
                 label="Sender phone number"
@@ -112,6 +137,13 @@ export default function PublicOrderPage({ params }: Props) {
                 value={values.senderPhone}
                 onChange={(v) => set("senderPhone", v)}
                 onBlur={() => set("senderPhone", normalizeNigerianPhone(values.senderPhone))}
+                error={errors.senderPhone}
+              />
+              <Field
+                label="Sender address / pickup address"
+                value={values.pickupAddress}
+                onChange={(v) => set("pickupAddress", v)}
+                error={errors.pickupAddress}
               />
             </div>
           </fieldset>
@@ -122,6 +154,7 @@ export default function PublicOrderPage({ params }: Props) {
                 label="Receiver name"
                 value={values.receiverName}
                 onChange={(v) => set("receiverName", v)}
+                error={errors.receiverName}
               />
               <Field
                 label="Receiver phone number"
@@ -129,6 +162,7 @@ export default function PublicOrderPage({ params }: Props) {
                 value={values.receiverPhone}
                 onChange={(v) => set("receiverPhone", v)}
                 onBlur={() => set("receiverPhone", normalizeNigerianPhone(values.receiverPhone))}
+                error={errors.receiverPhone}
               />
             </div>
           </fieldset>
@@ -176,6 +210,7 @@ export default function PublicOrderPage({ params }: Props) {
                 label="Delivery address"
                 value={values.deliveryAddress}
                 onChange={(v) => set("deliveryAddress", v)}
+                error={errors.deliveryAddress}
               />
               <div className="field">
                 <label htmlFor="public-station">Station</label>
@@ -193,6 +228,7 @@ export default function PublicOrderPage({ params }: Props) {
                     </option>
                   ))}
                 </select>
+                {errors.stationId && <small>{errors.stationId}</small>}
               </div>
               <div className="field">
                 <label htmlFor="public-area">Area</label>
@@ -212,6 +248,7 @@ export default function PublicOrderPage({ params }: Props) {
                       </option>
                     ))}
                 </select>
+                {errors.deliveryZoneId && <small>{errors.deliveryZoneId}</small>}
               </div>
               <div className="field">
                 <span className="field-label">Delivery fee</span>
@@ -259,14 +296,14 @@ export default function PublicOrderPage({ params }: Props) {
               <option value="PAYMENT_ON_DELIVERY">Payment on delivery</option>
               <option value="ALREADY_PAID">Already paid</option>
             </select>
-            {values.paymentMethod === "PAYMENT_ON_DELIVERY" && (
-              <Field
-                label="Order amount"
-                type="number"
-                value={values.orderAmount}
-                onChange={(v) => set("orderAmount", v)}
-              />
-            )}
+            <Field
+              label="Value of product"
+              type="number"
+              required
+              value={values.orderAmount}
+              onChange={(v) => set("orderAmount", v)}
+              error={errors.orderAmount}
+            />
           </fieldset>
           {mutation.isError && (
             <p className="form-error">
@@ -300,24 +337,29 @@ function Field({
   onChange,
   type = "text",
   onBlur,
+  required = false,
+  error,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   type?: string;
   onBlur?: () => void;
+  required?: boolean;
+  error?: string;
 }) {
   return (
     <div className="field">
       <label>{label}</label>
       <input
         className="input"
-        required={label !== "Notes" && label !== "Pickup instructions"}
+        required={required || (label !== "Notes" && label !== "Pickup instructions")}
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onBlur={onBlur}
       />
+      {error && <small>{error}</small>}
     </div>
   );
 }
