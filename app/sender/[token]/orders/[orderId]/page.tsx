@@ -272,7 +272,7 @@ export default function SenderOrderDetailsPage({ params }: Props) {
             </button>
             {order.receiverCollectionStatus !== "COLLECTED" &&
               order.senderPaymentStatus !== "PAID" && (
-                <p className="text-warning text-red-100">
+                <p className="text-warning text-red-400">
                   Waiting for receiver payment collection confirmation. The button is enable until the receiver confirms that payment has been collected. Please contact your receiver to confirm payment collection.
                 </p>
               )}

@@ -28,7 +28,7 @@ export default function OwnerDashboard() {
     pendingApproval: items.filter((o) =>
       ["PENDING", "PENDING_APPROVAL"].includes(o.status),
     ).length,
-    assigned: items.filter((o) => ["ASSIGNED", "APPROVED"].includes(o.status)).length,
+    assigned: items.filter((o) => ["APPROVED"].includes(o.status)).length,
     pickedUp: items.filter((o) => o.status === "PICKED_UP").length,
     delivered: items.filter((o) => o.status === "DELIVERED").length,
     express: items.filter((o) => o.deliveryType === "EXPRESS").length,
@@ -72,7 +72,7 @@ export default function OwnerDashboard() {
                   : label === "Pending approval"
                     ? "/owner/orders?status=PENDING_APPROVAL"
                     : label === "Assigned"
-                      ? "/owner/orders?status=ASSIGNED"
+                      ? "/owner/orders?status=APPROVED"
                       : label === "Picked up"
                         ? "/owner/orders?status=PICKED_UP"
                         : "/owner/orders?status=DELIVERED"

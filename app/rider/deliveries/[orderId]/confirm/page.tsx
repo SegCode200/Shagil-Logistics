@@ -157,21 +157,21 @@ export default function ConfirmDeliveryPage({ params }: Props) {
               onClick={() => resendCodeMutation.mutate()}
             >
               <Send size={16} />
-              {resendCodeMutation.isPending ? "Sending SMS..." : "Send delivery code via SMS"}
+              {resendCodeMutation.isPending ? "Sending Code..." : "Send delivery code via Whatsapp"}
             </button>
             {resendCodeMutation.isSuccess && (
-              <p className="success-text" role="status">Delivery code sent by SMS.</p>
+              <p className="success-text" role="status">Delivery code sent by WhatsApp.</p>
             )}
             {resendCodeMutation.isError && (
-              <p className="form-error confirm-error">Could not send the delivery code by SMS.</p>
+              <p className="form-error confirm-error">Could not send the delivery code by WhatsApp.</p>
             )}
             <a
               className="button button-whatsapp button-full"
-              href={`https://wa.me/${(order.receiverPhoneNumber || order.receiverPhone || "").replace(/\D/g, "")}?text=${encodeURIComponent(`Hello ${order.receiverName || order.customerName || "there"}, your delivery code is ${order.deliveryCode || "available in your delivery message"}.`)}`}
+              // href={`https://wa.me/${(order.receiverPhoneNumber || order.receiverPhone || "").replace(/\D/g, "")}?text=${encodeURIComponent(`Hello ${order.receiverName || order.customerName || "there"}, your delivery code is ${order.deliveryCode || "available in your delivery message"}.`)}`}
               target="_blank"
               rel="noreferrer"
             >
-              <MessageCircle size={16} /> Send delivery code via WhatsApp
+              <MessageCircle size={16} /> Send delivery code via SMS
             </a>
           </div>
           <form
