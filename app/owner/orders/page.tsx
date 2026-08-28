@@ -196,9 +196,9 @@ function OrdersContent() {
                             ? "COD"
                             : "Paid"}
                           <small className="muted block">
-                            {order.companyDeliveryAmount == null
+                            {order.deliveryFee == null
                               ? "—"
-                              : `₦${Number(order.companyDeliveryAmount).toLocaleString()}`}
+                              : `₦${Number(order.deliveryFee).toLocaleString()}`}
                           </small>
                         </td>
                         <td>
