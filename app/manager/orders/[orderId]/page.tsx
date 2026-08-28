@@ -33,7 +33,7 @@ export default function ManagerOrderDetailsPage({ params }: Props) {
   });
   const riders = useQuery({
     queryKey: ["riders"],
-    queryFn: api.getRiders,
+    queryFn: api.getStationRiders,
     enabled: Boolean(user),
   });
   const zones = useQuery({
