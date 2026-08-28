@@ -91,7 +91,7 @@ export default function RiderDashboard() {
                     <span>
                       <Wallet size={13} />{" "}
                       {order.paymentMethod === "PAYMENT_ON_DELIVERY"
-                        ? `Collect ₦${Number(order.deliveryFee ?? order.amount ?? 0).toLocaleString()}`
+                        ? `Collect ₦${Number(order.deliveryFee).toLocaleString()}`
                         : "Already paid"}
                     </span>
                   </span>

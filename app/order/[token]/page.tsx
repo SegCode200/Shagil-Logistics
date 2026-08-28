@@ -36,7 +36,6 @@
 //     deliveryZoneId: "",
 //     paymentMethod: "PAYMENT_ON_DELIVERY",
 //     deliveryType: "NORMAL",
-//     orderAmount: "",
 //     notes: "",
 //   });
 //   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -53,9 +52,6 @@
 //         ...values,
 //         senderPhone: normalizeNigerianPhone(values.senderPhone),
 //         receiverPhone: normalizeNigerianPhone(values.receiverPhone),
-//         orderAmount: values.orderAmount
-//           ? Number(values.orderAmount)
-//           : undefined,
 //         deliveryFee,
 //       }),
 //   });
@@ -78,7 +74,6 @@
 //       ["deliveryAddress", "Enter the delivery address."],
 //       ["stationId", "Select a station."],
 //       ["deliveryZoneId", "Select a delivery area."],
-//       ["orderAmount", "Enter the value of the product."],
 //     ];
 //     const nextErrors: Record<string, string> = {};
 //     requiredFields.forEach(([key, message]) => {
@@ -290,9 +285,6 @@
 //               label="Value of product"
 //               type="number"
 //               required
-//               value={values.orderAmount}
-//               onChange={(v) => set("orderAmount", v)}
-//               error={errors.orderAmount}
 //             />
 //           </fieldset>
 //           {mutation.isError && (
@@ -357,7 +349,6 @@
 
 "use client";
 
-import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, Camera, CheckCircle2, X } from "lucide-react";
 import { use, useEffect, useRef, useState } from "react";
@@ -378,7 +369,6 @@ type Values = {
   pickupInstructions: string;
   paymentMethod: "ALREADY_PAID" | "PAYMENT_ON_DELIVERY";
   deliveryType: "NORMAL" | "EXPRESS";
-  orderAmount: string;
 };
 const initialValues: Values = {
   senderName: "",
@@ -393,7 +383,6 @@ const initialValues: Values = {
   pickupInstructions: "",
   paymentMethod: "PAYMENT_ON_DELIVERY",
   deliveryType: "NORMAL",
-  orderAmount: "",
 };
 function removeEmptyValues(values: Values) {
   return Object.fromEntries(
@@ -454,7 +443,7 @@ export default function PublicOrderPage({ params }: Props) {
     queryFn: api.getPublicStations,
   });
   const [values, setValues] = useState(initialValues);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [validationMessage, setValidationMessage] = useState("");
   const [images, setImages] = useState<{ file: File; url: string }[]>([]);
   const [cameraOpen, setCameraOpen] = useState(false);
   const [cameraError, setCameraError] = useState("");
@@ -483,9 +472,6 @@ export default function PublicOrderPage({ params }: Props) {
               values.receiverPhoneNumber,
             ),
           }),
-          orderAmount: values.orderAmount
-            ? Number(values.orderAmount)
-            : undefined,
           deliveryFee,
         },
         images.map((image) => image.file),
@@ -494,15 +480,9 @@ export default function PublicOrderPage({ params }: Props) {
     onSuccess: setCreated,
   });
   const set = <K extends keyof Values>(key: K, value: Values[K]) =>
-    (setValues((current) => ({ ...current, [key]: value })),
-    setErrors((current) => {
-      const next = { ...current };
-      delete next[key];
-      return next;
-    }));
+    setValues((current) => ({ ...current, [key]: value }));
   function submitOrder(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const nextErrors: Record<string, string> = {};
     const requiredFields: [keyof Values, string][] = [
       ["senderName", "Enter the sender or business name."],
       ["senderPhoneNumber", "Enter the sender phone number."],
@@ -512,17 +492,25 @@ export default function PublicOrderPage({ params }: Props) {
       ["deliveryAddress", "Enter the delivery address."],
       ["stationId", "Select a station."],
       ["deliveryZoneId", "Select a delivery area."],
-      ["orderAmount", "Enter the value of the product."],
     ];
-    requiredFields.forEach(([key, message]) => {
-      if (!values[key].trim()) nextErrors[key] = message;
-    });
-    if (values.senderPhoneNumber.trim() && values.senderPhoneNumber.trim().length < 7)
-      nextErrors.senderPhoneNumber = "Enter a valid sender phone number.";
-    if (values.receiverPhoneNumber.trim() && values.receiverPhoneNumber.trim().length < 7)
-      nextErrors.receiverPhoneNumber = "Enter a valid receiver phone number.";
-    setErrors(nextErrors);
-    if (Object.keys(nextErrors).length) return;
+    const missingField = requiredFields.find(([key]) => !values[key].trim());
+    if (missingField) {
+      setValidationMessage(missingField[1]);
+      return;
+    }
+    if (values.senderPhoneNumber.trim().length < 7) {
+      setValidationMessage("Enter a valid sender phone number.");
+      return;
+    }
+    if (values.receiverPhoneNumber.trim().length < 7) {
+      setValidationMessage("Enter a valid receiver phone number.");
+      return;
+    }
+    if (deliveryFee == null) {
+      setValidationMessage("Select an area with a configured station distance.");
+      return;
+    }
+    setValidationMessage("");
     mutation.mutate();
   }
   async function openCamera() {
@@ -547,6 +535,7 @@ export default function PublicOrderPage({ params }: Props) {
       );
     }
   }
+
   function closeCamera() {
     streamRef.current?.getTracks().forEach((track) => track.stop());
     streamRef.current = null;
@@ -555,7 +544,7 @@ export default function PublicOrderPage({ params }: Props) {
   }
   async function capturePhoto() {
     const video = videoRef.current;
-    if (!video || images.length >= 5) return;
+    if (!video || images.length >= 3) return;
     const canvas = document.createElement("canvas");
     const maxDimension = 1600;
     const scale = Math.min(
@@ -583,7 +572,7 @@ export default function PublicOrderPage({ params }: Props) {
           { file, url: URL.createObjectURL(file) },
         ]);
         setCameraError("");
-        if (images.length + 1 >= 5) closeCamera();
+        if (images.length + 1 >= 3) closeCamera();
       },
       "image/webp",
       0.78,
@@ -612,9 +601,30 @@ export default function PublicOrderPage({ params }: Props) {
     );
   return (
     <main className="public-page">
+      {validationMessage && (
+        <div className="validation-dialog-backdrop">
+          <section
+            className="validation-dialog"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="validation-dialog-title"
+          >
+            <p className="eyebrow">Check your order</p>
+            <h2 id="validation-dialog-title">One detail is missing</h2>
+            <p>{validationMessage}</p>
+            <button
+              type="button"
+              className="button button-primary button-full"
+              onClick={() => setValidationMessage("")}
+            >
+              Continue
+            </button>
+          </section>
+        </div>
+      )}
       <div className="public-card">
         <header className="public-header">
-          <p className="eyebrow">Shagil delivery</p>
+          <p className="eyebrow">Shagil Delivery Service</p>
           <h1>Create Your Delivery</h1>
           <p className="subtext">
             Complete the order details. No account or special link is required.
@@ -632,7 +642,6 @@ export default function PublicOrderPage({ params }: Props) {
                 value={values.senderName}
                 required
                 onChange={(v) => set("senderName", v)}
-                error={errors.senderName}
               />
               <Field
                 label="Sender phone number"
@@ -646,7 +655,6 @@ export default function PublicOrderPage({ params }: Props) {
                     normalizeNigerianPhone(values.senderPhoneNumber),
                   )
                 }
-                error={errors.senderPhoneNumber}
               />
               <div className="form-grid">
                 <Field
@@ -654,7 +662,6 @@ export default function PublicOrderPage({ params }: Props) {
                   required
                   value={values.pickupAddress}
                   onChange={(v) => set("pickupAddress", v)}
-                  error={errors.pickupAddress}
                 />
               </div>
             </div>
@@ -666,7 +673,6 @@ export default function PublicOrderPage({ params }: Props) {
                 required
                 value={values.receiverName}
                 onChange={(v) => set("receiverName", v)}
-                error={errors.receiverName}
               />
               <Field
                 label="Receiver phone number"
@@ -680,14 +686,29 @@ export default function PublicOrderPage({ params }: Props) {
                     normalizeNigerianPhone(values.receiverPhoneNumber),
                   )
                 }
-                error={errors.receiverPhoneNumber}
               />
+          <Section title="Delivery type">
+            <div className="field">
+              <label htmlFor="delivery-type">Delivery type</label>
+              <select
+                className="select"
+                id="delivery-type"
+                required
+                value={values.deliveryType}
+                onChange={(event) =>
+                  set("deliveryType", event.target.value as Values["deliveryType"])
+                }
+              >
+                <option value="NORMAL">Normal delivery</option>
+                <option value="EXPRESS">Express/Charter delivery</option>
+              </select>
+            </div>
+          </Section>
               <Field
                 label="Receiver / Delivery address"
                 required
                 value={values.deliveryAddress}
                 onChange={(v) => set("deliveryAddress", v)}
-                error={errors.deliveryAddress}
               />
               <div className="field">
                 <label htmlFor="create-station">
@@ -707,7 +728,6 @@ export default function PublicOrderPage({ params }: Props) {
                     </option>
                   ))}
                 </select>
-                {errors.stationId && <small>{errors.stationId}</small>}
               </div>
               <div className="field">
                 <label htmlFor="create-area">Delivery Area</label>
@@ -727,7 +747,6 @@ export default function PublicOrderPage({ params }: Props) {
                       </option>
                     ))}
                 </select>
-                {errors.deliveryZoneId && <small>{errors.deliveryZoneId}</small>}
               </div>
               {/* Delivery Area fee when selected */}
               <div className="field">
@@ -802,23 +821,7 @@ export default function PublicOrderPage({ params }: Props) {
               </div>
             )}
           </Section>
-          <Section title="5. Delivery type">
-            <div className="field">
-              <label htmlFor="delivery-type">Delivery type</label>
-              <select
-                className="select"
-                id="delivery-type"
-                required
-                value={values.deliveryType}
-                onChange={(event) =>
-                  set("deliveryType", event.target.value as Values["deliveryType"])
-                }
-              >
-                <option value="NORMAL">Normal delivery</option>
-                <option value="EXPRESS">Express/Charter delivery</option>
-              </select>
-            </div>
-          </Section>
+
           <Section title="6. Payment">
             <select
               className="select"
@@ -830,14 +833,6 @@ export default function PublicOrderPage({ params }: Props) {
               <option value="ALREADY_PAID">Already paid</option>
               <option value="PAYMENT_ON_DELIVERY">Payment on delivery</option>
             </select>
-            <Field
-              label="Value of product"
-              type="number"
-              required
-              value={values.orderAmount}
-              onChange={(v) => set("orderAmount", v)}
-              error={errors.orderAmount}
-            />
           </Section>
           {mutation.isError && (
             <p className="form-error" role="alert">
@@ -849,17 +844,14 @@ export default function PublicOrderPage({ params }: Props) {
             disabled={mutation.isPending}
           >
             {mutation.isPending ? (
-              "Creating order..."
+              "Submitting..."
             ) : (
               <>
-                Create Order <ArrowRight size={17} />
+                Submit <ArrowRight size={17} />
               </>
             )}
           </button>
         </form>
-        <p className="public-foot">
-          <Link href="/login">Staff sign in</Link>
-        </p>
       </div>
       {cameraOpen && (
         <div className="camera-backdrop">

@@ -111,7 +111,6 @@ export default function ManagerOrderDetailsPage({ params }: Props) {
       deliveryZoneId: data.deliveryZoneId || data.deliveryZone?.id || "",
       pickupMethod: data.pickupMethod || "SENDER_DROPOFF",
       paymentMethod: data.paymentMethod || "PAYMENT_ON_DELIVERY",
-      orderAmount: String(data.orderAmount ?? data.amount ?? ""),
       deliveryFee: String(data.deliveryFee ?? ""),
     });
     setEditing(true);
@@ -260,7 +259,6 @@ export default function ManagerOrderDetailsPage({ params }: Props) {
                   </option>
                 </select>
               </div>
-              {field("Order amount", "orderAmount", "number")}
               {field("Delivery fee", "deliveryFee", "number")}
               <div className="form-actions field-span">
                 <button

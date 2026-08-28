@@ -72,11 +72,10 @@ export default function OrderDetailsPage({ params }: Props) {
         packageNotes: query.data?.packageNotes || "",
         pickupMethod: query.data?.pickupMethod || "SENDER_DROPOFF",
         paymentMethod: query.data?.paymentMethod || "PAYMENT_ON_DELIVERY",
-        orderAmount: String(query.data?.orderAmount ?? query.data?.amount ?? ""),
         deliveryFee: String(query.data?.deliveryFee ?? ""),
         deliveryZoneId: query.data?.deliveryZoneId || "",
       };
-      const numericFields = new Set(["quantity", "orderAmount", "deliveryFee"]);
+      const numericFields = new Set(["quantity", "deliveryFee"]);
       const payload: Record<string, unknown> = {};
 
       Object.entries(editValues).forEach(([key, value]) => {
@@ -133,8 +132,6 @@ export default function OrderDetailsPage({ params }: Props) {
       </AppShell>
     );
   const order = query.data;
-  const amount =
-    order.amount == null || order.amount === "" ? null : Number(order.amount);
   const canApprove = Boolean(
     (order.senderName || order.customerName) &&
     (order.receiverName || order.customerName) &&
@@ -179,7 +176,6 @@ export default function OrderDetailsPage({ params }: Props) {
                   packageNotes: order.packageNotes || "",
                   pickupMethod: order.pickupMethod || "SENDER_DROPOFF",
                   paymentMethod: order.paymentMethod || "PAYMENT_ON_DELIVERY",
-                  orderAmount: String(order.orderAmount ?? order.amount ?? ""),
                   deliveryFee: String(order.deliveryFee ?? ""),
                   deliveryZoneId: order.deliveryZoneId || "",
                 });
@@ -233,13 +229,6 @@ export default function OrderDetailsPage({ params }: Props) {
               <EditField
                 label="Pickup address"
                 name="pickupAddress"
-                values={editValues}
-                setValues={setEditValues}
-              />
-              <EditField
-                label="Order amount"
-                name="orderAmount"
-                type="number"
                 values={editValues}
                 setValues={setEditValues}
               />
@@ -372,14 +361,7 @@ export default function OrderDetailsPage({ params }: Props) {
             </dl>
             <h2 className="section-gap">Order information</h2>
             <dl className="detail-list">
-              <div>
-                <dt>Amount</dt>
-                <dd>
-                  {amount !== null && Number.isFinite(amount)
-                    ? `₦${Number(amount.toFixed(2)).toLocaleString()}`
-                    : "Not specified"}
-                </dd>
-              </div>
+  
               <div>
                 <dt>Area</dt>
                 <dd>{zoneName || "—"}</dd>

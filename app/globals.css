@@ -1700,6 +1700,32 @@ select {
     #edf4f5 100%
   );
 }
+.validation-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: #10202a66;
+}
+.validation-dialog {
+  width: min(390px, 100%);
+  padding: 26px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: white;
+  box-shadow: 0 25px 70px #09223544;
+}
+.validation-dialog h2 {
+  margin: 5px 0 8px;
+  font-size: 22px;
+}
+.validation-dialog p:not(.eyebrow) {
+  margin: 0 0 20px;
+  color: var(--muted);
+  line-height: 1.5;
+}
 .public-card {
   width: min(760px, 100%);
   padding: clamp(22px, 5vw, 48px);

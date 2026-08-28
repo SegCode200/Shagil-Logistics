@@ -52,10 +52,10 @@ export default function SenderAccessPage({ params }: Props) {
           <div className="public-header-actions">
             <div>
               <p className="eyebrow">Shagil sender access</p>
-              <h1>Your orders</h1>
+              <h2>List of Delivery</h2>
             </div>
             <Link className="button button-primary" href={`/order?token=${encodeURIComponent(token)}`}>
-              <Plus size={16} /> Create order
+              <Plus size={16} /> Create Delivery 
             </Link>
           </div>
           <p className="subtext">
@@ -69,7 +69,7 @@ export default function SenderAccessPage({ params }: Props) {
             description="Create a delivery request to see it here."
             action={
               <Link className="button button-primary" href={`/order?token=${encodeURIComponent(token)}`}>
-                <Plus size={16} /> Create order
+                <Plus size={16} /> Create Delivery
               </Link>
             }
           />

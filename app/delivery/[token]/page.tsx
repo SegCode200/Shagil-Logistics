@@ -54,7 +54,7 @@ export default function CustomerDeliveryPage({
     const order = query.data;
     console.log("query", order);
   const current = timeline.indexOf(order.status);
-  const amount = order.totalAmountToCollect ?? order.amount;
+  const amount = order.totalAmountToCollect;
   const senderPhone = order.senderPhoneNumber || order.senderPhone;
   const riderPhone = order.assignedRider?.phone;
   const receiverPhone = order.receiverPhoneNumber || order.receiverPhone;
@@ -176,7 +176,7 @@ export default function CustomerDeliveryPage({
             {order.paymentMethod === "PAYMENT_ON_DELIVERY" &&
               order.receiverCollectionStatus !== "COLLECTED" && (
                 <div>
-                  <span>Amount to pay</span>
+                  <span>Amount to </span>
                   <strong>₦{Number(amount || 0).toLocaleString()}</strong>
                 </div>
               )}

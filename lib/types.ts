@@ -155,7 +155,6 @@ export type Order = {
   customerName: string;
   customerPhone?: string;
   deliveryAddress: string;
-  amount?: number | string;
   deliveryCode?: string;
   status: OrderStatus;
   rider?: User | null;
@@ -185,10 +184,8 @@ export type Order = {
   paymentMethod?: PaymentMethod;
   deliveryType?: DeliveryType;
   paymentStatus?: PaymentStatus;
-  orderAmount?: number | string;
   deliveryFee?: number | string;
   totalAmountToCollect?: number | string;
-  senderAmount?: number | string;
   companyDeliveryAmount?: number | string;
   publicToken?: string;
   deliveryToken?: string;

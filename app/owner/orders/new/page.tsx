@@ -32,7 +32,6 @@ const schema = z.object({
   stationId: z.string().min(1),
   deliveryZoneId: z.string().min(1),
   paymentMethod: z.enum(["ALREADY_PAID", "PAYMENT_ON_DELIVERY"]),
-  orderAmount: z.coerce.number().nonnegative().optional(),
   assignedRiderId: z.string().optional(),
 });
 type FormValues = z.infer<typeof schema>;
@@ -240,14 +239,6 @@ export default function NewOrderPage() {
                   </option>
                 </select>
               </div>
-              {paymentMethod === "PAYMENT_ON_DELIVERY" && (
-                <Field
-                  form={form}
-                  name="orderAmount"
-                  label="Order amount"
-                  type="number"
-                />
-              )}
               <div className="field">
                 <label htmlFor="assignedRiderId">
                   Assign rider <span className="muted">(optional)</span>
