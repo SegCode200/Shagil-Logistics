@@ -16,6 +16,7 @@ type Props = { params: Promise<{ token: string; orderId: string }> };
 
 export default function SenderOrderDetailsPage({ params }: Props) {
   const { token, orderId } = use(params);
+  const [error, setError] = useState<React.ReactNode>(null);
   const queryClient = useQueryClient();
   const [feedback, setFeedback] = useState<{
     type: "success" | "error";
@@ -28,27 +29,49 @@ export default function SenderOrderDetailsPage({ params }: Props) {
   const senderPaid = useMutation({
     mutationFn: () => api.senderPaid(orderId),
     onSuccess: () => {
-      setFeedback({ type: "success", message: "Payment received status updated successfully." });
+      setFeedback({
+        type: "success",
+        message: "Payment received status updated successfully.",
+      });
       queryClient.invalidateQueries({
         queryKey: ["public-sender-orders", token],
       });
     },
-    onError: () => setFeedback({ type: "error", message: "Could not update payment status." }),
+    onError: () =>
+      setFeedback({
+        type: "error",
+        message: "Could not update payment status.",
+      }),
   });
   const pickedUp = useMutation({
     mutationFn: () => api.senderPickedUp(token, orderId),
     onSuccess: () => {
-      setFeedback({ type: "success", message: "Shipment marked as picked up successfully." });
+      setFeedback({
+        type: "success",
+        message: "Shipment marked as picked up successfully.",
+      });
       queryClient.invalidateQueries({
         queryKey: ["public-sender-orders", token],
       });
     },
-    onError: () => setFeedback({ type: "error", message: "Could not update shipment status." }),
+    onError: () =>
+      setFeedback({
+        type: "error",
+        message: "Could not update shipment status.",
+      }),
   });
   const resendCode = useMutation({
     mutationFn: () => api.resendReceiverDeliveryCode(token),
-    onSuccess: () => setFeedback({ type: "success", message: "Receiver delivery code sent successfully." }),
-    onError: () => setFeedback({ type: "error", message: "Could not resend the receiver code." }),
+    onSuccess: () =>
+      setFeedback({
+        type: "success",
+        message: "Receiver delivery code sent successfully.",
+      }),
+    onError: () =>
+      setFeedback({
+        type: "error",
+        message: "Could not resend the receiver code.",
+      }),
   });
 
   useEffect(() => {
@@ -89,11 +112,28 @@ export default function SenderOrderDetailsPage({ params }: Props) {
     <main className="public-page">
       {feedback && (
         <div className="validation-dialog-backdrop">
-          <section className={`validation-dialog action-feedback-${feedback.type}`} role="alertdialog" aria-modal="true" aria-labelledby="action-feedback-title">
-            <p className="eyebrow">{feedback.type === "success" ? "Success" : "Action failed"}</p>
-            <h2 id="action-feedback-title">{feedback.type === "success" ? "Action completed" : "Please try again"}</h2>
+          <section
+            className={`validation-dialog action-feedback-${feedback.type}`}
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="action-feedback-title"
+          >
+            <p className="eyebrow">
+              {feedback.type === "success" ? "Success" : "Action failed"}
+            </p>
+            <h2 id="action-feedback-title">
+              {feedback.type === "success"
+                ? "Action completed"
+                : "Please try again"}
+            </h2>
             <p>{feedback.message}</p>
-            <button type="button" className="button button-primary button-full" onClick={() => setFeedback(null)}>Continue</button>
+            <button
+              type="button"
+              className="button button-primary button-full"
+              onClick={() => setFeedback(null)}
+            >
+              Continue
+            </button>
           </section>
         </div>
       )}
@@ -108,7 +148,9 @@ export default function SenderOrderDetailsPage({ params }: Props) {
           </div>
           <div className="sender-statuses">
             <OrderStatusBadge status={order.status} />
-            <span className={`status sender-payment-status status-${order.senderPaymentStatus.toLowerCase()}`}>
+            <span
+              className={`status sender-payment-status status-${order.senderPaymentStatus.toLowerCase()}`}
+            >
               Sender payment: {order.senderPaymentStatus}
             </span>
           </div>
@@ -122,11 +164,21 @@ export default function SenderOrderDetailsPage({ params }: Props) {
                 <p>Send the delivery code to the receiver again.</p>
               </div>
             </div>
+
             <button
               type="button"
               className="button button-warning button-full"
               disabled={resendCode.isPending}
-              onClick={() => resendCode.mutate()}
+              onClick={() => {
+                if(order?.status !== "APPROVED"){
+                    setFeedback({
+                        type: "error",
+                        message: "Cannot resend code for an order that is not approved.",
+                      });
+                }
+                else if (window.confirm("Are you sure you want to resend the delivery code to the receiver?"))
+                  resendCode.mutate();
+              }}
             >
               <Send size={16} />
               {resendCode.isPending
@@ -147,10 +199,17 @@ export default function SenderOrderDetailsPage({ params }: Props) {
               className="button button-info button-full"
               disabled={
                 !order.assignedRiderId ||
-                !["ASSIGNED", "APPROVED"].includes(order.status) ||
+                !["APPROVED"].includes(order.status) ||
                 pickedUp.isPending
               }
-              onClick={() => pickedUp.mutate()}
+              onClick={() => {
+                if (
+                  window.confirm(
+                    "Confirm that the shipment has been picked up by the assigned rider?",
+                  )
+                )
+                  pickedUp.mutate();
+              }}
             >
               <PackageCheck size={16} />
               {pickedUp.isPending
@@ -178,7 +237,14 @@ export default function SenderOrderDetailsPage({ params }: Props) {
                 order.receiverCollectionStatus !== "COLLECTED" ||
                 senderPaid.isPending
               }
-              onClick={() => senderPaid.mutate()}
+              onClick={() => {
+                if (
+                  window.confirm(
+                    "Confirm that payment has been received from the receiver?",
+                  )
+                )
+                  senderPaid.mutate();
+              }}
             >
               <CheckCircle2 size={16} />
               {senderPaid.isPending

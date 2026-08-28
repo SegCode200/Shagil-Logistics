@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { normalizeNigerianPhone } from "@/lib/phone";
+import { error } from "console";
 
 type Values = {
   senderName: string;
@@ -95,6 +96,7 @@ export default function CreateOrderPage() {
   });
   const [values, setValues] = useState(initialValues);
   const [validationMessage, setValidationMessage] = useState("");
+  const [error, setError] = useState<React.ReactNode>(null);
   const [validationTarget, setValidationTarget] = useState("");
   const [images, setImages] = useState<{ file: File; url: string }[]>([]);
   const [cameraOpen, setCameraOpen] = useState(false);
@@ -135,12 +137,12 @@ export default function CreateOrderPage() {
   function submitOrder(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const requiredFields: [keyof Values, string][] = [
-      ["senderName", "Enter the sender or business name."],
-      ["senderPhoneNumber", "Enter the sender phone number."],
-      ["pickupAddress", "Enter the sender pickup address."],
-      ["receiverName", "Enter the receiver name."],
-      ["receiverPhoneNumber", "Enter the receiver phone number."],
-      ["deliveryAddress", "Enter the delivery address."],
+      ["senderName", "Sender or business name not filled."],
+      ["senderPhoneNumber", "Sender phone number not filled."],
+      ["pickupAddress", "Sender pickup address not filled."],
+      ["receiverName", "Receiver name not filled."],
+      ["receiverPhoneNumber", "Receiver phone number not filled."],
+      ["deliveryAddress", "Delivery address not filled."],
       ["stationId", "Select a station."],
       ["deliveryZoneId", "Select a delivery area."],
     ];
@@ -151,17 +153,17 @@ export default function CreateOrderPage() {
       return;
     }
     if (values.senderPhoneNumber.trim().length < 7) {
-      setValidationMessage("Enter a valid sender phone number.");
+      setValidationMessage("Sender Phone number must be at least 7 digits.");
       setValidationTarget("senderPhoneNumber");
       return;
     }
     if (values.receiverPhoneNumber.trim().length < 7) {
-      setValidationMessage("Enter a valid receiver phone number.");
+      setValidationMessage("Receiver Phone number must be at least 7 digits.");
       setValidationTarget("receiverPhoneNumber");
       return;
     }
     if (images.length === 0) {
-      setValidationMessage("Add at least one product image before continuing.");
+      setValidationMessage("Product of Goods not added");
       setValidationTarget("productImages");
       return;
     }
@@ -265,8 +267,8 @@ export default function CreateOrderPage() {
             aria-labelledby="create-validation-dialog-title"
           >
             <p className="eyebrow">Check your order</p>
-            <h2 id="create-validation-dialog-title">One detail is missing</h2>
-            <p>{validationMessage}</p>
+            <h2 id="create-validation-dialog-title">{validationMessage}</h2>
+
             <button
               type="button"
               className="button button-primary button-full"
@@ -497,6 +499,7 @@ export default function CreateOrderPage() {
                 ))}
               </div>
             )}
+
           </Section>
           <Section title="6. Payment">
             <select
@@ -510,6 +513,12 @@ export default function CreateOrderPage() {
               <option value="PAYMENT_ON_DELIVERY">Payment on delivery</option>
             </select>
           </Section>
+            {validationTarget === "productImages" && (
+              <p className="form-error" role="alert">
+                {validationMessage
+                  ? validationMessage
+                  : "Photo of goods not added."}
+              </p>)}
           {mutation.isError && (
             <p className="form-error" role="alert">
               We could not create this order. Check the details and try again.
@@ -575,6 +584,7 @@ export default function CreateOrderPage() {
           </div>
         </div>
       )}
+    
     </main>
   );
 }
