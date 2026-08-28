@@ -89,6 +89,7 @@ export default function SenderOrderDetailsPage({ params }: Props) {
     );
 
   const order = orders.data?.find((item) => item.orderId === orderId);
+  console.log("order", order);
   if (!order)
     return (
       <main className="public-page">
@@ -202,9 +203,9 @@ export default function SenderOrderDetailsPage({ params }: Props) {
               type="button"
               className="button button-info button-full"
               disabled={
-                !order.assignedRiderId ||
-                !["APPROVED"].includes(order.status) ||
-                pickedUp.isPending
+                // !order.assignedRiderId ||
+                
+                !["APPROVED"].includes(order.status)
               }
               onClick={() => {
                 if (order.status !== "APPROVED" && !order.assignedRiderId) {
@@ -271,8 +272,8 @@ export default function SenderOrderDetailsPage({ params }: Props) {
             </button>
             {order.receiverCollectionStatus !== "COLLECTED" &&
               order.senderPaymentStatus !== "PAID" && (
-                <p className="muted">
-                  Waiting for receiver payment collection confirmation.
+                <p className="text-warning text-red-100">
+                  Waiting for receiver payment collection confirmation. The button is enable until the receiver confirms that payment has been collected. Please contact your receiver to confirm payment collection.
                 </p>
               )}
           </div>

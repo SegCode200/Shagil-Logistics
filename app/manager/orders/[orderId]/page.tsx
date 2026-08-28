@@ -24,6 +24,8 @@ export default function ManagerOrderDetailsPage({ params }: Props) {
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState(false);
   const [replacementRiderId, setReplacementRiderId] = useState("");
+  const [paymentConfirmed, setPaymentConfirmed] = useState(false);
+  const [paymentError, setPaymentError] = useState(false);
   const [notice, setNotice] = useState("");
   const [editValues, setEditValues] = useState<EditValues>({});
   const order = useQuery({
@@ -131,6 +133,27 @@ export default function ManagerOrderDetailsPage({ params }: Props) {
   );
   return (
     <AppShell role="STATION_MANAGER">
+      {paymentError && (
+        <div className="validation-dialog-backdrop">
+          <section
+            className="validation-dialog"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="payment-confirmation-error"
+          >
+            <p className="eyebrow">Payment confirmation required</p>
+            <h2 id="payment-confirmation-error">Confirm payment first</h2>
+            <p>Tick the payment received checkbox before approving this order.</p>
+            <button
+              type="button"
+              className="button button-primary button-full"
+              onClick={() => setPaymentError(false)}
+            >
+              Continue
+            </button>
+          </section>
+        </div>
+      )}
       <div className="page">
         <Link className="back-link" href="/manager/orders">
           <ArrowLeft size={16} /> Back to orders
@@ -367,16 +390,38 @@ export default function ManagerOrderDetailsPage({ params }: Props) {
                 </dd>
               </div>
             </dl>
+            {data.paymentMethod === "ALREADY_PAID" && (
+              <label className="payment-confirmation">
+                <input
+                  type="checkbox"
+                  checked={paymentConfirmed || data.senderPaymentStatus === "PAID"}
+                  disabled={data.senderPaymentStatus === "PAID"}
+                  onChange={(event) => setPaymentConfirmed(event.target.checked)}
+                />
+                <span>You must fill checkbox to confirm customer payment.</span>
+              </label>
+            )}
             <div className="action-stack section-gap">
               {data.status === "PENDING_APPROVAL" && (
                 <button
                   className="button button-primary button-full"
                   disabled={approve.isPending}
-                  onClick={() => approve.mutate()}
+                  onClick={() => {
+                    if (
+                      data.paymentMethod === "ALREADY_PAID" &&
+                      data.senderPaymentStatus !== "PAID" &&
+                      !paymentConfirmed
+                    ) {
+                      setPaymentError(true);
+                      return;
+                    }
+                    approve.mutate();
+                  }}
                 >
                   {approve.isPending ? "Approving..." : "Approve order"}
                 </button>
               )}
+
               <div className="field">
                 <label htmlFor="manager-rider">
                   {data.assignedRider?.id || data.rider?.id

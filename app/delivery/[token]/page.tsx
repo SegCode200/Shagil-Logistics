@@ -85,8 +85,13 @@ export default function CustomerDeliveryPage({
                   confirmPayment.isPending
                 }
                 onClick={() => {
-                  if (window.confirm("Confirm that payment has been made?"))
+                  if (order.status !== "APPROVED" || !order.assignedRiderId) {
+                    alert("You cannot confirm payment collection until your order is approved.");
+                    return;
+                  }
+                  else if(window.confirm("Are you sure you want to confirm that payment has been collected?")) 
                     confirmPayment.mutate();
+                    
                 }}
               >
                 <CheckCircle2 size={16} />
