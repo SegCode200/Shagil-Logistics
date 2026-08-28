@@ -34,11 +34,7 @@ export default function RidersPage() {
   const [showForm, setShowForm] = useState(false);
   const queryClient = useQueryClient();
   const form = useForm({
-    defaultValues: { name: "", phone: "", zoneIds: [] as string[], bikeId: "" },
-  });
-  const selectedZoneIds = useWatch({
-    control: form.control,
-    name: "zoneIds",
+    defaultValues: { name: "", phone: "", address: "", zoneIds: [] as string[], bikeId: "" },
   });
   const [editingId, setEditingId] = useState<string | null>(null);
   const editForm = useForm({
@@ -112,6 +108,15 @@ export default function RidersPage() {
                     {...form.register("phone", {
                       onBlur: (event) => form.setValue("phone", normalizeNigerianPhone(event.target.value)),
                     })}
+                  />
+                </div>
+                <div className="field field-span">
+                  <label htmlFor="rider-address">Address</label>
+                  <input
+                    className="input"
+                    id="rider-address"
+                    required
+                    {...form.register("address")}
                   />
                 </div>
                 <div className="field">

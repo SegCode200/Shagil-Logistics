@@ -221,6 +221,7 @@ export type DeliveryZoneImportError = { row: number; locationId?: string; errors
 export type DeliveryZoneImport = { importId: string; summary: { total: number; updated: number; unchanged: number; invalid: number }; changes: DeliveryZoneImportChange[]; errors: DeliveryZoneImportError[]; applied: boolean };
 
 export type Rider = Omit<User, "stationId"> & {
+  address?: string | null;
   zoneIds?: string[];
   zones?: DeliveryZone[];
   active?: boolean;

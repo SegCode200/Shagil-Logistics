@@ -195,6 +195,7 @@ export const api = {
   createRider: (payload: {
     name: string;
     phone: string;
+    address: string;
     zoneIds: string[];
     bikeId: string;
   }) =>
