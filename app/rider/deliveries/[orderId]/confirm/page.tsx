@@ -128,7 +128,7 @@ export default function ConfirmDeliveryPage({ params }: Props) {
             <p className="delivery-address">{order.deliveryAddress}</p>
             <span className="collection-line">
               {order.paymentMethod === "PAYMENT_ON_DELIVERY"
-                ? `Delivery fee to collect: ₦${Number(order.deliveryFee ?? order.amount ?? 0).toLocaleString()}`
+                ? `Delivery fee to collect: ₦${Number(order.deliveryFee).toLocaleString()}`
                 : "Already paid"}
             </span>
           </div>
