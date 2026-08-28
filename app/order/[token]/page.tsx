@@ -482,15 +482,15 @@ export default function PublicOrderPage({ params }: Props) {
   });
   const set = <K extends keyof Values>(key: K, value: Values[K]) =>
     setValues((current) => ({ ...current, [key]: value }));
-  function submitOrder(event: React.FormEvent<HTMLFormElement>) {
+   function submitOrder(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const requiredFields: [keyof Values, string][] = [
-      ["senderName", "Enter the sender or business name."],
-      ["senderPhoneNumber", "Enter the sender phone number."],
-      ["pickupAddress", "Enter the sender pickup address."],
-      ["receiverName", "Enter the receiver name."],
-      ["receiverPhoneNumber", "Enter the receiver phone number."],
-      ["deliveryAddress", "Enter the delivery address."],
+      ["senderName", "Sender or business name not filled."],
+      ["senderPhoneNumber", "Sender phone number not filled."],
+      ["pickupAddress", "Sender pickup address not filled."],
+      ["receiverName", "Receiver name not filled."],
+      ["receiverPhoneNumber", "Receiver phone number not filled."],
+      ["deliveryAddress", "Delivery address not filled."],
       ["stationId", "Select a station."],
       ["deliveryZoneId", "Select a delivery area."],
     ];
@@ -501,22 +501,17 @@ export default function PublicOrderPage({ params }: Props) {
       return;
     }
     if (values.senderPhoneNumber.trim().length < 7) {
-      setValidationMessage("Enter a valid sender phone number.");
+      setValidationMessage("Sender Phone number must be at least 7 digits.");
       setValidationTarget("senderPhoneNumber");
       return;
     }
     if (values.receiverPhoneNumber.trim().length < 7) {
-      setValidationMessage("Enter a valid receiver phone number.");
+      setValidationMessage("Receiver Phone number must be at least 7 digits.");
       setValidationTarget("receiverPhoneNumber");
       return;
     }
-    if (deliveryFee == null) {
-      setValidationMessage("Select an area with a configured station distance.");
-      setValidationTarget("deliveryZoneId");
-      return;
-    }
     if (images.length === 0) {
-      setValidationMessage("Add at least one product image before continuing.");
+      setValidationMessage("Product of Goods not added");
       setValidationTarget("productImages");
       return;
     }
@@ -867,6 +862,12 @@ export default function PublicOrderPage({ params }: Props) {
               <option value="PAYMENT_ON_DELIVERY">Payment on delivery</option>
             </select>
           </Section>
+                      {validationTarget === "productImages" && (
+              <p className="form-error" role="alert">
+                {validationMessage
+                  ? validationMessage
+                  : "Photo of goods not added."}
+              </p>)}
           {mutation.isError && (
             <p className="form-error" role="alert">
               We could not create this order. Check the details and try again.

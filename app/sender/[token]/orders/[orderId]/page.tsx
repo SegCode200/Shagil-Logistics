@@ -170,13 +170,17 @@ export default function SenderOrderDetailsPage({ params }: Props) {
               className="button button-warning button-full"
               disabled={resendCode.isPending}
               onClick={() => {
-                if(order?.status !== "APPROVED"){
-                    setFeedback({
-                        type: "error",
-                        message: "Cannot resend code for an order that is not approved.",
-                      });
-                }
-                else if (window.confirm("Are you sure you want to resend the delivery code to the receiver?"))
+                if (order?.status !== "APPROVED") {
+                  setFeedback({
+                    type: "error",
+                    message:
+                      "Cannot resend code delivery request not yet approved approved. Please contact Shagil",
+                  });
+                } else if (
+                  window.confirm(
+                    "Are you sure you want to resend the delivery code to the receiver?",
+                  )
+                )
                   resendCode.mutate();
               }}
             >
@@ -203,9 +207,15 @@ export default function SenderOrderDetailsPage({ params }: Props) {
                 pickedUp.isPending
               }
               onClick={() => {
-                if (
+                if (order.status !== "APPROVED" && !order.assignedRiderId) {
+                  setFeedback({
+                    type: "error",
+                    message:
+                      "Cannot mark shipment as picked up. Delivery request not yet approved or no rider assigned. Please contact Shagil",
+                  });
+                } else if (
                   window.confirm(
-                    "Confirm that the shipment has been picked up by the assigned rider?",
+                    "Are you sure you want to mark this shipment as picked up by the assigned rider?",
                   )
                 )
                   pickedUp.mutate();
@@ -238,7 +248,13 @@ export default function SenderOrderDetailsPage({ params }: Props) {
                 senderPaid.isPending
               }
               onClick={() => {
-                if (
+                if (order.receiverCollectionStatus !== "COLLECTED" && order.status !== "PICKED_UP") {
+                  setFeedback({
+                    type: "error",
+                    message:
+                      "Cannot confirm payment received. The receiver has not yet confirmed the payment. Please contact your receiver ",
+                  });
+                } else if (
                   window.confirm(
                     "Confirm that payment has been received from the receiver?",
                   )
