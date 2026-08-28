@@ -43,7 +43,7 @@ export default function SenderAccessPage({ params }: Props) {
       </main>
     );
 
-  const orders = senderOrders.data || [];
+  const orders = senderOrders.data?.orders || [];
 
   return (
     <main className="public-page">
