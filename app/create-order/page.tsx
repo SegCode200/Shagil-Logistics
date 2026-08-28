@@ -163,7 +163,7 @@ export default function CreateOrderPage() {
       return;
     }
     if (images.length === 0) {
-      setValidationMessage("Product of Goods not added");
+      setValidationMessage("Photo of Goods not added");
       setValidationTarget("productImages");
       return;
     }

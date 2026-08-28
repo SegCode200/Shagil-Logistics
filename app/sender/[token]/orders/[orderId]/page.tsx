@@ -174,7 +174,7 @@ export default function SenderOrderDetailsPage({ params }: Props) {
                   setFeedback({
                     type: "error",
                     message:
-                      "Cannot resend code delivery request not yet approved approved. Please contact Shagil",
+                      "Request not yet approved. Contact shagil or try again later.",
                   });
                 } else if (
                   window.confirm(

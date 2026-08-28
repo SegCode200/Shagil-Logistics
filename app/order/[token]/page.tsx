@@ -511,7 +511,7 @@ export default function PublicOrderPage({ params }: Props) {
       return;
     }
     if (images.length === 0) {
-      setValidationMessage("Product of Goods not added");
+      setValidationMessage("Photo of Goods not added");
       setValidationTarget("productImages");
       return;
     }
@@ -616,8 +616,7 @@ export default function PublicOrderPage({ params }: Props) {
             aria-labelledby="validation-dialog-title"
           >
             <p className="eyebrow">Check your order</p>
-            <h2 id="validation-dialog-title">One detail is missing</h2>
-            <p>{validationMessage}</p>
+            <h2 id="validation-dialog-title">{validationMessage}</h2>
             <button
               type="button"
               className="button button-primary button-full"
