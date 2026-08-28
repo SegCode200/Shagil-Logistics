@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { ArrowUpRight, Plus } from "lucide-react";
 import { use, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { EmptyState, LoadingState } from "@/components/ui/primitives";
+import { EmptyState, LoadingState, formatDate } from "@/components/ui/primitives";
 
 type Props = { params: Promise<{ token: string }> };
 
@@ -81,11 +81,21 @@ export default function SenderAccessPage({ params }: Props) {
                   href={`/sender/${token}/orders/${encodeURIComponent(order.orderId)}`}
                   key={order.orderId}
                 >
-                  <strong>{order.orderId}</strong>
-                  <span>{order.deliveryZone?.name || order.deliveryAddress}</span>
+                  <div className="sender-order-main">
+                    <strong>{order.orderId}</strong>
+                    <span>{order.deliveryZone?.name || "Delivery area not set"}</span>
+                    <small>{order.deliveryAddress}</small>
+                  </div>
                   <span className={`status status-${order.status.toLowerCase()}`}>
                     {labels[order.status] || order.status}
                   </span>
+                  <div className="sender-order-meta">
+                    <span><b>Receiver</b>{order.receiverName || "—"}</span>
+                    <span><b>Payment</b>{order.paymentMethod === "PAYMENT_ON_DELIVERY" ? "On delivery" : "Already paid"}</span>
+                    <span><b>Fee</b>₦{Number(order.deliveryFee).toLocaleString()}</span>
+                    <span><b>Created</b>{formatDate(order.createdAt)}</span>
+                  </div>
+                  <ArrowUpRight className="sender-order-arrow" size={17} />
                 </Link>
               ))}
             </div>

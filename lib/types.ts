@@ -60,6 +60,7 @@ export type OrderImage = {
 };
 export type PublicSenderOrder = {
   orderId: string;
+  createdAt?: string;
   senderName?: string | null;
   senderPhoneNumber?: string | null;
   receiverName?: string | null;
@@ -69,6 +70,7 @@ export type PublicSenderOrder = {
   packageNotes?: string | null;
   deliveryFee: number | string;
   paymentMethod: PaymentMethod;
+  deliveryType?: DeliveryType;
   assignedRiderId?: string | null;
   senderPaymentStatus: SenderPaymentStatus;
   receiverCollectionStatus?: ReceiverCollectionStatus;

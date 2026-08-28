@@ -2,9 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
-import { use, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { ArrowLeft, CheckCircle2, PackageCheck, Send } from "lucide-react";
+import { use, useEffect, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import {
   ErrorState,
@@ -16,9 +16,33 @@ type Props = { params: Promise<{ token: string; orderId: string }> };
 
 export default function SenderOrderDetailsPage({ params }: Props) {
   const { token, orderId } = use(params);
+  const queryClient = useQueryClient();
+  const [notice, setNotice] = useState("");
   const orders = useQuery({
     queryKey: ["public-sender-orders", token],
     queryFn: () => api.getPublicSenderOrders(token),
+  });
+  const senderPaid = useMutation({
+    mutationFn: () => api.senderPaid(orderId),
+    onSuccess: () => {
+      setNotice("Payment received status updated successfully.");
+      queryClient.invalidateQueries({
+        queryKey: ["public-sender-orders", token],
+      });
+    },
+  });
+  const pickedUp = useMutation({
+    mutationFn: (riderId: string) => api.senderPickedUp(orderId, riderId),
+    onSuccess: () => {
+      setNotice("Shipment marked as picked up successfully.");
+      queryClient.invalidateQueries({
+        queryKey: ["public-sender-orders", token],
+      });
+    },
+  });
+  const resendCode = useMutation({
+    mutationFn: () => api.resendReceiverDeliveryCode(token),
+    onSuccess: () => setNotice("Receiver delivery code sent successfully."),
   });
 
   useEffect(() => {
@@ -44,7 +68,9 @@ export default function SenderOrderDetailsPage({ params }: Props) {
             <ArrowLeft size={16} /> Back to orders
           </Link>
           <h1>Order unavailable</h1>
-          <p className="subtext">This order could not be found for this sender link.</p>
+          <p className="subtext">
+            This order could not be found for this sender link.
+          </p>
         </div>
       </main>
     );
@@ -66,6 +92,110 @@ export default function SenderOrderDetailsPage({ params }: Props) {
           </div>
           <OrderStatusBadge status={order.status} />
         </header>
+        {notice && (
+          <p className="success-text" role="status">
+            {notice}
+          </p>
+        )}
+        <section className="sender-actions" aria-label="Order actions">
+          <div className="sender-action-card sender-code-action">
+            <div className="sender-action-heading">
+              <Send size={20} />
+              <div>
+                <h2>Receiver delivery code</h2>
+                <p>Send the delivery code to the receiver again.</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              className="button button-warning button-full"
+              disabled={resendCode.isPending}
+              onClick={() => resendCode.mutate()}
+            >
+              <Send size={16} />
+              {resendCode.isPending
+                ? "Sending code..."
+                : "Resend receiver code"}
+            </button>
+            {resendCode.isError && (
+              <p className="form-error" role="alert">
+                Could not resend the receiver code.
+              </p>
+            )}
+          </div>
+          <div className="sender-action-card sender-pickup-action">
+            <div className="sender-action-heading">
+              <PackageCheck size={20} />
+              <div>
+                <h2>Shipment picked up</h2>
+                <p>Mark the shipment as collected by the assigned rider.</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              className="button button-info button-full"
+              disabled={
+                !order.assignedRiderId ||
+                !["ASSIGNED", "APPROVED"].includes(order.status) ||
+                pickedUp.isPending
+              }
+              onClick={() =>
+                order.assignedRiderId && pickedUp.mutate(order.assignedRiderId)
+              }
+            >
+              <PackageCheck size={16} />
+              {pickedUp.isPending
+                ? "Updating shipment..."
+                : order.status === "PICKED_UP"
+                  ? "Shipment picked up"
+                  : "Mark shipment picked up"}
+            </button>
+            {pickedUp.isError && (
+              <p className="form-error" role="alert">
+                Could not update shipment status.
+              </p>
+            )}
+          </div>
+          <div className="sender-action-card sender-payment-action">
+            <div className="sender-action-heading">
+              <CheckCircle2 size={20} />
+              <div>
+                <h2>Payment received</h2>
+                <p>
+                  Status: <strong>{order.senderPaymentStatus}</strong>
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              className="button button-success button-full"
+              disabled={
+                order.senderPaymentStatus === "PAID" ||
+                order.receiverCollectionStatus !== "COLLECTED" ||
+                senderPaid.isPending
+              }
+              onClick={() => senderPaid.mutate()}
+            >
+              <CheckCircle2 size={16} />
+              {senderPaid.isPending
+                ? "Updating payment..."
+                : order.senderPaymentStatus === "PAID"
+                  ? "Payment received"
+                  : "Confirm payment received"}
+            </button>
+            {order.receiverCollectionStatus !== "COLLECTED" &&
+              order.senderPaymentStatus !== "PAID" && (
+                <p className="muted">
+                  Waiting for receiver payment collection confirmation.
+                </p>
+              )}
+            {senderPaid.isError && (
+              <p className="form-error" role="alert">
+                Could not update payment status.
+              </p>
+            )}
+          </div>
+        </section>
 
         <div className="public-facts">
           <div>

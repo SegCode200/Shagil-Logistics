@@ -1750,22 +1750,62 @@ select {
 .sender-order-link {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 5px 14px;
+  gap: 8px 14px;
   color: inherit;
   text-decoration: none;
 }
 .sender-order-link strong {
   grid-column: 1;
 }
-.sender-order-link span:not(.status) {
+.sender-order-main {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+}
+.sender-order-main span,
+.sender-order-main small {
   grid-column: 1;
   color: var(--muted);
   font-size: 13px;
 }
+.sender-order-main small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+}
 .sender-order-link .status {
   grid-column: 2;
-  grid-row: 1 / span 2;
+  grid-row: 1;
   align-self: center;
+}
+.sender-order-meta {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  padding-top: 5px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+.sender-order-meta span {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sender-order-meta b {
+  color: var(--foreground);
+  font-size: 11px;
+}
+.sender-order-arrow {
+  grid-column: 2;
+  grid-row: 2;
+  align-self: end;
+  color: var(--brand-dark);
 }
 .sender-order-link:hover {
   border-color: var(--brand);
@@ -2297,6 +2337,9 @@ select {
   }
 }
 @media (max-width: 700px) {
+  .sender-order-meta {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
   .sidebar {
     width: 268px;
     transform: translateX(-100%);
