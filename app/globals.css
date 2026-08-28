@@ -1747,6 +1747,13 @@ select {
 .public-header-actions .eyebrow {
   margin: 0;
 }
+.public-header .sender-list-title {
+  margin: 3px 0 0;
+  color: var(--navy);
+  font-size: 30px;
+  font-weight: 850;
+  letter-spacing: 0;
+}
 .sender-order-link {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -1782,7 +1789,7 @@ select {
 .sender-order-meta {
   display: grid;
   grid-column: 1 / -1;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
   padding-top: 5px;
   border-top: 1px solid var(--line);
@@ -2337,8 +2344,35 @@ select {
   }
 }
 @media (max-width: 700px) {
+  .public-page {
+    padding: 24px 12px;
+  }
+  .sender-public {
+    padding: 20px 16px;
+  }
+  .public-header-actions {
+    align-items: flex-start;
+  }
+  .public-header .sender-list-title {
+    font-size: 28px;
+  }
+  .sender-order-link {
+    gap: 9px 10px;
+    padding: 15px;
+  }
+  .sender-order-link .status {
+    max-width: 132px;
+    text-align: right;
+  }
   .sender-order-meta {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 7px;
+  }
+  .sender-order-meta span {
+    font-size: 11px;
+  }
+  .sender-order-meta b {
+    font-size: 10px;
   }
   .sidebar {
     width: 268px;

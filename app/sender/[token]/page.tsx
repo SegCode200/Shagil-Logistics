@@ -51,7 +51,8 @@ export default function SenderAccessPage({ params }: Props) {
         <header className="public-header">
           <div className="public-header-actions">
             <div>
-              <p className="eyebrow">Delivery List</p>
+              <p className="eyebrow">Sender access</p>
+              <h1 className="sender-list-title">Delivery List</h1>
             </div>
             <Link className="button button-primary" href={`/order?token=${encodeURIComponent(token)}`}>
               <Plus size={16} /> Create Delivery 
@@ -91,11 +92,8 @@ export default function SenderAccessPage({ params }: Props) {
                   </span>
                   <div className="sender-order-meta">
                     <span><b>Receiver</b>{order.receiverName || "—"}</span>
-                    <span><b>Payment</b>{order.paymentMethod === "PAYMENT_ON_DELIVERY" ? "On delivery" : "Already paid"}</span>
                     <span><b>Fee</b>₦{Number(order.deliveryFee).toLocaleString()}</span>
-                    <span><b>Created</b>{formatDate(order.createdAt)}</span>
                   </div>
-                  <ArrowUpRight className="sender-order-arrow" size={17} />
                 </Link>
               ))}
             </div>
