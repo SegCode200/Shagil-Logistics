@@ -37,7 +37,7 @@ export default function SenderAccessPage({ params }: Props) {
       <main className="public-page">
         <div className="public-card">
           <p className="eyebrow">Shagil sender access</p>
-          <h1>Orders unavailable</h1>
+          <h1>Deliveries unavailable</h1>
           <p className="subtext">This link may be invalid or expired.</p>
         </div>
       </main>
@@ -51,7 +51,6 @@ export default function SenderAccessPage({ params }: Props) {
         <header className="public-header">
           <div className="public-header-actions">
             <div>
-              <p className="eyebrow">Sender access</p>
               <h1 className="sender-list-title">Delivery List</h1>
             </div>
             <Link className="button button-primary" href={`/order?token=${encodeURIComponent(token)}`}>
@@ -65,7 +64,7 @@ export default function SenderAccessPage({ params }: Props) {
 
         {orders.length === 0 ? (
           <EmptyState
-            title="No orders yet"
+            title="No Deliveries yet"
             description="Create a delivery request to see it here."
             // action={
             //   <Link className="button button-primary" href={`/order?token=${encodeURIComponent(token)}`}>

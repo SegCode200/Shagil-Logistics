@@ -2409,7 +2409,7 @@ select {
     align-items: flex-start;
   }
   .public-header .sender-list-title {
-    font-size: 28px;
+    font-size: 25px;
   }
   .sender-order-link {
     gap: 9px 10px;
