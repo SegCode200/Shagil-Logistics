@@ -102,7 +102,7 @@ export default function RiderDashboard() {
                       href={`/rider/deliveries/${order.orderId || order.id}/confirm`}
                       className="button button-primary button-full"
                     >
-                      Confirm delivery <ArrowRight size={17} />
+                      See delivery <ArrowRight size={17} />
                     </Link>
                   )}
               </article>

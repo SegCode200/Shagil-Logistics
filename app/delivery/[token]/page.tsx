@@ -74,6 +74,37 @@ export default function CustomerDeliveryPage({
           <p>Show this code to the rider when your order is delivered.</p>
         </div>
         <section className="public-info-section">
+
+              {order.paymentMethod === "PAYMENT_ON_DELIVERY" && (
+            <div className="public-action">
+              <button
+                type="button"
+                className="button button-success button-full"
+                disabled={
+                  order.receiverCollectionStatus === "COLLECTED" ||
+                  confirmPayment.isPending
+                }
+                onClick={() => {
+                  if (window.confirm("Confirm that payment has been made?"))
+                    confirmPayment.mutate();
+                }}
+              >
+                <CheckCircle2 size={16} />
+                {confirmPayment.isPending
+                  ? "Confirming payment..."
+                  : order.receiverCollectionStatus === "COLLECTED"
+                    ? "Payment collected"
+                    : "Confirm payment collected"}
+              </button>
+              {confirmPayment.isError && (
+                <p className="form-error" role="alert">
+                  Could not confirm payment collection. Please try again.
+                </p>
+              )}
+            </div>
+          )}
+          </section>
+        <section className="public-info-section">
           <h2>Sender information</h2>
           <div className="public-facts">
             <div>
@@ -151,14 +182,14 @@ export default function CustomerDeliveryPage({
         <section className="public-info-section">
           <h2>Delivery information</h2>
           <div className="public-facts">
-            <div>
+            {/* <div>
               <span>Receiver</span>
               <strong>{order.receiverName || "—"}</strong>
             </div>
             <div>
               <span>Receiver phone</span>
               <PhoneNumber value={receiverPhone} />
-            </div>
+            </div> */}
             <div>
               <span>Delivery address</span>
               <strong>{order.deliveryAddress}</strong>
@@ -181,34 +212,7 @@ export default function CustomerDeliveryPage({
                 </div>
               )}
           </div>
-          {order.paymentMethod === "PAYMENT_ON_DELIVERY" && (
-            <div className="public-action">
-              <button
-                type="button"
-                className="button button-success button-full"
-                disabled={
-                  order.receiverCollectionStatus === "COLLECTED" ||
-                  confirmPayment.isPending
-                }
-                onClick={() => {
-                  if (window.confirm("Confirm that payment has been collected?"))
-                    confirmPayment.mutate();
-                }}
-              >
-                <CheckCircle2 size={16} />
-                {confirmPayment.isPending
-                  ? "Confirming payment..."
-                  : order.receiverCollectionStatus === "COLLECTED"
-                    ? "Payment collected"
-                    : "Confirm payment collected"}
-              </button>
-              {confirmPayment.isError && (
-                <p className="form-error" role="alert">
-                  Could not confirm payment collection. Please try again.
-                </p>
-              )}
-            </div>
-          )}
+    
         </section>
         <div className="timeline">
           {timeline.map((status, index) => (

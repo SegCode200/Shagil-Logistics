@@ -87,11 +87,40 @@ export type PublicStation = {
   address?: string | null;
   zoneDistances?: StationZoneDistance[];
 };
-export type OrderEvent = { id: string; type: string; createdAt: string; createdBy?: User | null };
-export type Notification = { id: string; type: string; status: "SENT" | "FAILED"; createdAt: string };
-export type RiderRating = { id: string; orderId: string; riderId?: string; rating: number; comment?: string | null; createdAt: string };
-export type RiderReportStatus = "OPEN" | "UNDER_REVIEW" | "RESOLVED" | "DISMISSED";
-export type RiderReport = { id: string; orderId: string; riderId?: string; reason: string; description: string; status: RiderReportStatus; createdAt: string };
+export type OrderEvent = {
+  id: string;
+  type: string;
+  createdAt: string;
+  createdBy?: User | null;
+};
+export type Notification = {
+  id: string;
+  type: string;
+  status: "SENT" | "FAILED";
+  createdAt: string;
+};
+export type RiderRating = {
+  id: string;
+  orderId: string;
+  riderId?: string;
+  rating: number;
+  comment?: string | null;
+  createdAt: string;
+};
+export type RiderReportStatus =
+  | "OPEN"
+  | "UNDER_REVIEW"
+  | "RESOLVED"
+  | "DISMISSED";
+export type RiderReport = {
+  id: string;
+  orderId: string;
+  riderId?: string;
+  reason: string;
+  description: string;
+  status: RiderReportStatus;
+  createdAt: string;
+};
 
 export type User = {
   id: string;
@@ -178,8 +207,8 @@ export type Order = {
   stationId?: string;
   deliveryZone?: DeliveryZone | null;
   station?: Station | null;
-    bikeId?: string | null;
-    companyBikeId?: string | null;
+  bikeId?: string | null;
+  companyBikeId?: string | null;
   managedBy?: User | null;
   paymentMethod?: PaymentMethod;
   deliveryType?: DeliveryType;
@@ -211,11 +240,45 @@ export type Order = {
   companyBankName?: string | null;
 };
 
-export type DeliveryZone = { id: string; name: string; fee: number | string; active: boolean; station?: Station | null; stationId?: string | null; updatedAt?: string };
-export type DeliveryZoneImportRow = { locationCode: string; locationName: string; deliveryFee: number | string; status: "ACTIVE" | "INACTIVE" };
-export type DeliveryZoneImportChange = { locationId: string; location: string; oldFee: number | string; newFee: number | string; changeType: "UPDATED" };
-export type DeliveryZoneImportError = { row: number; locationId?: string; errors: string[] };
-export type DeliveryZoneImport = { importId: string; summary: { total: number; updated: number; unchanged: number; invalid: number }; changes: DeliveryZoneImportChange[]; errors: DeliveryZoneImportError[]; applied: boolean };
+export type DeliveryZone = {
+  id: string;
+  name: string;
+  fee: number | string;
+  active: boolean;
+  station?: Station | null;
+  stationId?: string | null;
+  updatedAt?: string;
+};
+export type DeliveryZoneImportRow = {
+  locationCode: string;
+  locationName: string;
+  deliveryFee: number | string;
+  status: "ACTIVE" | "INACTIVE";
+};
+export type DeliveryZoneImportChange = {
+  locationId: string;
+  location: string;
+  oldFee: number | string;
+  newFee: number | string;
+  changeType: "UPDATED";
+};
+export type DeliveryZoneImportError = {
+  row: number;
+  locationId?: string;
+  errors: string[];
+};
+export type DeliveryZoneImport = {
+  importId: string;
+  summary: {
+    total: number;
+    updated: number;
+    unchanged: number;
+    invalid: number;
+  };
+  changes: DeliveryZoneImportChange[];
+  errors: DeliveryZoneImportError[];
+  applied: boolean;
+};
 
 export type Rider = Omit<User, "stationId"> & {
   address?: string | null;
@@ -230,7 +293,16 @@ export type Rider = Omit<User, "stationId"> & {
   ratingDistribution?: Partial<Record<1 | 2 | 3 | 4 | 5, number>>;
 };
 
-export type Pagination = { page: number; pageSize: number; total: number; totalPages: number };
+export type Pagination = {
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+};
 export type PaginatedResponse<T> = { items: T[]; pagination: Pagination };
 
-export type LoginResponse = { user?: User; token?: string; accessToken?: string };
+export type LoginResponse = {
+  user?: User;
+  token?: string;
+  accessToken?: string;
+};

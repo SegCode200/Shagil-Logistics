@@ -43,7 +43,7 @@ export default function SenderAccessPage({ params }: Props) {
       </main>
     );
 
-  const orders = senderOrders.data?.orders || [];
+  const orders = senderOrders.data || [];
 
   return (
     <main className="public-page">
@@ -51,8 +51,7 @@ export default function SenderAccessPage({ params }: Props) {
         <header className="public-header">
           <div className="public-header-actions">
             <div>
-              <p className="eyebrow">Shagil sender access</p>
-              <h2>List of Delivery</h2>
+              <p className="eyebrow">Delivery List</p>
             </div>
             <Link className="button button-primary" href={`/order?token=${encodeURIComponent(token)}`}>
               <Plus size={16} /> Create Delivery 
@@ -67,11 +66,11 @@ export default function SenderAccessPage({ params }: Props) {
           <EmptyState
             title="No orders yet"
             description="Create a delivery request to see it here."
-            action={
-              <Link className="button button-primary" href={`/order?token=${encodeURIComponent(token)}`}>
-                <Plus size={16} /> Create Delivery
-              </Link>
-            }
+            // action={
+            //   <Link className="button button-primary" href={`/order?token=${encodeURIComponent(token)}`}>
+            //     <Plus size={16} /> Create Delivery
+            //   </Link>
+            // }
           />
         ) : (
           <section className="sender-order-history" aria-label="Sender orders">

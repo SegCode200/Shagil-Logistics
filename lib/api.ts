@@ -57,10 +57,12 @@ function listFromResponse<T>(value: unknown): T[] {
       reports?: unknown;
       riders?: unknown;
       data?: unknown;
+      orders?:unknown;
     };
     if (Array.isArray(result.items)) return result.items as T[];
     if (Array.isArray(result.reports)) return result.reports as T[];
     if (Array.isArray(result.riders)) return result.riders as T[];
+    if (Array.isArray(result.orders)) return result.orders as T[];
     if (Array.isArray(result.data)) return result.data as T[];
   }
   return [];
