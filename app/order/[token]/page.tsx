@@ -444,6 +444,7 @@ export default function PublicOrderPage({ params }: Props) {
   });
   const [values, setValues] = useState(initialValues);
   const [validationMessage, setValidationMessage] = useState("");
+  const [validationTarget, setValidationTarget] = useState("");
   const [images, setImages] = useState<{ file: File; url: string }[]>([]);
   const [cameraOpen, setCameraOpen] = useState(false);
   const [cameraError, setCameraError] = useState("");
@@ -496,25 +497,31 @@ export default function PublicOrderPage({ params }: Props) {
     const missingField = requiredFields.find(([key]) => !values[key].trim());
     if (missingField) {
       setValidationMessage(missingField[1]);
+      setValidationTarget(missingField[0]);
       return;
     }
     if (values.senderPhoneNumber.trim().length < 7) {
       setValidationMessage("Enter a valid sender phone number.");
+      setValidationTarget("senderPhoneNumber");
       return;
     }
     if (values.receiverPhoneNumber.trim().length < 7) {
       setValidationMessage("Enter a valid receiver phone number.");
+      setValidationTarget("receiverPhoneNumber");
       return;
     }
     if (deliveryFee == null) {
       setValidationMessage("Select an area with a configured station distance.");
+      setValidationTarget("deliveryZoneId");
       return;
     }
     if (images.length === 0) {
       setValidationMessage("Add at least one product image before continuing.");
+      setValidationTarget("productImages");
       return;
     }
     setValidationMessage("");
+    setValidationTarget("");
     mutation.mutate();
   }
   async function openCamera() {
@@ -619,7 +626,22 @@ export default function PublicOrderPage({ params }: Props) {
             <button
               type="button"
               className="button button-primary button-full"
-              onClick={() => setValidationMessage("")}
+              onClick={() => {
+                setValidationMessage("");
+                requestAnimationFrame(() => {
+                  const targetId =
+                    validationTarget === "productImages"
+                      ? "product-image-upload"
+                      : validationTarget === "stationId"
+                        ? "create-station"
+                        : validationTarget === "deliveryZoneId"
+                          ? "create-area"
+                          : `create-${validationTarget}`;
+                  const target = document.getElementById(targetId);
+                  target?.scrollIntoView({ behavior: "smooth", block: "center" });
+                  if (target instanceof HTMLElement) target.focus();
+                });
+              }}
             >
               Continue
             </button>
@@ -643,12 +665,14 @@ export default function PublicOrderPage({ params }: Props) {
             <div className="form-grid">
               <Field
                 label="Sender / business name"
+                id="create-senderName"
                 value={values.senderName}
                 required
                 onChange={(v) => set("senderName", v)}
               />
               <Field
                 label="Sender phone number"
+                id="create-senderPhoneNumber"
                 type="tel"
                 required
                 value={values.senderPhoneNumber}
@@ -663,6 +687,7 @@ export default function PublicOrderPage({ params }: Props) {
               <div className="form-grid">
                 <Field
                   label="Sender address/  pickup address"
+                  id="create-pickupAddress"
                   required
                   value={values.pickupAddress}
                   onChange={(v) => set("pickupAddress", v)}
@@ -674,12 +699,14 @@ export default function PublicOrderPage({ params }: Props) {
             <div className="form-grid">
               <Field
                 label="Receiver name"
+                id="create-receiverName"
                 required
                 value={values.receiverName}
                 onChange={(v) => set("receiverName", v)}
               />
               <Field
                 label="Receiver phone number"
+                id="create-receiverPhoneNumber"
                 type="tel"
                 required
                 value={values.receiverPhoneNumber}
@@ -710,6 +737,7 @@ export default function PublicOrderPage({ params }: Props) {
           </Section>
               <Field
                 label="Receiver / Delivery address"
+                id="create-deliveryAddress"
                 required
                 value={values.deliveryAddress}
                 onChange={(v) => set("deliveryAddress", v)}
@@ -788,6 +816,7 @@ export default function PublicOrderPage({ params }: Props) {
             <button
               type="button"
               className="upload-field"
+              id="product-image-upload"
               onClick={openCamera}
               disabled={images.length >= 5}
             >
@@ -927,7 +956,7 @@ function Field({
   type = "text",
   required = false,
   onBlur,
-  error,
+  id,
 }: {
   label: string;
   value: string;
@@ -935,12 +964,13 @@ function Field({
   type?: string;
   required?: boolean;
   onBlur?: () => void;
-  error?: string;
+  id?: string;
 }) {
   return (
     <div className="field">
       <label>{label}</label>
       <input
+        id={id}
         className="input"
         aria-required={required}
         type={type}
@@ -948,7 +978,7 @@ function Field({
         onChange={(e) => onChange(e.target.value)}
         onBlur={onBlur}
       />
-      {error && <small>{error}</small>}
     </div>
   );
 }
+

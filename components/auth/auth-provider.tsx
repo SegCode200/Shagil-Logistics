@@ -2,7 +2,7 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { createContext, useContext, useEffect } from "react";
+import { createContext, useContext, useEffect, useSyncExternalStore } from "react";
 import { api } from "@/lib/api";
 import type { User } from "@/lib/types";
 
@@ -22,17 +22,25 @@ const AuthContext = createContext<{
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient();
+  const hydrated = useSyncExternalStore(
+    () => () => undefined,
+    () => true,
+    () => false,
+  );
   const hasSession =
-    typeof window !== "undefined" &&
-    (Boolean(localStorage.getItem("auth_token")) || document.cookie.length > 0);
+    hydrated &&
+    (Boolean(localStorage.getItem("auth_token")) ||
+      document.cookie.length > 0);
   const query = useQuery({
     queryKey: ["me"],
     queryFn: api.getCurrentUser,
-    enabled: hasSession,
+    enabled: hydrated && hasSession,
     retry: false,
   });
   useEffect(() => {
-    if (query.error) localStorage.removeItem("auth_token");
+    if (query.error instanceof Error && query.error.message === "SESSION_EXPIRED") {
+      localStorage.removeItem("auth_token");
+    }
   }, [query.error]);
   async function login(data: { phone: string; password: string }) {
     const result = await api.login(data);
@@ -51,7 +59,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     <AuthContext.Provider
       value={{
         user: query.data || null,
-        isLoading: hasSession && query.isLoading,
+        isLoading: !hydrated || (hasSession && query.isLoading),
         login,
         logout,
       }}
