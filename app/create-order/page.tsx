@@ -156,6 +156,10 @@ export default function CreateOrderPage() {
       setValidationMessage("Enter a valid receiver phone number.");
       return;
     }
+    if (images.length === 0) {
+      setValidationMessage("Add at least one product image before continuing.");
+      return;
+    }
     setValidationMessage("");
     mutation.mutate();
   }
@@ -217,7 +221,7 @@ export default function CreateOrderPage() {
           { file, url: URL.createObjectURL(file) },
         ]);
         setCameraError("");
-        if (images.length + 1 >= 5) closeCamera();
+        closeCamera();
       },
       "image/webp",
       0.78,

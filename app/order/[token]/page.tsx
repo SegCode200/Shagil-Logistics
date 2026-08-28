@@ -510,6 +510,10 @@ export default function PublicOrderPage({ params }: Props) {
       setValidationMessage("Select an area with a configured station distance.");
       return;
     }
+    if (images.length === 0) {
+      setValidationMessage("Add at least one product image before continuing.");
+      return;
+    }
     setValidationMessage("");
     mutation.mutate();
   }
@@ -572,7 +576,7 @@ export default function PublicOrderPage({ params }: Props) {
           { file, url: URL.createObjectURL(file) },
         ]);
         setCameraError("");
-        if (images.length + 1 >= 3) closeCamera();
+        closeCamera();
       },
       "image/webp",
       0.78,
