@@ -5,7 +5,7 @@ import { ArrowUpRight, Plus } from "lucide-react";
 import { use, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { EmptyState, LoadingState } from "@/components/ui/primitives";
+import { EmptyState, LoadingState, formatDate } from "@/components/ui/primitives";
 
 type Props = { params: Promise<{ token: string }> };
 
@@ -36,8 +36,7 @@ export default function SenderAccessPage({ params }: Props) {
     return (
       <main className="public-page">
         <div className="public-card">
-          <p className="eyebrow">Shagil sender access</p>
-          <h1>Deliveries unavailable</h1>
+          <h1>Delivery unavailable</h1>
           <p className="subtext">This link may be invalid or expired.</p>
         </div>
       </main>
@@ -58,13 +57,13 @@ export default function SenderAccessPage({ params }: Props) {
             </Link>
           </div>
           <p className="subtext">
-            Select an order to view its delivery details and current status.
+            Select an delivery to view its details and current status.
           </p>
         </header>
 
         {orders.length === 0 ? (
           <EmptyState
-            title="No Deliveries yet"
+            title="No orders yet"
             description="Create a delivery request to see it here."
             // action={
             //   <Link className="button button-primary" href={`/order?token=${encodeURIComponent(token)}`}>
@@ -74,38 +73,32 @@ export default function SenderAccessPage({ params }: Props) {
           />
         ) : (
           <section className="sender-order-history" aria-label="Sender orders">
-            <div className="sender-order-list-heading">
-              <h2>Recent deliveries</h2>
-              <span>{orders.length} {orders.length === 1 ? "order" : "orders"}</span>
-            </div>
             <div className="stack-list">
               {orders.map((order) => (
                 <Link
-                  className="sender-order-link"
+                  className="detail-card sender-order-link"
                   href={`/sender/${token}/orders/${encodeURIComponent(order.orderId)}`}
                   key={order.orderId}
                 >
                   <div className="sender-order-main">
-                    <div className="sender-order-heading">
-                      <strong>{order.orderId}</strong>
-                      <span className={`status status-${order.status.toLowerCase()}`}>
-                        {labels[order.status] || order.status}
-                      </span>
-                    </div>
-                    <span className="sender-order-destination-label">Delivering to</span>
-                    <span className="sender-order-destination">{order.deliveryZone?.name || "Delivery area not set"}</span>
+                    <strong>{order.orderId}</strong>
+                    <span>{order.deliveryZone?.name || "Delivery area not set"}</span>
                     <small>{order.deliveryAddress}</small>
                   </div>
+                  <span className={`status status-${order.status.toLowerCase()}`}>
+                    {labels[order.status] || order.status}
+                  </span>
                   <div className="sender-order-meta">
                     <span><b>Receiver</b>{order.receiverName || "—"}</span>
                     <span><b>Fee</b>₦{Number(order.deliveryFee).toLocaleString()}</span>
                   </div>
-                  <span className="sender-order-open">View details <ArrowUpRight size={15} /></span>
                 </Link>
               ))}
             </div>
           </section>
         )}
+
+        
       </div>
     </main>
   );
