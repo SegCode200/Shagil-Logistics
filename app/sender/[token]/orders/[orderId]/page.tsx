@@ -17,7 +17,10 @@ type Props = { params: Promise<{ token: string; orderId: string }> };
 export default function SenderOrderDetailsPage({ params }: Props) {
   const { token, orderId } = use(params);
   const queryClient = useQueryClient();
-  const [notice, setNotice] = useState("");
+  const [feedback, setFeedback] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
   const orders = useQuery({
     queryKey: ["public-sender-orders", token],
     queryFn: () => api.getPublicSenderOrders(token),
@@ -25,24 +28,27 @@ export default function SenderOrderDetailsPage({ params }: Props) {
   const senderPaid = useMutation({
     mutationFn: () => api.senderPaid(orderId),
     onSuccess: () => {
-      setNotice("Payment received status updated successfully.");
+      setFeedback({ type: "success", message: "Payment received status updated successfully." });
       queryClient.invalidateQueries({
         queryKey: ["public-sender-orders", token],
       });
     },
+    onError: () => setFeedback({ type: "error", message: "Could not update payment status." }),
   });
   const pickedUp = useMutation({
-    mutationFn: (riderId: string) => api.senderPickedUp(orderId, riderId),
+    mutationFn: () => api.senderPickedUp(token, orderId),
     onSuccess: () => {
-      setNotice("Shipment marked as picked up successfully.");
+      setFeedback({ type: "success", message: "Shipment marked as picked up successfully." });
       queryClient.invalidateQueries({
         queryKey: ["public-sender-orders", token],
       });
     },
+    onError: () => setFeedback({ type: "error", message: "Could not update shipment status." }),
   });
   const resendCode = useMutation({
     mutationFn: () => api.resendReceiverDeliveryCode(token),
-    onSuccess: () => setNotice("Receiver delivery code sent successfully."),
+    onSuccess: () => setFeedback({ type: "success", message: "Receiver delivery code sent successfully." }),
+    onError: () => setFeedback({ type: "error", message: "Could not resend the receiver code." }),
   });
 
   useEffect(() => {
@@ -81,6 +87,16 @@ export default function SenderOrderDetailsPage({ params }: Props) {
 
   return (
     <main className="public-page">
+      {feedback && (
+        <div className="validation-dialog-backdrop">
+          <section className={`validation-dialog action-feedback-${feedback.type}`} role="alertdialog" aria-modal="true" aria-labelledby="action-feedback-title">
+            <p className="eyebrow">{feedback.type === "success" ? "Success" : "Action failed"}</p>
+            <h2 id="action-feedback-title">{feedback.type === "success" ? "Action completed" : "Please try again"}</h2>
+            <p>{feedback.message}</p>
+            <button type="button" className="button button-primary button-full" onClick={() => setFeedback(null)}>Continue</button>
+          </section>
+        </div>
+      )}
       <div className="public-card sender-public">
         <Link className="back-link" href={`/sender/${token}`}>
           <ArrowLeft size={16} /> Back to orders
@@ -90,13 +106,13 @@ export default function SenderOrderDetailsPage({ params }: Props) {
             <p className="eyebrow">Sender order details</p>
             <h1>{order.orderId}</h1>
           </div>
-          <OrderStatusBadge status={order.status} />
+          <div className="sender-statuses">
+            <OrderStatusBadge status={order.status} />
+            <span className={`status sender-payment-status status-${order.senderPaymentStatus.toLowerCase()}`}>
+              Sender payment: {order.senderPaymentStatus}
+            </span>
+          </div>
         </header>
-        {notice && (
-          <p className="success-text" role="status">
-            {notice}
-          </p>
-        )}
         <section className="sender-actions" aria-label="Order actions">
           <div className="sender-action-card sender-code-action">
             <div className="sender-action-heading">
@@ -117,11 +133,6 @@ export default function SenderOrderDetailsPage({ params }: Props) {
                 ? "Sending code..."
                 : "Resend receiver code"}
             </button>
-            {resendCode.isError && (
-              <p className="form-error" role="alert">
-                Could not resend the receiver code.
-              </p>
-            )}
           </div>
           <div className="sender-action-card sender-pickup-action">
             <div className="sender-action-heading">
@@ -139,9 +150,7 @@ export default function SenderOrderDetailsPage({ params }: Props) {
                 !["ASSIGNED", "APPROVED"].includes(order.status) ||
                 pickedUp.isPending
               }
-              onClick={() =>
-                order.assignedRiderId && pickedUp.mutate(order.assignedRiderId)
-              }
+              onClick={() => pickedUp.mutate()}
             >
               <PackageCheck size={16} />
               {pickedUp.isPending
@@ -150,11 +159,6 @@ export default function SenderOrderDetailsPage({ params }: Props) {
                   ? "Shipment picked up"
                   : "Mark shipment picked up"}
             </button>
-            {pickedUp.isError && (
-              <p className="form-error" role="alert">
-                Could not update shipment status.
-              </p>
-            )}
           </div>
           <div className="sender-action-card sender-payment-action">
             <div className="sender-action-heading">
@@ -189,11 +193,6 @@ export default function SenderOrderDetailsPage({ params }: Props) {
                   Waiting for receiver payment collection confirmation.
                 </p>
               )}
-            {senderPaid.isError && (
-              <p className="form-error" role="alert">
-                Could not update payment status.
-              </p>
-            )}
           </div>
         </section>
 

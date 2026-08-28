@@ -403,13 +403,10 @@ export const api = {
         method: "POST",
       },
     ),
-  senderPickedUp: (orderId: string, riderId: string) =>
+  senderPickedUp: (token: string, orderId: string) =>
     request<PublicSenderOrder>(
-      `/riders/orders/${encodeURIComponent(orderId)}/picked-up`,
-      {
-        method: "POST",
-        body: JSON.stringify({ riderId }),
-      },
+      `/public/sender/${encodeURIComponent(token)}/orders/${encodeURIComponent(orderId)}/pickup`,
+      { method: "POST" },
     ),
   resendReceiverDeliveryCode: (token: string) =>
     request<{ notificationStatus?: string }>(
