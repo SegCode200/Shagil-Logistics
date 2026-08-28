@@ -390,10 +390,91 @@ select {
 .import-modal {
   position: relative;
   width: min(480px, 100%);
-  padding: 25px;
+  padding: 30px;
   border-radius: 12px;
   background: white;
   box-shadow: 0 25px 70px #09223544;
+}
+.station-create-modal {
+  width: min(560px, 100%);
+}
+.station-create-intro {
+  margin: -8px 0 24px;
+  max-width: 440px;
+  line-height: 1.55;
+}
+.station-upload {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 76px;
+  padding: 14px;
+  border: 1px dashed #c4d0d5;
+  border-radius: 10px;
+  color: var(--navy);
+  background: #f7faf9;
+  cursor: pointer;
+  transition: border-color 0.18s ease, background 0.18s ease;
+}
+.station-upload:hover,
+.station-upload.has-file {
+  border-color: var(--brand);
+  background: #fff8f3;
+}
+.station-upload-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  border-radius: 9px;
+  color: var(--brand-dark);
+  background: #f6d9ca;
+}
+.station-upload-copy {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+}
+.station-upload-copy strong,
+.station-upload-copy small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.station-upload-copy strong {
+  font-size: 13px;
+}
+.station-upload-copy small,
+.station-upload-action {
+  color: var(--muted);
+  font-size: 12px;
+}
+.station-upload-action {
+  margin-left: auto;
+  padding: 7px 9px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--brand-dark);
+  background: white;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.station-upload-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+.station-upload-hint {
+  display: block;
+  margin-top: 8px;
+  line-height: 1.45;
+}
+.station-create-modal .form-actions {
+  justify-content: flex-end;
+  margin-top: 24px;
 }
 .import-modal h2 {
   margin: 0 0 18px;

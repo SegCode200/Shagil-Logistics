@@ -20,6 +20,7 @@ type Values = {
   pickupAddress: string;
   pickupInstructions: string;
   paymentMethod: "ALREADY_PAID" | "PAYMENT_ON_DELIVERY";
+  deliveryType: "NORMAL" | "EXPRESS";
   orderAmount: string;
 };
 const initialValues: Values = {
@@ -34,6 +35,7 @@ const initialValues: Values = {
   pickupAddress: "",
   pickupInstructions: "",
   paymentMethod: "PAYMENT_ON_DELIVERY",
+  deliveryType: "NORMAL",
   orderAmount: "",
 };
 function removeEmptyValues(values: Values) {
@@ -85,6 +87,10 @@ export default function CreateOrderPage() {
     queryKey: ["delivery-zones"],
     queryFn: api.getDeliveryZones,
   });
+  const settings = useQuery({
+    queryKey: ["company-settings"],
+    queryFn: api.getSettings,
+  });
   const stations = useQuery({
     queryKey: ["public-stations"],
     queryFn: api.getPublicStations,
@@ -99,6 +105,13 @@ export default function CreateOrderPage() {
   const [created, setCreated] = useState<Awaited<
     ReturnType<typeof api.createOrder>
   > | null>(null);
+  const selectedDistance = stations.data
+    ?.find((station) => station.id === values.stationId)
+    ?.zoneDistances?.find((distance) => distance.deliveryZoneId === values.deliveryZoneId);
+  const deliveryFee = selectedDistance
+    ? Number(settings.data?.fixedDeliveryRate || 0) +
+      Number(settings.data?.variableDeliveryRate || 0) * Number(selectedDistance.distanceKm)
+    : undefined;
 
   const mutation = useMutation({
     mutationFn: () =>
@@ -114,6 +127,7 @@ export default function CreateOrderPage() {
           orderAmount: values.orderAmount
             ? Number(values.orderAmount)
             : undefined,
+          deliveryFee,
         },
         images.map((image) => image.file),
       ),
@@ -364,17 +378,15 @@ export default function CreateOrderPage() {
                     <strong>
                       {values.deliveryZoneId
                         ? `₦${Number(
-                            zones.data?.find(
-                              (zone) => zone.id === values.deliveryZoneId,
-                            )?.fee || 0,
+                            deliveryFee || 0,
                           ).toLocaleString()}`
                         : "Select an area"}
                     </strong>
                   </div>
                   <span className="delivery-fee-zone">
-                    {zones.data?.find(
-                      (zone) => zone.id === values.deliveryZoneId,
-                    )?.name || "Fee will appear here"}
+                    {selectedDistance
+                      ? `${selectedDistance.distanceKm} km`
+                      : "Distance will appear here"}
                   </span>
                 </div>
                 <p className="delivery-fee-note">
@@ -429,6 +441,23 @@ export default function CreateOrderPage() {
                 ))}
               </div>
             )}
+          </Section>
+          <Section title="5. Delivery type">
+            <div className="field">
+              <label htmlFor="delivery-type">Delivery type</label>
+              <select
+                className="select"
+                id="delivery-type"
+                required
+                value={values.deliveryType}
+                onChange={(event) =>
+                  set("deliveryType", event.target.value as Values["deliveryType"])
+                }
+              >
+                <option value="NORMAL">Normal delivery</option>
+                <option value="EXPRESS">Express/Charter delivery</option>
+              </select>
+            </div>
           </Section>
           <Section title="6. Payment">
             <select

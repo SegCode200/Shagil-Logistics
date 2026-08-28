@@ -31,6 +31,7 @@ export default function OwnerDashboard() {
     assigned: items.filter((o) => ["ASSIGNED", "APPROVED"].includes(o.status)).length,
     pickedUp: items.filter((o) => o.status === "PICKED_UP").length,
     delivered: items.filter((o) => o.status === "DELIVERED").length,
+    express: items.filter((o) => o.deliveryType === "EXPRESS").length,
     cod: items.filter((o) => o.paymentMethod === "PAYMENT_ON_DELIVERY").length,
     approved: items.filter(
       (o) => o.approvalStatus === "APPROVED" || o.status === "APPROVED",
@@ -61,6 +62,7 @@ export default function OwnerDashboard() {
             ["Assigned", counts.assigned, "dot-blue"],
             ["Picked up", counts.pickedUp, "dot-blue"],
             ["Delivered", counts.delivered, "dot-green"],
+            ["Express delivery", counts.express, "dot-blue"],
           ].map(([label, value, dot]) => (
             <Link
               className="summary-card summary-card-link"

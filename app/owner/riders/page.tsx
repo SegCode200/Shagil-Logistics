@@ -101,7 +101,7 @@ export default function RidersPage() {
                     {...form.register("name")}
                   />
                 </div>
-                                <div className="field">
+                <div className="field">
                   <label htmlFor="rider-phone">Phone</label>
                   <input
                     className="input"
@@ -126,7 +126,7 @@ export default function RidersPage() {
                     <span className="field-hint">Add an unassigned active bike first.</span>
                   )}
                 </div>
-                <div className="field field-span">
+                {/* <div className="field field-span">
                   <span className="field-label">Delivery zones</span>
                   <span className="field-hint">Select all zones this rider can serve.</span>
                   <div className="rider-zone-picker">
@@ -156,7 +156,7 @@ export default function RidersPage() {
                   {!zones.isLoading && !zones.isError && !(zones.data || []).some((zone) => zone.active) && (
                     <span className="muted">No active delivery zones available.</span>
                   )}
-                </div>
+                </div> */}
 
               </div>
               {mutation.isError && (

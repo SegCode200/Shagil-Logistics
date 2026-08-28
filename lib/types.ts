@@ -14,10 +14,24 @@ export type CompanyPaymentStatus = "PENDING" | "PAID";
 export type SenderPaymentStatus = "PENDING" | "PAID";
 export type ReceiverCollectionStatus = "NOT_COLLECTED" | "COLLECTED";
 export type PickupMethod = "SENDER_DROPOFF" | "RIDER_PICKUP";
+export type DeliveryType = "NORMAL" | "EXPRESS";
 export type AccountDetails = {
   accountName: string;
   accountNumber: string;
   bankName: string;
+};
+export type CompanySettings = {
+  maximumInsuranceValue: number | string;
+  fixedDeliveryRate: number | string;
+  variableDeliveryRate: number | string;
+  expressMultiplier: number | string;
+  accountName: string | null;
+  accountNumber: string | null;
+  bankName: string | null;
+};
+export type StationZoneDistance = {
+  deliveryZoneId: string;
+  distanceKm: number | string;
 };
 export type Sender = {
   id: string;
@@ -35,7 +49,6 @@ export type CompanyBike = {
   status?: "ACTIVE" | "INACTIVE";
   rider?: { id: string; name: string; phone?: string; active?: boolean } | null;
   station?: { id: string; name: string; stationCode: string } | null;
-  bikeAccountDetails?: AccountDetails | null;
 };
 
 export type OrderImage = {
@@ -68,7 +81,12 @@ export type PublicSenderOrder = {
   accountDetails?: AccountDetails | null;
   images?: OrderImage[];
 };
-export type PublicStation = { id: string; name: string; address?: string | null };
+export type PublicStation = {
+  id: string;
+  name: string;
+  address?: string | null;
+  zoneDistances?: StationZoneDistance[];
+};
 export type OrderEvent = { id: string; type: string; createdAt: string; createdBy?: User | null };
 export type Notification = { id: string; type: string; status: "SENT" | "FAILED"; createdAt: string };
 export type RiderRating = { id: string; orderId: string; riderId?: string; rating: number; comment?: string | null; createdAt: string };
@@ -98,6 +116,7 @@ export type Station = {
   managers?: StationManager[];
   riders?: StationRider[];
   companyBikes?: CompanyBike[];
+  zoneDistances?: StationZoneDistance[];
   createdAt?: string;
   updatedAt?: string;
 };
@@ -164,6 +183,7 @@ export type Order = {
     companyBikeId?: string | null;
   managedBy?: User | null;
   paymentMethod?: PaymentMethod;
+  deliveryType?: DeliveryType;
   paymentStatus?: PaymentStatus;
   orderAmount?: number | string;
   deliveryFee?: number | string;
@@ -181,6 +201,7 @@ export type Order = {
   companyPaymentStatus?: CompanyPaymentStatus;
   senderPaymentStatus?: SenderPaymentStatus;
   receiverCollectionStatus?: ReceiverCollectionStatus;
+  maximumInsuranceValue?: boolean;
   images?: OrderImage[];
   events?: OrderEvent[];
   notifications?: Notification[];

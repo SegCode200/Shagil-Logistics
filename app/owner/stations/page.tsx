@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Plus, X } from "lucide-react";
+import { Download, FileSpreadsheet, Plus, X } from "lucide-react";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/app-shell";
@@ -27,17 +27,31 @@ export default function StationsPage() {
     name: "",
     address: "",
   });
+  const [zoneDistances, setZoneDistances] = useState<File | null>(null);
   const create = useMutation({
-    mutationFn: () => api.createStation(draft),
+    mutationFn: () => {
+      if (!zoneDistances) throw new Error("ZONE_DISTANCES_REQUIRED");
+      return api.createStation(draft, zoneDistances);
+    },
     onSuccess: () => {
       setDraft({
         name: "",
         address: "",
       });
+      setZoneDistances(null);
       setShowCreateForm(false);
       queryClient.invalidateQueries({ queryKey: ["stations"] });
     },
   });
+  async function downloadTemplate() {
+    const blob = await api.downloadZoneDistanceTemplate();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "station-zone-distances-template.xlsx";
+    link.click();
+    URL.revokeObjectURL(url);
+  }
   if (isLoading || !user) return <LoadingState />;
   const filtered = (stations.data || []).filter((station) =>
     station.name
@@ -55,13 +69,19 @@ export default function StationsPage() {
               Organize managers, riders, and orders by station.
             </p>
           </div>
+      <div className="inline-actions">
           <button
             className="button button-primary"
             onClick={() => setShowCreateForm(true)}
           >
             <Plus size={17} /> Add station
           </button>
+          <button type="button" className="button button-secondary" onClick={downloadTemplate}>
+            <Download size={16} /> Download upload template
+          </button>
+          </div>
         </header>
+
 
         {showCreateForm && (
           <div
@@ -86,6 +106,9 @@ export default function StationsPage() {
                 <X size={19} />
               </button>
               <h2 id="create-station-title">Add station</h2>
+              <p className="station-create-intro">
+                Set up the station and upload its zone distances to enable delivery fee calculations.
+              </p>
               <form
                 onSubmit={(event) => {
                   event.preventDefault();
@@ -104,6 +127,26 @@ export default function StationsPage() {
                         setDraft({ ...draft, name: event.target.value })
                       }
                     />
+                  </div>
+                  <div className="field field-span">
+                    <span className="field-label">Zone distances (.xlsx) <strong>Required</strong></span>
+                    <label className={`station-upload${zoneDistances ? " has-file" : ""}`} htmlFor="station-zone-distances">
+                      <span className="station-upload-icon"><FileSpreadsheet size={23} /></span>
+                      <span className="station-upload-copy">
+                        <strong>{zoneDistances ? zoneDistances.name : "Upload zone-distance workbook"}</strong>
+                        <small>{zoneDistances ? `${(zoneDistances.size / 1024).toFixed(1)} KB selected` : "Choose the completed .xlsx template"}</small>
+                      </span>
+                      <span className="station-upload-action">{zoneDistances ? "Change file" : "Browse"}</span>
+                    </label>
+                    <input
+                      className="station-upload-input"
+                      id="station-zone-distances"
+                      type="file"
+                      accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                      required
+                      onChange={(event) => setZoneDistances(event.target.files?.[0] || null)}
+                    />
+                    <span className="field-hint station-upload-hint">Use the upload template above and fill in every zone distance before creating the station.</span>
                   </div>
                   <div className="field">
                     <label htmlFor="station-address">Address</label>

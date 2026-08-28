@@ -17,9 +17,6 @@ const emptyDraft = {
   bikeId: "",
   companyPhoneNumber: "",
   stationId: "",
-  accountName: "",
-  accountNumber: "",
-  bankName: "",
 };
 
 type Draft = typeof emptyDraft;
@@ -49,7 +46,7 @@ export default function OwnerBikePage() {
       api.createBike({
         ...draft,
         companyPhoneNumber: normalizeNigerianPhone(draft.companyPhoneNumber),
-        stationId: draft.stationId || undefined,
+        stationId: draft.stationId,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["bikes"] });
@@ -130,7 +127,7 @@ export default function OwnerBikePage() {
                       setDraft({ ...draft, stationId: event.target.value })
                     }
                   >
-                    <option value="">No station</option>
+                    <option value="">Select a station</option>
                     {(stations.data || []).map((station) => (
                       <option key={station.id} value={station.id}>
                         {station.name}
@@ -138,30 +135,6 @@ export default function OwnerBikePage() {
                     ))}
                   </select>
                 </div>
-                <Field
-                  label="Account name"
-                  value={draft.accountName}
-                  onChange={(value) =>
-                    setDraft({ ...draft, accountName: value })
-                  }
-                  required
-                />
-                <Field
-                  label="Account number"
-                  value={draft.accountNumber}
-                  maxLength={10}
-                  pattern="[0-9]{10}"
-                  onChange={(value) =>
-                    setDraft({ ...draft, accountNumber: value })
-                  }
-                  required
-                />
-                <Field
-                  label="Bank name"
-                  value={draft.bankName}
-                  onChange={(value) => setDraft({ ...draft, bankName: value })}
-                  required
-                />
               </div>
               {create.isError && (
                 <p className="form-error">

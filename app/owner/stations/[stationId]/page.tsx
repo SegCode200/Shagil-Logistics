@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Download, FileSpreadsheet, Upload } from "lucide-react";
 import { use, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -22,6 +22,7 @@ export default function StationDetailsPage({ params }: Props) {
   const [tab, setTab] = useState("Overview");
   const [editingStation, setEditingStation] = useState(false);
   const [stationDraft, setStationDraft] = useState({ name: "", address: "" });
+  const [zoneDistances, setZoneDistances] = useState<File | null>(null);
   const station = useQuery({
     queryKey: ["station", stationId],
     queryFn: () => api.getStation(stationId),
@@ -34,6 +35,25 @@ export default function StationDetailsPage({ params }: Props) {
       queryClient.invalidateQueries({ queryKey: ["station", stationId] });
     },
   });
+  const uploadDistances = useMutation({
+    mutationFn: () => {
+      if (!zoneDistances) throw new Error("ZONE_DISTANCES_REQUIRED");
+      return api.uploadStationZoneDistances(stationId, zoneDistances);
+    },
+    onSuccess: () => {
+      setZoneDistances(null);
+      queryClient.invalidateQueries({ queryKey: ["station", stationId] });
+    },
+  });
+  async function downloadTemplate() {
+    const blob = await api.downloadStationZoneDistanceTemplate(stationId);
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${stationId}-zone-distances-template.xlsx`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
   if (isLoading || !user) return <LoadingState />;
   if (station.isLoading)
     return (
@@ -184,6 +204,39 @@ export default function StationDetailsPage({ params }: Props) {
             </form>
           </section>
         )}
+        <section className="panel section-gap">
+          <div className="panel-heading">
+            <div>
+              <h2>Zone distances</h2>
+              <p className="subtext">Download or replace this station&apos;s distance workbook.</p>
+            </div>
+            <button type="button" className="button button-secondary" onClick={downloadTemplate}>
+              <Download size={16} /> Download template
+            </button>
+          </div>
+          <form className="panel-body" onSubmit={(event) => { event.preventDefault(); uploadDistances.mutate(); }}>
+            <div className="form-grid">
+              <div className="field field-span">
+                <label htmlFor="station-zone-distance-upload">Zone distances (.xlsx)</label>
+                <input
+                  className="input"
+                  id="station-zone-distance-upload"
+                  type="file"
+                  accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                  required
+                  onChange={(event) => setZoneDistances(event.target.files?.[0] || null)}
+                />
+              </div>
+              <div className="form-actions field-span">
+                <button className="button button-primary" disabled={uploadDistances.isPending || !zoneDistances}>
+                  <Upload size={16} /> {uploadDistances.isPending ? "Uploading..." : "Upload zone distances"}
+                </button>
+              </div>
+            </div>
+            {uploadDistances.isSuccess && <p className="success-text"><FileSpreadsheet size={15} /> Zone distances updated successfully.</p>}
+            {uploadDistances.isError && <p className="form-error">Zone distances could not be uploaded. Check that the workbook includes every delivery zone.</p>}
+          </form>
+        </section>
         <div className="tabs">
           {[
             "Overview",

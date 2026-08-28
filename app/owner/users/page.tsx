@@ -43,6 +43,7 @@ export default function UsersPage() {
       queryClient.invalidateQueries({ queryKey: ["stations"] });
     },
   });
+  console.log("managers")
   if (isLoading || !user) return <LoadingState />;
   const stationForManager = (managerId: string) =>
     stations.data?.find((station) =>

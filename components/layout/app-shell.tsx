@@ -21,12 +21,12 @@ import { useAuth } from "@/components/auth/auth-provider";
 
 const ownerLinks = [
   { href: "/owner/dashboard", label: "Dashboard", icon: Home },
-  { href: "/owner/orders", label: "Orders", icon: Package },
-  { href: "/owner/profile", label: "Profile", icon: Settings },
+  { href: "/owner/settings", label: "Settings", icon: Settings },
   { href: "/create-order", label: "Create order", icon: Plus },
+  { href: "/owner/orders", label: "Orders", icon: Package },
   { href: "/owner/bike", label: "Bike", icon: Truck },
   { href: "/owner/riders", label: "Riders", icon: Users },
-  { href: "/owner/zones", label: "Delivery zones", icon: MapPinned },
+  // { href: "/owner/zones", label: "Delivery zones", icon: MapPinned },
   { href: "/owner/rider-reports", label: "Rider reports", icon: Flag },
   { href: "/owner/link-customer", label: "Link customer", icon: Plus },
   { href: "/owner/stations", label: "Stations", icon: Building2 },

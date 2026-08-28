@@ -39,6 +39,7 @@ export default function ManagerDashboard() {
     totalTransactions: items.filter((order) => order.paymentMethod === "ALREADY_PAID" || order.paymentMethod === "PAYMENT_ON_DELIVERY").length,
     pickedUp: items.filter((order) => order.status === "PICKED_UP").length,
     delivered: items.filter((order) => order.status === "DELIVERED").length,
+    express: items.filter((order) => order.deliveryType === "EXPRESS").length,
   };
   const metrics = [
     ["Total orders", data.totalOrders],
@@ -48,6 +49,7 @@ export default function ManagerDashboard() {
     ["Total Transactions", data.totalTransactions],
     ["Picked up", data.pickedUp],
     ["Delivered", data.delivered],
+    ["Express delivery", data.express],
   ];
   return (
     <AppShell role="STATION_MANAGER">

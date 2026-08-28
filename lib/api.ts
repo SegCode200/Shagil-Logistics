@@ -5,6 +5,7 @@ import type {
   Order,
   OrderStatus,
   AccountDetails,
+  CompanySettings,
   CompanyBike,
   PublicSenderOrder,
   Rider,
@@ -111,6 +112,12 @@ export const api = {
     }),
 
   getCurrentUser: () => request<User>("/auth/me"),
+  getSettings: () => request<CompanySettings>("/settings"),
+  updateSettings: (payload: Partial<CompanySettings>) =>
+    request<CompanySettings>("/settings", {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    }),
   logout: () =>
     request<void>("/auth/logout", { method: "POST" }).catch(() => undefined),
   getOrders: (page = 1, pageSize = 20) =>
@@ -170,10 +177,7 @@ export const api = {
   createBike: (payload: {
     bikeId: string;
     companyPhoneNumber: string;
-    stationId?: string;
-    accountName: string;
-    accountNumber: string;
-    bankName: string;
+    stationId: string;
   }) =>
     request<CompanyBike>("/bikes", {
       method: "POST",
@@ -258,14 +262,30 @@ export const api = {
     listFromResponse<Station>(await request<unknown>("/stations")),
   getStation: (stationId: string) =>
     request<Station>(`/stations/${encodeURIComponent(stationId)}`),
-  createStation: (payload: {
-    name: string;
-    address?: string;
-  }) =>
-    request<Station>("/stations", {
-      method: "POST",
-      body: JSON.stringify(normalizePhoneFields(payload)),
-    }),
+  createStation: (
+    payload: { name: string; address?: string },
+    zoneDistances: File,
+  ) => {
+    const body = new FormData();
+    body.append("name", payload.name);
+    if (payload.address) body.append("address", payload.address);
+    body.append("zoneDistances", zoneDistances, zoneDistances.name);
+    return request<Station>("/stations", { method: "POST", body });
+  },
+  uploadStationZoneDistances: (stationId: string, file: File) => {
+    const body = new FormData();
+    body.append("zoneDistances", file, file.name);
+    return request<Station>(
+      `/stations/${encodeURIComponent(stationId)}/zone-distances`,
+      { method: "POST", body },
+    );
+  },
+  downloadZoneDistanceTemplate: () =>
+    requestBlob("/stations/zone-distances/template"),
+  downloadStationZoneDistanceTemplate: (stationId: string) =>
+    requestBlob(
+      `/stations/${encodeURIComponent(stationId)}/zone-distances/template`,
+    ),
   updateStation: (
     stationId: string,
     payload: Pick<Station, "name" | "address">,

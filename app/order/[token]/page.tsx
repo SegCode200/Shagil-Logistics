@@ -19,6 +19,10 @@ export default function PublicOrderPage({ params }: Props) {
     queryKey: ["public-stations"],
     queryFn: api.getPublicStations,
   });
+  const settings = useQuery({
+    queryKey: ["company-settings"],
+    queryFn: api.getSettings,
+  });
   const [values, setValues] = useState({
     senderName: "",
     senderPhone: "",
@@ -31,9 +35,17 @@ export default function PublicOrderPage({ params }: Props) {
     deliveryAddress: "",
     deliveryZoneId: "",
     paymentMethod: "PAYMENT_ON_DELIVERY",
+    deliveryType: "NORMAL",
     orderAmount: "",
     notes: "",
   });
+  const selectedDistance = stations.data
+    ?.find((station) => station.id === values.stationId)
+    ?.zoneDistances?.find((distance) => distance.deliveryZoneId === values.deliveryZoneId);
+  const deliveryFee = selectedDistance
+    ? Number(settings.data?.fixedDeliveryRate || 0) +
+      Number(settings.data?.variableDeliveryRate || 0) * Number(selectedDistance.distanceKm)
+    : undefined;
   const mutation = useMutation({
     mutationFn: () =>
       api.createPublicOrder(token, {
@@ -43,9 +55,10 @@ export default function PublicOrderPage({ params }: Props) {
         orderAmount: values.orderAmount
           ? Number(values.orderAmount)
           : undefined,
+        deliveryFee,
       }),
   });
-  const set = (key: keyof typeof values, value: string) =>
+  const set = <K extends keyof typeof values>(key: K, value: (typeof values)[K]) =>
     setValues((current) => ({ ...current, [key]: value }));
   if (mutation.data)
     return (
@@ -195,12 +208,46 @@ export default function PublicOrderPage({ params }: Props) {
                     .filter((zone) => zone.active)
                     .map((zone) => (
                       <option key={zone.id} value={zone.id}>
-                        {zone.name} · ₦{Number(zone.fee).toLocaleString()}
+                        {zone.name}
                       </option>
                     ))}
                 </select>
               </div>
+              <div className="field">
+                <span className="field-label">Delivery fee</span>
+                <div className="delivery-fee-card" aria-live="polite">
+                  <div>
+                    <span className="delivery-fee-caption">Calculated fee</span>
+                    <strong>
+                      {deliveryFee == null
+                        ? "Select station and area"
+                        : `₦${deliveryFee.toLocaleString()}`}
+                    </strong>
+                  </div>
+                  <span className="delivery-fee-zone">
+                    {selectedDistance
+                      ? `${selectedDistance.distanceKm} km`
+                      : "Distance will appear here"}
+                  </span>
+                </div>
+              </div>
             </div>
+          </fieldset>
+          <fieldset>
+            <legend>5. Delivery type</legend>
+            <label htmlFor="public-delivery-type">Delivery type</label>
+            <select
+              className="select"
+              id="public-delivery-type"
+              required
+              value={values.deliveryType}
+              onChange={(event) =>
+                set("deliveryType", event.target.value as "NORMAL" | "EXPRESS")
+              }
+            >
+              <option value="NORMAL">Normal delivery</option>
+              <option value="EXPRESS">Express/Charter delivery</option>
+            </select>
           </fieldset>
           <fieldset>
             <legend>6. Payment</legend>
