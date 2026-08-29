@@ -18,6 +18,37 @@ import {
 type Props = { params: Promise<{ orderId: string }> };
 type EditValues = Record<string, string>;
 
+function calculateDeliveryFeeBreakdown(
+  value: number | string | null | undefined,
+  settings?: { riderCommissionRate?: number | string; vat?: number | string } | null,
+) {
+  const deliveryFee = Number(value ?? 0) || 0;
+  if (!settings || deliveryFee <= 0) {
+    return null;
+  }
+
+  const commissionRate = Number(settings.riderCommissionRate ?? 0);
+  const vatRate = Number(settings.vat ?? 0);
+  if (commissionRate === 0 && vatRate === 0) {
+    return {
+      baseFee: deliveryFee,
+      riderCommissionAmount: 0,
+      vatAmount: 0,
+    };
+  }
+
+  const multiplier = (1 + commissionRate / 100) * (1 + vatRate / 100);
+  const baseFee = deliveryFee / multiplier;
+  const riderCommissionAmount = baseFee * (commissionRate / 100);
+  const vatAmount = deliveryFee - baseFee - riderCommissionAmount;
+
+  return {
+    baseFee,
+    riderCommissionAmount,
+    vatAmount,
+  };
+}
+
 export default function ManagerOrderDetailsPage({ params }: Props) {
   const { orderId } = use(params);
   const { user, isLoading } = useRoleRedirect("STATION_MANAGER");
@@ -36,6 +67,11 @@ export default function ManagerOrderDetailsPage({ params }: Props) {
   const riders = useQuery({
     queryKey: ["riders"],
     queryFn: api.getStationRiders,
+    enabled: Boolean(user),
+  });
+  const settings = useQuery({
+    queryKey: ["company-settings"],
+    queryFn: api.getSettings,
     enabled: Boolean(user),
   });
   const zones = useQuery({
@@ -101,6 +137,10 @@ export default function ManagerOrderDetailsPage({ params }: Props) {
       </AppShell>
     );
   const data = order.data;
+  const deliveryBreakdown = calculateDeliveryFeeBreakdown(
+    data.deliveryFee,
+    settings.data,
+  );
   function beginEditing() {
     setEditValues({
       senderName: data.senderName || "",
@@ -344,8 +384,39 @@ export default function ManagerOrderDetailsPage({ params }: Props) {
               </div>
               <div>
                 <dt>Delivery fee</dt>
-                <dd>{data.deliveryFee ?? "-"}</dd>
+                <dd>
+                  {data.deliveryFee == null
+                    ? "-"
+                    : `₦${Number(data.deliveryFee).toLocaleString()}`}
+                </dd>
               </div>
+              {deliveryBreakdown && (
+                <div className="fee-breakdown-wrap">
+                  <dt>Fee breakdown</dt>
+                  <dd>
+                    <div className="fee-breakdown">
+                      <div>
+                        <span>Base fee</span>
+                        <strong>
+                          ₦{Number(deliveryBreakdown.baseFee).toLocaleString()}
+                        </strong>
+                      </div>
+                      <div>
+                        <span>Rider commission</span>
+                        <strong>
+                          ₦{Number(deliveryBreakdown.riderCommissionAmount).toLocaleString()}
+                        </strong>
+                      </div>
+                      <div>
+                        <span>VAT</span>
+                        <strong>
+                          ₦{Number(deliveryBreakdown.vatAmount).toLocaleString()}
+                        </strong>
+                      </div>
+                    </div>
+                  </dd>
+                </div>
+              )}
               <div>
                 <dt>Sender Payment Status</dt>
                 <dd>{data.paymentStatus || data.senderPaymentStatus || "-"}</dd>

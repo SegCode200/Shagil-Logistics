@@ -23,6 +23,38 @@ import {
 } from "@/components/ui/primitives";
 
 type Props = { params: Promise<{ orderId: string }> };
+
+function calculateDeliveryFeeBreakdown(
+  value: number | string | null | undefined,
+  settings?: { riderCommissionRate?: number | string; vat?: number | string } | null,
+) {
+  const deliveryFee = Number(value ?? 0) || 0;
+  if (!settings || deliveryFee <= 0) {
+    return null;
+  }
+
+  const commissionRate = Number(settings.riderCommissionRate ?? 0);
+  const vatRate = Number(settings.vat ?? 0);
+  if (commissionRate === 0 && vatRate === 0) {
+    return {
+      baseFee: deliveryFee,
+      riderCommissionAmount: 0,
+      vatAmount: 0,
+    };
+  }
+
+  const multiplier = (1 + commissionRate / 100) * (1 + vatRate / 100);
+  const baseFee = deliveryFee / multiplier;
+  const riderCommissionAmount = baseFee * (commissionRate / 100);
+  const vatAmount = deliveryFee - baseFee - riderCommissionAmount;
+
+  return {
+    baseFee,
+    riderCommissionAmount,
+    vatAmount,
+  };
+}
+
 export default function OrderDetailsPage({ params }: Props) {
   const { orderId } = use(params);
   const { user, isLoading } = useRoleRedirect("OWNER");
@@ -35,6 +67,11 @@ export default function OrderDetailsPage({ params }: Props) {
   const query = useQuery({
     queryKey: ["order", orderId],
     queryFn: () => api.getOrder(orderId),
+    enabled: Boolean(user),
+  });
+  const settings = useQuery({
+    queryKey: ["company-settings"],
+    queryFn: api.getSettings,
     enabled: Boolean(user),
   });
 
@@ -134,6 +171,10 @@ export default function OrderDetailsPage({ params }: Props) {
       </AppShell>
     );
   const order = query.data;
+  const deliveryBreakdown = calculateDeliveryFeeBreakdown(
+    order.deliveryFee,
+    settings.data,
+  );
   const canApprove = Boolean(
     (order.senderName || order.customerName) &&
     (order.receiverName || order.customerName) &&
@@ -397,6 +438,33 @@ export default function OrderDetailsPage({ params }: Props) {
                     : `₦${Number(order.deliveryFee).toLocaleString()}`}
                 </dd>
               </div>
+              {deliveryBreakdown && (
+                <div className="fee-breakdown-wrap">
+                  <dt>Fee breakdown</dt>
+                  <dd>
+                    <div className="fee-breakdown">
+                      <div>
+                        <span>Base fee</span>
+                        <strong>
+                          ₦{Number(deliveryBreakdown.baseFee).toLocaleString()}
+                        </strong>
+                      </div>
+                      <div>
+                        <span>Rider commission</span>
+                        <strong>
+                          ₦{Number(deliveryBreakdown.riderCommissionAmount).toLocaleString()}
+                        </strong>
+                      </div>
+                      <div>
+                        <span>VAT</span>
+                        <strong>
+                          ₦{Number(deliveryBreakdown.vatAmount).toLocaleString()}
+                        </strong>
+                      </div>
+                    </div>
+                  </dd>
+                </div>
+              )}
               <div>
                 <dt>Total</dt>
                 <dd>

@@ -1181,6 +1181,39 @@ select {
   font-weight: 650;
   text-align: right;
 }
+.fee-breakdown-wrap {
+  display: block;
+}
+.fee-breakdown-wrap dt {
+  color: var(--muted);
+  font-size: 13px;
+}
+.fee-breakdown-wrap dd {
+  max-width: 100%;
+  margin-top: 8px;
+  text-align: left;
+}
+.fee-breakdown {
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fafbfd;
+}
+.fee-breakdown > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+}
+.fee-breakdown span {
+  color: var(--muted);
+}
+.fee-breakdown strong {
+  font-size: 12px;
+}
 .settings-form-panel {
   padding: 0;
   border: 1px solid var(--line);
