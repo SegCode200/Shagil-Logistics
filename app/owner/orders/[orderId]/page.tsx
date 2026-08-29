@@ -148,8 +148,8 @@ export default function OrderDetailsPage({ params }: Props) {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
     },
   });
-  const confirmReceiverPayment = useMutation({
-    mutationFn: () => api.confirmReceiverPaymentForUser(orderId),
+  const confirmFinalPayment = useMutation({
+    mutationFn: () => api.confirmFinalPayment(orderId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["order", orderId] });
       queryClient.invalidateQueries({ queryKey: ["orders"] });
@@ -192,6 +192,11 @@ export default function OrderDetailsPage({ params }: Props) {
         "DELIVERED",
       ].includes(order.status),
   );
+  const isFinalPaymentReady =
+    order.status === "DELIVERED" &&
+    order.companyPaymentStatus === "PAID" &&
+    order.senderPaymentStatus === "PAID" &&
+    order.finalPaymentStatus !== "PAID";
   return (
     <AppShell role="OWNER">
       {paymentError && (
@@ -711,21 +716,43 @@ export default function OrderDetailsPage({ params }: Props) {
                   </p>
                 )}
               </div>
-              {order.status === "PICKED_UP" &&
-                order.paymentMethod === "PAYMENT_ON_DELIVERY" &&
-                order.receiverCollectionStatus !== "COLLECTED" && (
-                  <button
-                    className="button button-success button-full"
-                    disabled={confirmReceiverPayment.isPending}
-                    onClick={() => confirmReceiverPayment.mutate()}
-                  >
-                    {confirmReceiverPayment.isPending
-                      ? "Confirming payment..."
-                      : "Confirm receiver payment"}
-                  </button>
-                )}
-              {confirmReceiverPayment.isError && (
-                <p className="form-error">Receiver payment could not be confirmed.</p>
+              {order.finalPaymentStatus !== "PAID" && (
+                <button
+                  className="button button-success button-full"
+                  disabled={
+                    confirmFinalPayment.isPending ||
+                    !isFinalPaymentReady
+                  }
+                  title={
+                    !isFinalPaymentReady
+                      ? "Final payment can be confirmed only when all payments are settled and the order is delivered."
+                      : undefined
+                  }
+                  onClick={() => {
+                    if (!isFinalPaymentReady) {
+                      return;
+                    }
+                    if (
+                      window.confirm(
+                        `Are you sure you want to confirm the final payment for ${order.orderId || "this order"}? This action cannot be undone.`,
+                      )
+                    ) {
+                      confirmFinalPayment.mutate();
+                    }
+                  }}
+                >
+                  {confirmFinalPayment.isPending
+                    ? "Confirming final payment..."
+                    : "Confirm final payment"}
+                </button>
+              )}
+              {!isFinalPaymentReady && order.finalPaymentStatus !== "PAID" && (
+                <p className="form-error">
+                  Final payment cannot be confirmed until all payments are made and the order is delivered.
+                </p>
+              )}
+              {confirmFinalPayment.isError && (
+                <p className="form-error">Final payment could not be confirmed.</p>
               )}
             </div>
             {!canApprove &&

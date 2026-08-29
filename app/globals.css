@@ -748,6 +748,40 @@ select {
   color: #a63b3b;
   background: #fee9e9;
 }
+.delivery-type-badge,
+.mini-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 7px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.delivery-type-normal {
+  color: #1f4d7d;
+  background: #eaf3ff;
+}
+.delivery-type-express {
+  color: #816524;
+  background: #fff1c8;
+}
+.mini-status-pending {
+  color: #a86a00;
+  background: #fff0cf;
+}
+.mini-status-paid {
+  color: #18705c;
+  background: #ddf6ed;
+}
+.mobile-order-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+}
 .text-link,
 .back-link {
   display: inline-flex;

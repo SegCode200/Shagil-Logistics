@@ -206,6 +206,11 @@ export default function ManagerOrderDetailsPage({ params }: Props) {
           </div>
 
           <div className="inline-actions">
+            <span
+              className={`delivery-type-badge delivery-type-${(data.deliveryType || "NORMAL").toLowerCase()}`}
+            >
+              {(data.deliveryType || "NORMAL").slice(0, 3).toUpperCase()}
+            </span>
             <OrderStatusBadge status={data.status} />
             {data.status === "PENDING_APPROVAL" && (
               <div className="inline-actions">
@@ -381,6 +386,16 @@ export default function ManagerOrderDetailsPage({ params }: Props) {
               <div>
                 <dt>Delivery zone</dt>
                 <dd>{data.deliveryZone?.name || "-"}</dd>
+              </div>
+              <div>
+                <dt>Delivery type</dt>
+                <dd>
+                  <span
+                    className={`delivery-type-badge delivery-type-${(data.deliveryType || "NORMAL").toLowerCase()}`}
+                  >
+                    {(data.deliveryType || "NORMAL").slice(0, 3).toUpperCase()}
+                  </span>
+                </dd>
               </div>
               <div>
                 <dt>Delivery fee</dt>

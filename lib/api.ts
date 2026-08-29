@@ -247,6 +247,10 @@ export const api = {
       `/orders/${encodeURIComponent(orderId)}/confirm-receiver-payment`,
       { method: "POST" },
     ),
+  confirmFinalPayment: (orderId: string) =>
+    request<Order>(`/orders/${encodeURIComponent(orderId)}/confirm-final-payment`, {
+      method: "POST",
+    }),
   companyPaid: (orderId: string) =>
     request<Order>(`/orders/${encodeURIComponent(orderId)}/company-payment`, {
       method: "POST",

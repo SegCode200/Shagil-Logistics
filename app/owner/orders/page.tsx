@@ -183,6 +183,11 @@ function OrdersContent() {
                         <td className="location-cell">
                           <strong>{order.deliveryAddress}</strong>
                           <small className="muted block">
+                            <span
+                              className={`delivery-type-badge delivery-type-${(order.deliveryType || "NORMAL").toLowerCase()}`}
+                            >
+                              {(order.deliveryType || "NORMAL").slice(0, 3).toUpperCase()}
+                            </span>
                             {order.deliveryFee != null
                               ? ` · ₦${Number(order.deliveryFee).toLocaleString()}`
                               : ""}
@@ -193,12 +198,14 @@ function OrdersContent() {
                         </td>
                         <td>
                           {order.paymentMethod === "PAYMENT_ON_DELIVERY"
-                            ? "COD"
-                            : "Paid"}
+                            ? "POD"
+                            : "PAID"}
                           <small className="muted block">
-                            {order.deliveryFee == null
-                              ? "—"
-                              : `₦${Number(order.deliveryFee).toLocaleString()}`}
+                            <span
+                              className={`mini-status mini-status-${(order.finalPaymentStatus || "PENDING").toLowerCase()}`}
+                            >
+                              {order.finalPaymentStatus || "PENDING"}
+                            </span>
                           </small>
                         </td>
                         <td>
@@ -225,17 +232,23 @@ function OrdersContent() {
                       <strong className="order-ref">
                         {order.orderId || order.id}
                       </strong>
-                      <OrderStatusBadge status={order.status} />
+                      <div className="mobile-order-meta">
+                        <span
+                          className={`delivery-type-badge delivery-type-${(order.deliveryType || "NORMAL").toLowerCase()}`}
+                        >
+                          {(order.deliveryType || "NORMAL").slice(0, 3).toUpperCase()}
+                        </span>
+                        <span
+                          className={`mini-status mini-status-${(order.finalPaymentStatus || "PENDING").toLowerCase()}`}
+                        >
+                          {order.finalPaymentStatus || "PENDING"}
+                        </span>
+                      </div>
                     </header>
                     <p>{order.customerName}</p>
                     <footer>
                       <span>{formatDate(order.createdAt)}</span>
-                      <Link
-                        href={`/owner/orders/${order.orderId}`}
-                        className="text-link"
-                      >
-                        Open
-                      </Link>
+                      <OrderStatusBadge status={order.status} />
                     </footer>
                   </article>
                 ))}

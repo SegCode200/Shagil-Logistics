@@ -11,6 +11,7 @@ export type OrderStatus =
 export type PaymentMethod = "ALREADY_PAID" | "PAYMENT_ON_DELIVERY";
 export type PaymentStatus = "NOT_REQUIRED" | "PENDING" | "PAID";
 export type CompanyPaymentStatus = "PENDING" | "PAID";
+export type FinalPaymentStatus = "PENDING" | "PAID";
 export type RiderCommissionStatus = "PENDING" | "PAID";
 export type SenderPaymentStatus = "PENDING" | "PAID";
 export type ReceiverCollectionStatus = "NOT_COLLECTED" | "COLLECTED";
@@ -230,6 +231,7 @@ export type Order = {
   approvedAt?: string | null;
   approvedBy?: User | null;
   companyPaymentStatus?: CompanyPaymentStatus;
+  finalPaymentStatus?: FinalPaymentStatus;
   riderCommission?: number | string | null;
   riderCommissionStatus?: RiderCommissionStatus;
   senderPaymentStatus?: SenderPaymentStatus;

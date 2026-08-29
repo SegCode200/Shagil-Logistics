@@ -80,6 +80,7 @@ function ManagerOrdersContent() {
                     <th>Order</th>
                     <th>Zone</th>
                     <th>Station</th>
+                    <th>Type</th>
                     <th>Payment</th>
                     <th>Status</th>
                     <th>Rider</th>
@@ -95,6 +96,13 @@ function ManagerOrdersContent() {
                         {order.deliveryZone?.name || order.deliveryAddress}
                       </td>
                       <td>{order.station?.name || "-"}</td>
+                      <td>
+                        <span
+                          className={`delivery-type-badge delivery-type-${(order.deliveryType || "NORMAL").toLowerCase()}`}
+                        >
+                          {(order.deliveryType || "NORMAL").slice(0, 3).toUpperCase()}
+                        </span>
+                      </td>
                       <td>
                         {order.paymentMethod === "PAYMENT_ON_DELIVERY"
                           ? "Payment on delivery"
