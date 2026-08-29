@@ -27,6 +27,7 @@ export type CompanySettings = {
   variableDeliveryRate: number | string;
   riderCommissionRate: number | string;
   expressMultiplier: number | string;
+  vat: number | string;
   accountName: string | null;
   accountNumber: string | null;
   bankName: string | null;

@@ -456,12 +456,15 @@ export default function PublicOrderPage({ params }: Props) {
   const selectedDistance = stations.data
     ?.find((station) => station.id === values.stationId)
     ?.zoneDistances?.find((distance) => distance.deliveryZoneId === values.deliveryZoneId);
-  const deliveryFee = selectedDistance
+  const baseFee = selectedDistance
     ? Number(settings.data?.fixedDeliveryRate || 0) +
       Number(settings.data?.variableDeliveryRate || 0) * Number(selectedDistance.distanceKm)
-    : undefined;
-
-    // console.log("deliveryFee", deliveryFee, selectedDistance, settings.data?.fixedDeliveryRate, settings.data?.variableDeliveryRate)
+    : 0;
+  const riderCommissionAmount =
+    (Number(settings.data?.riderCommissionRate || 0) * baseFee) / 100;
+  const vatAmount =
+    (Number(settings.data?.vat || 0) * (baseFee + riderCommissionAmount)) / 100;
+  const deliveryFee = baseFee + riderCommissionAmount + vatAmount;
   const mutation = useMutation({
     mutationFn: () =>
       api.createOrder(

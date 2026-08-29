@@ -14,6 +14,7 @@ type SettingsForm = {
   variableDeliveryRate: string;
   riderCommissionRate: string;
   expressMultiplier: string;
+  vat: string;
   accountName: string;
   accountNumber: string;
   bankName: string;
@@ -24,6 +25,7 @@ const emptyForm: SettingsForm = {
   fixedDeliveryRate: "",
   variableDeliveryRate: "",
   riderCommissionRate: "",
+  vat: "",
   expressMultiplier: "1",
   accountName: "",
   accountNumber: "",
@@ -49,6 +51,7 @@ export default function OwnerSettingsPage() {
         variableDeliveryRate: Number(form.variableDeliveryRate || 0),
         riderCommissionRate: Number(form.riderCommissionRate || 0),
         expressMultiplier: Number(form.expressMultiplier || 1),
+        vat: Number(form.vat || 0),
         accountName: form.accountName || undefined,
         accountNumber: form.accountNumber || undefined,
         bankName: form.bankName || undefined,
@@ -68,6 +71,7 @@ export default function OwnerSettingsPage() {
       fixedDeliveryRate: String(settings.data.fixedDeliveryRate),
       variableDeliveryRate: String(settings.data.variableDeliveryRate),
       riderCommissionRate: String(settings.data.riderCommissionRate ?? 0),
+      vat: String(settings.data.vat ?? 0),
       expressMultiplier: String(settings.data.expressMultiplier),
       accountName: settings.data.accountName || "",
       accountNumber: settings.data.accountNumber || "",
@@ -124,6 +128,11 @@ export default function OwnerSettingsPage() {
                 <dd>
                   ₦{Number(settings.data.variableDeliveryRate).toLocaleString()} per KM
                 </dd>
+              </div>
+              {/* Vat */}
+              <div>
+                <dt>VAT</dt>
+                <dd>{Number(settings.data.vat ?? 0).toLocaleString()}%</dd>
               </div>
               <div>
                 <dt>Rider commission rate</dt>
@@ -187,6 +196,17 @@ export default function OwnerSettingsPage() {
                 value={form.variableDeliveryRate}
                 onChange={(value) => set("variableDeliveryRate", value)}
               />
+              <Field
+                label="VAT Rate in percentage"
+                type="number"
+                min="0"
+                step="0.01"
+                value={form.vat}
+                onChange={(value) => set("vat", value)}
+              />
+              <h2 className="field-span form-section-title">
+                Vat Rate in percentage
+              </h2>
               <Field
                 label="Rider commission rate"
                 type="number"
