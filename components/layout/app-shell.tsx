@@ -12,9 +12,9 @@ import {
   Truck,
   Users,
   X,
-  MapPinned,
   Flag,
   Building2,
+  Wallet,
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
@@ -34,6 +34,7 @@ const ownerLinks = [
 ];
 const riderLinks = [
   { href: "/rider/dashboard", label: "My deliveries", icon: Truck },
+  { href: "/rider/commission", label: "Commission", icon: Wallet },
   { href: "/rider/profile", label: "Profile", icon: Settings }
 
 ];

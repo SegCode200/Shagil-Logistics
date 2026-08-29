@@ -740,6 +740,14 @@ select {
   color: #a63b3b;
   background: #fee9e9;
 }
+.status-collected {
+  color: #18705c;
+  background: #ddf6ed;
+}
+.status-not_collected {
+  color: #a63b3b;
+  background: #fee9e9;
+}
 .text-link,
 .back-link {
   display: inline-flex;
@@ -1347,6 +1355,30 @@ select {
 .rider-delivery-card {
   margin-bottom: 0;
   padding: 22px;
+}
+.rider-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.rider-summary-card {
+  display: grid;
+  gap: 6px;
+  padding: 16px 18px;
+  border: 1px solid #edf2f6;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafb 100%);
+  box-shadow: 0 10px 25px rgba(24, 59, 86, 0.04);
+}
+.rider-summary-card span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+.rider-summary-card strong {
+  color: var(--navy);
+  font-size: 22px;
 }
 .rider-rating-card {
   display: grid;
@@ -2079,6 +2111,21 @@ select {
   flex: 0 0 auto;
   margin-top: 1px;
   accent-color: var(--brand);
+}
+.payment-action-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.payment-action-row .button {
+  flex: 1;
+}
+.payment-action-row .status {
+  flex: 0 0 auto;
+}
+.payment-action-row .status-paid {
+  color: #287650;
+  background: #e3f5eb;
 }
 .sender-action-card {
   display: grid;

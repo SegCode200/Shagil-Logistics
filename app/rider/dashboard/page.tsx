@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { MapPin, ArrowRight, Phone, Wallet } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/app-shell";
 import { useRoleRedirect } from "@/components/auth/auth-provider";
@@ -13,6 +13,11 @@ import {
   LoadingState,
   OrderStatusBadge,
 } from "@/components/ui/primitives";
+
+const formatMoney = (value?: number | string | null) => {
+  const numeric = Number(value ?? 0);
+  return Number.isFinite(numeric) ? numeric.toLocaleString() : "0";
+};
 
 export default function RiderDashboard() {
   const { user, isLoading: authLoading } = useRoleRedirect("RIDER");
@@ -27,6 +32,21 @@ export default function RiderDashboard() {
     queryFn: api.getRiderRatings,
     enabled: Boolean(user),
   });
+  const commissionQuery = useQuery({
+    queryKey: ["rider-commission-summary"],
+    queryFn: api.getCommissionSummary,
+    enabled: Boolean(user),
+  });
+  const summary = commissionQuery.data;
+  const commissionCards = useMemo(
+    () => [
+      { label: "Today's commission", value: `₦${formatMoney(summary?.todayCommission)}` },
+      { label: "This month", value: `₦${formatMoney(summary?.monthCommission)}` },
+      { label: "Total earned", value: `₦${formatMoney(summary?.totalCommission)}` },
+      { label: "Paid", value: `₦${formatMoney(summary?.paidCommission)}` },
+    ],
+    [summary],
+  );
   if (authLoading || !user) return <LoadingState />;
   const orders = query.data?.items || [];
   return (
@@ -39,6 +59,14 @@ export default function RiderDashboard() {
             <p className="subtext">Keep it simple. One delivery at a time.</p>
           </div>
         </header>
+        <section className="rider-summary-grid">
+          {commissionCards.map((card) => (
+            <div className="rider-summary-card" key={card.label}>
+              <span>{card.label}</span>
+              <strong>{card.value}</strong>
+            </div>
+          ))}
+        </section>
         <section className="rider-rating-card">
           <span>My rating</span>
           <strong>
@@ -91,10 +119,18 @@ export default function RiderDashboard() {
                     <span>
                       <Wallet size={13} />{" "}
                       {order.paymentMethod === "PAYMENT_ON_DELIVERY"
-                        ? `Collect ₦${Number(order.deliveryFee).toLocaleString()}`
+                        ? `Collect ₦${Number(order.deliveryFee ?? 0).toLocaleString()}`
                         : "Already paid"}
                     </span>
                   </span>
+                  {order.riderCommission != null && order.riderCommission !== "" && (
+                    <span>
+                      <strong>Commission</strong>
+                      <span>
+                        <Wallet size={13} />₦{formatMoney(order.riderCommission)}
+                      </span>
+                    </span>
+                  )}
                 </div>
                 {order.status !== "DELIVERED" &&
                   order.status !== "CANCELLED" && (

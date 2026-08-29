@@ -11,6 +11,7 @@ export type OrderStatus =
 export type PaymentMethod = "ALREADY_PAID" | "PAYMENT_ON_DELIVERY";
 export type PaymentStatus = "NOT_REQUIRED" | "PENDING" | "PAID";
 export type CompanyPaymentStatus = "PENDING" | "PAID";
+export type RiderCommissionStatus = "PENDING" | "PAID";
 export type SenderPaymentStatus = "PENDING" | "PAID";
 export type ReceiverCollectionStatus = "NOT_COLLECTED" | "COLLECTED";
 export type PickupMethod = "SENDER_DROPOFF" | "RIDER_PICKUP";
@@ -24,6 +25,7 @@ export type CompanySettings = {
   maximumInsuranceValue: number | string;
   fixedDeliveryRate: number | string;
   variableDeliveryRate: number | string;
+  riderCommissionRate: number | string;
   expressMultiplier: number | string;
   accountName: string | null;
   accountNumber: string | null;
@@ -227,6 +229,8 @@ export type Order = {
   approvedAt?: string | null;
   approvedBy?: User | null;
   companyPaymentStatus?: CompanyPaymentStatus;
+  riderCommission?: number | string | null;
+  riderCommissionStatus?: RiderCommissionStatus;
   senderPaymentStatus?: SenderPaymentStatus;
   receiverCollectionStatus?: ReceiverCollectionStatus;
   maximumInsuranceValue?: boolean;
@@ -240,6 +244,23 @@ export type Order = {
   companyAccountName?: string | null;
   companyAccountNumber?: string | null;
   companyBankName?: string | null;
+};
+
+export type RiderCommissionDelivery = {
+  orderId: string;
+  date?: string | Date | null;
+  commission: number | string;
+  paymentStatus?: RiderCommissionStatus;
+  companyPaymentStatus?: CompanyPaymentStatus;
+};
+
+export type RiderCommissionSummary = {
+  riderId: string;
+  todayCommission: number | string;
+  monthCommission: number | string;
+  totalCommission: number | string;
+  paidCommission: number | string;
+  deliveries: RiderCommissionDelivery[];
 };
 
 export type DeliveryZone = {

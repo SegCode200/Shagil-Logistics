@@ -10,7 +10,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { use, useState } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/app-shell";
 import { useRoleRedirect } from "@/components/auth/auth-provider";
 import { api } from "@/lib/api";
@@ -20,8 +20,14 @@ type Props = { params: Promise<{ orderId: string }> };
 export default function ConfirmDeliveryPage({ params }: Props) {
   const { orderId: routeOrderId } = use(params);
   const { user, isLoading } = useRoleRedirect("RIDER");
+  const queryClient = useQueryClient();
   const [code, setCode] = useState("");
   const [confirmed, setConfirmed] = useState(false);
+  const [paymentDialog, setPaymentDialog] = useState<null | {
+    type: "success" | "error";
+    title: string;
+    message: string;
+  }>(null);
   const [confirmedOrder, setConfirmedOrder] = useState<Awaited<
     ReturnType<typeof api.confirmDelivery>
   > | null>(null);
@@ -43,6 +49,27 @@ export default function ConfirmDeliveryPage({ params }: Props) {
   });
   const companyPaymentMutation = useMutation({
     mutationFn: () => api.companyPaid(routeOrderId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["rider-orders"] });
+    },
+  });
+  const receiverPaymentMutation = useMutation({
+    mutationFn: () => api.confirmReceiverPaymentForUser(routeOrderId),
+    onSuccess: () => {
+      setPaymentDialog({
+        type: "success",
+        title: "Release payment for sender",
+        message: "Receiver payment has been confirmed and the sender can now be released.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["rider-orders"] });
+    },
+    onError: () => {
+      setPaymentDialog({
+        type: "error",
+        title: "Release payment for sender",
+        message: "Could not confirm receiver payment. Please try again.",
+      });
+    },
   });
   const resendCodeMutation = useMutation({
     mutationFn: () => api.resendReceiverDeliveryCodeForUser(routeOrderId),
@@ -94,6 +121,29 @@ export default function ConfirmDeliveryPage({ params }: Props) {
     );
   return (
     <AppShell role="RIDER">
+      {paymentDialog && (
+        <div className="validation-dialog-backdrop">
+          <section
+            className="validation-dialog"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="rider-payment-dialog-title"
+          >
+            <p className="eyebrow">
+              {paymentDialog.type === "success" ? "Success" : "Payment update failed"}
+            </p>
+            <h2 id="rider-payment-dialog-title">{paymentDialog.title}</h2>
+            <p>{paymentDialog.message}</p>
+            <button
+              type="button"
+              className="button button-primary button-full"
+              onClick={() => setPaymentDialog(null)}
+            >
+              Continue
+            </button>
+          </section>
+        </div>
+      )}
       <div className="page confirm-page">
         <Link href="/rider/dashboard" className="back-link">
           <ArrowLeft size={16} /> Back to deliveries
@@ -131,24 +181,50 @@ export default function ConfirmDeliveryPage({ params }: Props) {
                 ? `Delivery fee to collect: ₦${Number(order.deliveryFee).toLocaleString()}`
                 : "Already paid"}
             </span>
+            <span
+              className={`status status-${(order.receiverCollectionStatus || "NOT_COLLECTED").toLowerCase()}`}
+            >
+              {order.receiverCollectionStatus === "COLLECTED"
+                ? "Receiver payment confirmed"
+                : "Receiver payment pending"}
+            </span>
           </div>
           <div className="rider-action-stack">
             <p className="action-section-label">Delivery controls</p>
-            <button
-              type="button"
-              className="button button-success button-full"
-              disabled={order.companyPaymentStatus === "PAID" || companyPaymentMutation.isPending}
-              onClick={() => companyPaymentMutation.mutate()}
-            >
-              <CheckCircle2 size={16} />
-              {companyPaymentMutation.isPending
-                ? "Updating payment..."
-                : order.companyPaymentStatus === "PAID"
-                  ? "Payment received"
-                  : "Payment received"}
-            </button>
+            <div className="payment-action-row">
+              <button
+                type="button"
+                className="button button-success"
+                disabled={order.companyPaymentStatus === "PAID" || companyPaymentMutation.isPending}
+                onClick={() => companyPaymentMutation.mutate()}
+              >
+                <CheckCircle2 size={16} />
+                {companyPaymentMutation.isPending ? "Updating payment..." : "Payment received"}
+              </button>
+              <span className={`status status-${(order.companyPaymentStatus || "PENDING").toLowerCase()}`}>
+                {order.companyPaymentStatus === "PAID" ? "PAID" : "PENDING"}
+              </span>
+            </div>
             {companyPaymentMutation.isError && (
               <p className="form-error confirm-error">Company payment could not be updated.</p>
+            )}
+            {order.paymentMethod === "PAYMENT_ON_DELIVERY" &&
+              order.status === "PICKED_UP" &&
+              order.receiverCollectionStatus !== "COLLECTED" && (
+                <button
+                  type="button"
+                  className="button button-warning button-full"
+                  disabled={receiverPaymentMutation.isPending}
+                  onClick={() => receiverPaymentMutation.mutate()}
+                >
+                  <CheckCircle2 size={16} />
+                  {receiverPaymentMutation.isPending
+                    ? "Releasing payment..."
+                    : "Release payment for sender"}
+                </button>
+              )}
+            {receiverPaymentMutation.isError && (
+              <p className="form-error confirm-error">Receiver payment could not be confirmed.</p>
             )}
             <button
               type="button"
@@ -167,7 +243,6 @@ export default function ConfirmDeliveryPage({ params }: Props) {
             )}
             <a
               className="button button-whatsapp button-full"
-              // href={`https://wa.me/${(order.receiverPhoneNumber || order.receiverPhone || "").replace(/\D/g, "")}?text=${encodeURIComponent(`Hello ${order.receiverName || order.customerName || "there"}, your delivery code is ${order.deliveryCode || "available in your delivery message"}.`)}`}
               target="_blank"
               rel="noreferrer"
             >

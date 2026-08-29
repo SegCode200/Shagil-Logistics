@@ -150,6 +150,13 @@ export default function SenderOrderDetailsPage({ params }: Props) {
           <div className="sender-statuses">
             <OrderStatusBadge status={order.status} />
             <span
+              className={`status ${order.receiverCollectionStatus === "COLLECTED" ? "payment-confirmed" : "payment-pending"}`}
+            >
+              {order.receiverCollectionStatus === "COLLECTED"
+                ? "Receiver payment confirmed"
+                : "Receiver payment pending"}
+            </span>
+            <span
               className={`status sender-payment-status status-${order.senderPaymentStatus.toLowerCase()}`}
             >
               Sender payment: {order.senderPaymentStatus}
@@ -234,9 +241,9 @@ export default function SenderOrderDetailsPage({ params }: Props) {
             <div className="sender-action-heading">
               <CheckCircle2 size={20} />
               <div>
-                <h2>Payment received</h2>
+                <h2>Release payment for sender</h2>
                 <p>
-                  Status: <strong>{order.senderPaymentStatus}</strong>
+                  Status: <strong>{order.receiverCollectionStatus === "COLLECTED" ? "Collected" : "Not collected"}</strong>
                 </p>
               </div>
             </div>
@@ -273,7 +280,7 @@ export default function SenderOrderDetailsPage({ params }: Props) {
             {order.receiverCollectionStatus !== "COLLECTED" &&
               order.senderPaymentStatus !== "PAID" && (
                 <p className="text-warning text-red-400">
-                  Waiting for receiver payment collection confirmation. The button is enable until the receiver confirms that payment has been collected. Please contact your receiver to confirm payment collection.
+                  Waiting for receiver payment collection confirmation. The sender payment can only be released after the receiver confirms collection.
                 </p>
               )}
           </div>

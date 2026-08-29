@@ -12,6 +12,7 @@ type SettingsForm = {
   maximumInsuranceValue: string;
   fixedDeliveryRate: string;
   variableDeliveryRate: string;
+  riderCommissionRate: string;
   expressMultiplier: string;
   accountName: string;
   accountNumber: string;
@@ -22,6 +23,7 @@ const emptyForm: SettingsForm = {
   maximumInsuranceValue: "",
   fixedDeliveryRate: "",
   variableDeliveryRate: "",
+  riderCommissionRate: "",
   expressMultiplier: "1",
   accountName: "",
   accountNumber: "",
@@ -45,6 +47,7 @@ export default function OwnerSettingsPage() {
         maximumInsuranceValue: Number(form.maximumInsuranceValue || 0),
         fixedDeliveryRate: Number(form.fixedDeliveryRate || 0),
         variableDeliveryRate: Number(form.variableDeliveryRate || 0),
+        riderCommissionRate: Number(form.riderCommissionRate || 0),
         expressMultiplier: Number(form.expressMultiplier || 1),
         accountName: form.accountName || undefined,
         accountNumber: form.accountNumber || undefined,
@@ -64,6 +67,7 @@ export default function OwnerSettingsPage() {
       maximumInsuranceValue: String(settings.data.maximumInsuranceValue),
       fixedDeliveryRate: String(settings.data.fixedDeliveryRate),
       variableDeliveryRate: String(settings.data.variableDeliveryRate),
+      riderCommissionRate: String(settings.data.riderCommissionRate ?? 0),
       expressMultiplier: String(settings.data.expressMultiplier),
       accountName: settings.data.accountName || "",
       accountNumber: settings.data.accountNumber || "",
@@ -118,8 +122,13 @@ export default function OwnerSettingsPage() {
               <div>
                 <dt>Variable delivery rate</dt>
                 <dd>
-                  ₦{Number(settings.data.variableDeliveryRate).toLocaleString()}{" "}
-                  per KM
+                  ₦{Number(settings.data.variableDeliveryRate).toLocaleString()} per KM
+                </dd>
+              </div>
+              <div>
+                <dt>Rider commission rate</dt>
+                <dd>
+                  ₦{Number(settings.data.riderCommissionRate ?? 0).toLocaleString()} per delivery
                 </dd>
               </div>
               <div>
@@ -177,6 +186,14 @@ export default function OwnerSettingsPage() {
                 step="0.01"
                 value={form.variableDeliveryRate}
                 onChange={(value) => set("variableDeliveryRate", value)}
+              />
+              <Field
+                label="Rider commission rate"
+                type="number"
+                min="0"
+                step="0.01"
+                value={form.riderCommissionRate}
+                onChange={(value) => set("riderCommissionRate", value)}
               />
               <Field
                 label="Express multiplier"

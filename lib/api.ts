@@ -21,6 +21,7 @@ import type {
   PaymentStatus,
   ReceiverCollectionStatus,
   Sender,
+  RiderCommissionSummary,
 } from "@/lib/types";
 import { normalizeNigerianPhone } from "@/lib/phone";
 
@@ -431,6 +432,8 @@ export const api = {
     }),
   getRiderRatings: () => request<RiderRating[]>("/riders/me/ratings"),
   getRiderReports: () => request<RiderReport[]>("/riders/me/reports"),
+  getCommissionSummary: () =>
+    request<RiderCommissionSummary>("/riders/me/commission-summary"),
   getAdminRiderRatings: (riderId: string) =>
     request<RiderRating[]>(`/orders/riders/${riderId}/ratings`),
   getAdminRiderReports: (riderId: string) =>
