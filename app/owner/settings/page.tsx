@@ -93,8 +93,8 @@ export default function OwnerSettingsPage() {
             <p className="eyebrow">Owner controls</p>
             <h1>Settings</h1>
             <p className="subtext">
-              Manage insurance limits, delivery rates, and company payment
-              details.
+              Manage insurance limits, delivery rates, rider commission, and
+              company payment details.
             </p>
           </div>
           {!editing && (
@@ -105,142 +105,153 @@ export default function OwnerSettingsPage() {
         </header>
         {notice && <p className="success-text">{notice}</p>}
         {!editing && settings.data && (
-          <section className="panel settings-list">
-            <div className="panel-heading">
-              <h2>Current settings</h2>
-            </div>
-            <dl className="detail-list">
-              <div>
-                <dt>Maximum insurance value</dt>
-                <dd>
-                  ₦
-                  {Number(settings.data.maximumInsuranceValue).toLocaleString()}
-                </dd>
-              </div>
-              <div>
-                <dt>Fixed delivery rate</dt>
-                <dd>
+          <>
+            <div className="settings-summary-grid">
+              <div className="settings-summary-card">
+                <span className="settings-summary-label">Fixed delivery</span>
+                <strong>
                   ₦{Number(settings.data.fixedDeliveryRate).toLocaleString()}
-                </dd>
+                </strong>
+                <small>Base fee</small>
               </div>
-              <div>
-                <dt>Variable delivery rate</dt>
-                <dd>
-                  ₦{Number(settings.data.variableDeliveryRate).toLocaleString()} per KM
-                </dd>
+              <div className="settings-summary-card accent">
+                <span className="settings-summary-label">VAT</span>
+                <strong>{Number(settings.data.vat ?? 0).toLocaleString()}%</strong>
+                <small>Tax rate</small>
               </div>
-              {/* Vat */}
-              <div>
-                <dt>VAT</dt>
-                <dd>{Number(settings.data.vat ?? 0).toLocaleString()}%</dd>
+              <div className="settings-summary-card success">
+                <span className="settings-summary-label">Rider commission</span>
+                <strong>
+                  {Number(settings.data.riderCommissionRate ?? 0).toLocaleString()}%
+                </strong>
+                <small>Per delivery</small>
               </div>
-              <div>
-                <dt>Rider commission rate</dt>
-                <dd>
-                  ₦{Number(settings.data.riderCommissionRate ?? 0).toLocaleString()} per delivery
-                </dd>
+            </div>
+
+            <section className="panel settings-list">
+              <div className="panel-heading">
+                <h2>Current settings</h2>
               </div>
-              <div>
-                <dt>Express multiplier</dt>
-                <dd>{settings.data.expressMultiplier}x</dd>
-              </div>
-              <div>
-                <dt>Account name</dt>
-                <dd>{settings.data.accountName || "Not set"}</dd>
-              </div>
-              <div>
-                <dt>Account number</dt>
-                <dd>{settings.data.accountNumber || "Not set"}</dd>
-              </div>
-              <div>
-                <dt>Bank name</dt>
-                <dd>{settings.data.bankName || "Not set"}</dd>
-              </div>
-            </dl>
-          </section>
+              <dl className="detail-list settings-detail-list">
+                <div>
+                  <dt>Maximum insurance value</dt>
+                  <dd>
+                    ₦
+                    {Number(settings.data.maximumInsuranceValue).toLocaleString()}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Variable delivery rate</dt>
+                  <dd>
+                    ₦{Number(settings.data.variableDeliveryRate).toLocaleString()} per KM
+                  </dd>
+                </div>
+                <div>
+                  <dt>Delivery fee formula</dt>
+                  <dd>Base fee + commission + VAT</dd>
+                </div>
+                <div>
+                  <dt>Express multiplier</dt>
+                  <dd>{settings.data.expressMultiplier}x</dd>
+                </div>
+                <div>
+                  <dt>Account name</dt>
+                  <dd>{settings.data.accountName || "Not set"}</dd>
+                </div>
+                <div>
+                  <dt>Account number</dt>
+                  <dd>{settings.data.accountNumber || "Not set"}</dd>
+                </div>
+                <div>
+                  <dt>Bank name</dt>
+                  <dd>{settings.data.bankName || "Not set"}</dd>
+                </div>
+              </dl>
+            </section>
+          </>
         )}
         {editing && (
           <form
-            className="panel panel-body"
+            className="panel settings-form-panel"
             onSubmit={(event) => {
               event.preventDefault();
               setNotice("");
               save.mutate();
             }}
           >
-            <div className="form-grid">
-              <h2 className="field-span form-section-title">
-                Delivery pricing
-              </h2>
-              <Field
-                label="Maximum insurance value"
-                type="number"
-                min="0"
-                step="0.01"
-                value={form.maximumInsuranceValue}
-                onChange={(value) => set("maximumInsuranceValue", value)}
-              />
-              <Field
-                label="Fixed delivery rate"
-                type="number"
-                min="0"
-                step="0.01"
-                value={form.fixedDeliveryRate}
-                onChange={(value) => set("fixedDeliveryRate", value)}
-              />
-              <Field
-                label="Variable delivery rate"
-                type="number"
-                min="0"
-                step="0.01"
-                value={form.variableDeliveryRate}
-                onChange={(value) => set("variableDeliveryRate", value)}
-              />
-              <Field
-                label="VAT Rate in percentage"
-                type="number"
-                min="0"
-                step="0.01"
-                value={form.vat}
-                onChange={(value) => set("vat", value)}
-              />
-              <h2 className="field-span form-section-title">
-                Vat Rate in percentage
-              </h2>
-              <Field
-                label="Rider commission rate"
-                type="number"
-                min="0"
-                step="0.01"
-                value={form.riderCommissionRate}
-                onChange={(value) => set("riderCommissionRate", value)}
-              />
-              <Field
-                label="Express multiplier"
-                type="number"
-                min="0.01"
-                step="0.01"
-                value={form.expressMultiplier}
-                onChange={(value) => set("expressMultiplier", value)}
-              />
-              <h2 className="field-span form-section-title">
-                Company payment account
-              </h2>
-              <Field
-                label="Account name"
-                value={form.accountName}
-                onChange={(value) => set("accountName", value)}
-              />
-              <Field
-                label="Account number"
-                value={form.accountNumber}
-                onChange={(value) => set("accountNumber", value)}
-              />
-              <Field
-                label="Bank name"
-                value={form.bankName}
-                onChange={(value) => set("bankName", value)}
-              />
+            <div className="settings-form-section">
+              <h2>Delivery pricing</h2>
+              <div className="form-grid">
+                <Field
+                  label="Maximum insurance value"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={form.maximumInsuranceValue}
+                  onChange={(value) => set("maximumInsuranceValue", value)}
+                />
+                <Field
+                  label="Fixed delivery rate"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={form.fixedDeliveryRate}
+                  onChange={(value) => set("fixedDeliveryRate", value)}
+                />
+                <Field
+                  label="Variable delivery rate"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={form.variableDeliveryRate}
+                  onChange={(value) => set("variableDeliveryRate", value)}
+                />
+                <Field
+                  label="VAT rate (%)"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={form.vat}
+                  onChange={(value) => set("vat", value)}
+                />
+                <Field
+                  label="Rider commission rate (%)"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={form.riderCommissionRate}
+                  onChange={(value) => set("riderCommissionRate", value)}
+                />
+                <Field
+                  label="Express multiplier"
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  value={form.expressMultiplier}
+                  onChange={(value) => set("expressMultiplier", value)}
+                />
+              </div>
+            </div>
+
+            <div className="settings-form-section">
+              <h2>Company payment account</h2>
+              <div className="form-grid">
+                <Field
+                  label="Account name"
+                  value={form.accountName}
+                  onChange={(value) => set("accountName", value)}
+                />
+                <Field
+                  label="Account number"
+                  value={form.accountNumber}
+                  onChange={(value) => set("accountNumber", value)}
+                />
+                <Field
+                  label="Bank name"
+                  value={form.bankName}
+                  onChange={(value) => set("bankName", value)}
+                />
+              </div>
             </div>
             {save.isError && (
               <p className="form-error">
