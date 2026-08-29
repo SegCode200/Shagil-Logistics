@@ -1248,6 +1248,13 @@ select {
 .fee-breakdown strong {
   font-size: 12px;
 }
+.fee-formula-note {
+  display: block;
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
 .settings-form-panel {
   padding: 0;
   border: 1px solid var(--line);

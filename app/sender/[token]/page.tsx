@@ -85,13 +85,16 @@ export default function SenderAccessPage({ params }: Props) {
                     <span>{order.deliveryZone?.name || "Delivery area not set"}</span>
                     <small>{order.deliveryAddress}</small>
                   </div>
-                  <span className={`status status-${order.status.toLowerCase()}`}>
+                  <div className="flex-col gap-3">
+                <span className={`status status-${order.status.toLowerCase()}`}>
                     {labels[order.status] || order.status}
                   </span>
                   <div className="sender-order-meta">
                     <span><b>Receiver</b>{order.receiverName || "—"}</span>
                     <span><b>Fee</b>₦{Number(order.deliveryFee).toLocaleString()}</span>
                   </div>
+                  </div>
+
                 </Link>
               ))}
             </div>

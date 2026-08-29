@@ -40,11 +40,11 @@ function calculateDeliveryFeeBreakdown(
       baseFee: deliveryFee,
       riderCommissionAmount: 0,
       vatAmount: 0,
+      formula: "Base fee + rider commission + VAT = final fee",
     };
   }
 
-  const multiplier = (1 + commissionRate / 100) * (1 + vatRate / 100);
-  const baseFee = deliveryFee / multiplier;
+  const baseFee = deliveryFee / ((1 + commissionRate / 100) * (1 + vatRate / 100));
   const riderCommissionAmount = baseFee * (commissionRate / 100);
   const vatAmount = deliveryFee - baseFee - riderCommissionAmount;
 
@@ -52,6 +52,8 @@ function calculateDeliveryFeeBreakdown(
     baseFee,
     riderCommissionAmount,
     vatAmount,
+    formula:
+      "Base fee = fixed delivery + (distance × variable rate) → rider commission → VAT → final delivery fee",
   };
 }
 
@@ -467,6 +469,9 @@ export default function OrderDetailsPage({ params }: Props) {
                         </strong>
                       </div>
                     </div>
+                    <small className="fee-formula-note">
+                      {deliveryBreakdown.formula}
+                    </small>
                   </dd>
                 </div>
               )}
