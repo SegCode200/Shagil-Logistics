@@ -143,6 +143,7 @@ export default function ManagerOrderDetailsPage({ params }: Props) {
     data.deliveryFee,
     settings.data,
   );
+  const editableBaseFee = Number(deliveryBreakdown?.baseFee ?? data.deliveryFee ?? 0);
   function beginEditing() {
     setEditValues({
       senderName: data.senderName || "",
@@ -155,7 +156,7 @@ export default function ManagerOrderDetailsPage({ params }: Props) {
       deliveryZoneId: data.deliveryZoneId || data.deliveryZone?.id || "",
       pickupMethod: data.pickupMethod || "SENDER_DROPOFF",
       paymentMethod: data.paymentMethod || "PAYMENT_ON_DELIVERY",
-      deliveryFee: String(data.deliveryFee ?? ""),
+      deliveryFee: String(editableBaseFee),
     });
     setEditing(true);
   }
@@ -329,7 +330,7 @@ export default function ManagerOrderDetailsPage({ params }: Props) {
                   </option>
                 </select>
               </div>
-              {field("Delivery fee", "deliveryFee", "number")}
+              {field("Base fee", "deliveryFee", "number")}
               <div className="form-actions field-span">
                 <button
                   type="button"

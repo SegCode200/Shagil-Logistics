@@ -12,11 +12,37 @@ const formatMoney = (value?: number | string | null) => {
   return Number.isFinite(numeric) ? `₦${numeric.toLocaleString()}` : "₦0";
 };
 
+function getCommissionBreakdown(
+  amount: number | string | null | undefined,
+  settings?: { riderCommissionRate?: number | string } | null,
+) {
+  const commission = Number(amount ?? 0) || 0;
+  const rate = Number(settings?.riderCommissionRate ?? 0) || 0;
+
+  if (commission <= 0 || rate <= 0) {
+    return null;
+  }
+
+  const baseFee = (commission * 100) / rate;
+
+  return {
+    baseFee,
+    rate,
+    commission,
+    formula: `${formatMoney(baseFee)} × ${rate}% = ${formatMoney(commission)}`,
+  };
+}
+
 export default function RiderCommissionPage() {
   const { user, isLoading: authLoading } = useRoleRedirect("RIDER");
   const summaryQuery = useQuery({
     queryKey: ["rider-commission-summary"],
     queryFn: api.getCommissionSummary,
+    enabled: Boolean(user),
+  });
+  const settings = useQuery({
+    queryKey: ["company-settings"],
+    queryFn: api.getSettings,
     enabled: Boolean(user),
   });
 
@@ -73,34 +99,73 @@ export default function RiderCommissionPage() {
               />
             ) : (
               <div className="commission-list">
-                {summary.deliveries.map((delivery, index) => (
-                  <div key={`${delivery.orderId}-${delivery.date ?? index}`} className="commission-item">
-                    <div className="commission-item-head">
-                      <div>
-                        <strong>{delivery.orderId}</strong>
+                {summary.deliveries.map((delivery, index) => {
+                  const breakdown = getCommissionBreakdown(
+                    delivery.commission,
+                    settings.data,
+                  );
+
+                  return (
+                    <div
+                      key={`${delivery.orderId}-${delivery.date ?? index}`}
+                      className="commission-item"
+                    >
+                      <div className="commission-item-head">
+                        <div>
+                          <strong>{delivery.orderId}</strong>
+                          <span>
+                            <CalendarDays size={12} />
+                            {delivery.date
+                              ? new Intl.DateTimeFormat("en", {
+                                  day: "numeric",
+                                  month: "short",
+                                  year: "numeric",
+                                }).format(new Date(delivery.date))
+                              : "Date unavailable"}
+                          </span>
+                        </div>
+                        <div className="commission-amount">
+                          {formatMoney(delivery.commission)}
+                        </div>
+                      </div>
+
+                      {breakdown ? (
+                        <div className="commission-breakdown">
+                          <div>
+                            <small>Base fee</small>
+                            <strong>{formatMoney(breakdown.baseFee)}</strong>
+                          </div>
+                          <div>
+                            <small>Rate</small>
+                            <strong>{breakdown.rate}%</strong>
+                          </div>
+                          <div>
+                            <small>Commission</small>
+                            <strong>{formatMoney(breakdown.commission)}</strong>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="commission-breakdown single-line">
+                          <small>Commission earned</small>
+                          <strong>{formatMoney(delivery.commission)}</strong>
+                        </div>
+                      )}
+
+                      <div className="commission-meta">
                         <span>
-                          <CalendarDays size={12} />
-                          {delivery.date ? new Intl.DateTimeFormat("en", {
-                            day: "numeric",
-                            month: "short",
-                            year: "numeric",
-                          }).format(new Date(delivery.date)) : "Date unavailable"}
+                          <Wallet size={12} />
+                          {delivery.paymentStatus === "PAID" ? "Paid" : "Pending"}
+                        </span>
+                        <span>
+                          <CheckCircle2 size={12} />
+                          {delivery.companyPaymentStatus === "PAID"
+                            ? "Company settled"
+                            : "Company pending"}
                         </span>
                       </div>
-                      <div className="commission-amount">{formatMoney(delivery.commission)}</div>
                     </div>
-                    <div className="commission-meta">
-                      <span>
-                        <Wallet size={12} />
-                        {delivery.paymentStatus === "PAID" ? "Paid" : "Pending"}
-                      </span>
-                      <span>
-                        <CheckCircle2 size={12} />
-                        {delivery.companyPaymentStatus === "PAID" ? "Company settled" : "Company pending"}
-                      </span>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

@@ -1561,6 +1561,80 @@ select {
   font-weight: 750;
 }
 .rider-access-button { width: 100%; margin-top: 14px; }
+.commission-list {
+  display: grid;
+  gap: 14px;
+}
+.commission-item {
+  display: grid;
+  gap: 10px;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+}
+.commission-item-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.commission-item-head > div:first-child {
+  display: grid;
+  gap: 7px;
+}
+.commission-item-head strong {
+  color: var(--navy);
+}
+.commission-item-head span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.commission-amount {
+  color: var(--navy);
+  font-weight: 800;
+  font-size: 18px;
+}
+.commission-breakdown {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid #edf2f6;
+}
+.commission-breakdown div {
+  display: grid;
+  gap: 4px;
+}
+.commission-breakdown small {
+  color: var(--muted);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.commission-breakdown strong {
+  color: var(--navy);
+  font-size: 12px;
+}
+.commission-breakdown.single-line {
+  grid-template-columns: 1fr auto;
+  align-items: center;
+}
+.commission-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.commission-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
 .report-filter {
   width: auto;
 }
@@ -2735,22 +2809,36 @@ select {
     gap: 10px;
   }
   .mobile-order-card {
+    display: block;
     padding: 15px;
     border: 1px solid var(--line);
     border-radius: 9px;
     background: white;
+    color: inherit;
+    text-decoration: none;
   }
-  .mobile-order-card header,
-  .mobile-order-card footer {
+  .mobile-order-card:active {
+    opacity: 0.9;
+  }
+  .mobile-order-main,
+  .mobile-order-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 10px;
   }
-  .mobile-order-card footer {
-    margin-top: 14px;
-    color: var(--muted);
+  .mobile-order-row {
+    margin-top: 12px;
+  }
+  .mobile-order-address {
+    flex: 1;
+    min-width: 0;
     font-size: 12px;
+    color: var(--muted);
+    line-height: 1.4;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .search {
     max-width: none;

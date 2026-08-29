@@ -177,6 +177,7 @@ export default function OrderDetailsPage({ params }: Props) {
     order.deliveryFee,
     settings.data,
   );
+  const editableBaseFee = Number(deliveryBreakdown?.baseFee ?? order.deliveryFee ?? 0);
   const canApprove = Boolean(
     (order.senderName || order.customerName) &&
     (order.receiverName || order.customerName) &&
@@ -247,7 +248,7 @@ export default function OrderDetailsPage({ params }: Props) {
                   packageNotes: order.packageNotes || "",
                   pickupMethod: order.pickupMethod || "SENDER_DROPOFF",
                   paymentMethod: order.paymentMethod || "PAYMENT_ON_DELIVERY",
-                  deliveryFee: String(order.deliveryFee ?? ""),
+                  deliveryFee: String(editableBaseFee),
                   deliveryZoneId: order.deliveryZoneId || "",
                 });
                 setEditing(true);
@@ -363,7 +364,7 @@ export default function OrderDetailsPage({ params }: Props) {
                 </select>
               </div>
               <EditField
-                label="Change delivery fee"
+                label="Base fee"
                 name="deliveryFee"
                 type="number"
                 values={editValues}

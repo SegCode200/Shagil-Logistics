@@ -227,30 +227,24 @@ function OrdersContent() {
               </div>
               <div className="mobile-order-list">
                 {filtered.map((order) => (
-                  <article className="mobile-order-card" key={order.id}>
-                    <header>
+                  <Link
+                    className="mobile-order-card"
+                    href={`/owner/orders/${order.orderId}`}
+                    key={order.id}
+                  >
+                    <div className="mobile-order-main">
                       <strong className="order-ref">
                         {order.orderId || order.id}
                       </strong>
-                      <div className="mobile-order-meta">
-                        <span
-                          className={`delivery-type-badge delivery-type-${(order.deliveryType || "NORMAL").toLowerCase()}`}
-                        >
-                          {(order.deliveryType || "NORMAL").slice(0, 3).toUpperCase()}
-                        </span>
-                        <span
-                          className={`mini-status mini-status-${(order.finalPaymentStatus || "PENDING").toLowerCase()}`}
-                        >
-                          {order.finalPaymentStatus || "PENDING"}
-                        </span>
-                      </div>
-                    </header>
-                    <p>{order.customerName}</p>
-                    <footer>
-                      <span>{formatDate(order.createdAt)}</span>
+                      <span className="muted">{formatDate(order.createdAt)}</span>
+                    </div>
+                    <div className="mobile-order-row">
+                      <span className="mobile-order-address">
+                        {order.deliveryAddress || "Delivery address"}
+                      </span>
                       <OrderStatusBadge status={order.status} />
-                    </footer>
-                  </article>
+                    </div>
+                  </Link>
                 ))}
               </div>
             </>
