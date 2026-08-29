@@ -2827,8 +2827,35 @@ select {
     justify-content: space-between;
     gap: 10px;
   }
+  .mobile-order-main {
+    margin-bottom: 8px;
+  }
   .mobile-order-row {
-    margin-top: 12px;
+    margin-top: 8px;
+  }
+  .mobile-order-row-tight {
+    margin-top: 6px;
+  }
+  .mobile-order-label {
+    color: var(--muted);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .mobile-order-value {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--navy);
+  }
+  .mobile-order-inline-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .mobile-order-fee {
+    color: var(--navy);
+    font-size: 12px;
+    font-weight: 700;
   }
   .mobile-order-address {
     flex: 1;

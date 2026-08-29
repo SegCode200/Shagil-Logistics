@@ -238,6 +238,41 @@ function OrdersContent() {
                       </strong>
                       <span className="muted">{formatDate(order.createdAt)}</span>
                     </div>
+
+                    <div className="mobile-order-row mobile-order-row-tight">
+                      <span className="mobile-order-label">Sender</span>
+                      <span className="mobile-order-value">
+                        {order.senderName || order.customerName || "—"}
+                      </span>
+                    </div>
+
+                    <div className="mobile-order-row mobile-order-row-tight">
+                      <span className="mobile-order-label">Payment</span>
+                      <span
+                        className={`mini-status mini-status-${(order.paymentMethod === "PAYMENT_ON_DELIVERY" ? "pending" : "paid")}`}
+                      >
+                        {order.paymentMethod === "PAYMENT_ON_DELIVERY"
+                          ? "POD"
+                          : "PAID"}
+                      </span>
+                    </div>
+
+                    <div className="mobile-order-row mobile-order-row-tight">
+                      <span className="mobile-order-label">Delivery</span>
+                      <div className="mobile-order-inline-meta">
+                        <span
+                          className={`delivery-type-badge delivery-type-${(order.deliveryType || "NORMAL").toLowerCase()}`}
+                        >
+                          {(order.deliveryType || "NORMAL").slice(0, 3).toUpperCase()}
+                        </span>
+                        <span className="mobile-order-fee">
+                          {order.deliveryFee != null
+                            ? `₦${Number(order.deliveryFee).toLocaleString()}`
+                            : "—"}
+                        </span>
+                      </div>
+                    </div>
+
                     <div className="mobile-order-row">
                       <span className="mobile-order-address">
                         {order.deliveryAddress || "Delivery address"}
