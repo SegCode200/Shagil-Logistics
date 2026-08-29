@@ -19,6 +19,14 @@ const formatMoney = (value?: number | string | null) => {
   return Number.isFinite(numeric) ? numeric.toLocaleString() : "0";
 };
 
+const formatDateTime = (value?: string | null) => {
+  if (!value) return "—";
+  return new Intl.DateTimeFormat("en", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(value));
+};
+
 export default function RiderDashboard() {
   const { user, isLoading: authLoading } = useRoleRedirect("RIDER");
   const [page, setPage] = useState(1);
@@ -113,6 +121,10 @@ export default function RiderDashboard() {
                     ) : (
                       "—"
                     )}
+                  </span>
+                  <span>
+                    <strong>Date & time</strong>
+                    <span>{formatDateTime(order.deliveredAt || order.createdAt)}</span>
                   </span>
                   <span>
                     <strong>Payment</strong>
