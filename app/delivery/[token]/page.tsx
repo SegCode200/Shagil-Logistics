@@ -73,7 +73,7 @@ export default function CustomerDeliveryPage({
           <strong>{order.deliveryCode || "Provided by sender"}</strong>
           <p>Show this code to the rider when your order is delivered.</p>
         </div>
-        <section className="public-info-section">
+        {/* <section className="public-info-section">
 
               {order.paymentMethod === "PAYMENT_ON_DELIVERY" && (
             <div className="public-action">
@@ -108,7 +108,7 @@ export default function CustomerDeliveryPage({
               )}
             </div>
           )}
-          </section>
+          </section> */}
         <section className="public-info-section">
           <h2>Sender information</h2>
           <div className="public-facts">
