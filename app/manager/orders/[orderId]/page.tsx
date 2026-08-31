@@ -20,7 +20,12 @@ type EditValues = Record<string, string>;
 
 function calculateDeliveryFeeBreakdown(
   value: number | string | null | undefined,
-  settings?: { riderCommissionRate?: number | string; vat?: number | string } | null,
+  settings?: {
+    riderCommissionRate?: number | string;
+    vat?: number | string;
+    expressMultiplier?: number | string;
+  } | null,
+  deliveryType?: string | null,
 ) {
   const deliveryFee = Number(value ?? 0) || 0;
   if (!settings || deliveryFee <= 0) {
@@ -29,16 +34,22 @@ function calculateDeliveryFeeBreakdown(
 
   const commissionRate = Number(settings.riderCommissionRate ?? 0);
   const vatRate = Number(settings.vat ?? 0);
+  const expressMultiplier =
+    deliveryType === "EXPRESS" ? Number(settings.expressMultiplier ?? 1) : 1;
   if (commissionRate === 0 && vatRate === 0) {
     return {
       baseFee: deliveryFee,
       riderCommissionAmount: 0,
       vatAmount: 0,
-      formula: "Base fee + rider commission + VAT = final fee",
+      formula:
+        deliveryType === "EXPRESS" && expressMultiplier > 1
+          ? "Base fee = normal base × express multiplier → final fee"
+          : "Base fee + rider commission + VAT = final fee",
     };
   }
 
-  const baseFee = deliveryFee / ((1 + commissionRate / 100) * (1 + vatRate / 100));
+  const baseFee =
+    deliveryFee / ((1 + commissionRate / 100) * (1 + vatRate / 100));
   const riderCommissionAmount = baseFee * (commissionRate / 100);
   const vatAmount = deliveryFee - baseFee - riderCommissionAmount;
 
@@ -47,7 +58,9 @@ function calculateDeliveryFeeBreakdown(
     riderCommissionAmount,
     vatAmount,
     formula:
-      "Base fee = fixed delivery + (distance × variable rate) → rider commission → VAT → final delivery fee",
+      deliveryType === "EXPRESS" && expressMultiplier > 1
+        ? "Base fee = normal base × express multiplier → rider commission → VAT → final delivery fee"
+        : "Base fee = fixed delivery + (distance × variable rate) → rider commission → VAT → final delivery fee",
   };
 }
 
@@ -142,6 +155,7 @@ export default function ManagerOrderDetailsPage({ params }: Props) {
   const deliveryBreakdown = calculateDeliveryFeeBreakdown(
     data.deliveryFee,
     settings.data,
+    data.deliveryType,
   );
   const editableBaseFee = Number(deliveryBreakdown?.baseFee ?? data.deliveryFee ?? 0);
   function beginEditing() {
