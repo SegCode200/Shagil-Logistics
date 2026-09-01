@@ -149,6 +149,7 @@ export default function SenderOrderDetailsPage({ params }: Props) {
           </div>
           <div className="sender-statuses">
             <OrderStatusBadge status={order.status} />
+            
             <span
               className={`status ${order.receiverCollectionStatus === "COLLECTED" ? "payment-confirmed" : "payment-pending"}`}
             >

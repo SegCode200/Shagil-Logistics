@@ -72,6 +72,10 @@ export default function NewOrderPage() {
     control: form.control,
     name: "paymentMethod",
   });
+  const getRiderOptionLabel = (rider: { name?: string; bikeId?: string | null; companyBikeId?: string | null }) => {
+    const bikeNumber = rider.companyBikeId || rider.bikeId;
+    return bikeNumber ? `${rider.name || "Rider"} - Bike ${bikeNumber}` : rider.name || "Rider";
+  };
   const mutation = useMutation({
     mutationFn: (values: FormValues) => api.createOrder(values),
     onSuccess: (order) => {
@@ -253,7 +257,7 @@ export default function NewOrderPage() {
                     .filter((rider) => rider.active !== false)
                     .map((rider) => (
                       <option key={rider.id} value={rider.id}>
-                        {rider.name}
+                        {getRiderOptionLabel(rider)}
                       </option>
                     ))}
                 </select>

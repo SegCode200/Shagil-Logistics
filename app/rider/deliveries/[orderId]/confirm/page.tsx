@@ -181,34 +181,33 @@ export default function ConfirmDeliveryPage({ params }: Props) {
                 ? `Delivery fee to collect: ₦${Number(order.deliveryFee).toLocaleString()}`
                 : "Already paid"}
             </span>
-            <span
-              className={`status status-${(order.receiverCollectionStatus || "NOT_COLLECTED").toLowerCase()}`}
-            >
-              {order.receiverCollectionStatus === "COLLECTED"
-                ? "Receiver payment confirmed"
-                : "Receiver payment pending"}
-            </span>
           </div>
           <div className="rider-action-stack">
             <p className="action-section-label">Delivery controls</p>
             <div className="payment-action-row">
+
+              {order.paymentMethod === "PAYMENT_ON_DELIVERY" &&
+              order.status === "PICKED_UP" && (
               <button
                 type="button"
                 className="button button-success"
-                disabled={order.companyPaymentStatus === "PAID" || companyPaymentMutation.isPending}
-                onClick={() => companyPaymentMutation.mutate()}
+                disabled={order.receiverCollectionStatus === "COLLECTED" || receiverPaymentMutation.isPending}
+                onClick={() => receiverPaymentMutation.mutate()}
               >
                 <CheckCircle2 size={16} />
-                {companyPaymentMutation.isPending ? "Updating payment..." : "Payment received"}
+                {receiverPaymentMutation.isPending ? "Releasing payment..." : "Allow payment confirmation for sender"}
               </button>
-              <span className={`status status-${(order.companyPaymentStatus || "PENDING").toLowerCase()}`}>
-                {order.companyPaymentStatus === "PAID" ? "PAID" : "PENDING"}
+              )}
+              <span className={`status status-${(order.receiverCollectionStatus || "PENDING").toLowerCase()}`}>
+                {order.receiverCollectionStatus === "COLLECTED" ? "PAID" : "PENDING"}
               </span>
             </div>
-            {companyPaymentMutation.isError && (
-              <p className="form-error confirm-error">Company payment could not be updated.</p>
+              
+            {receiverPaymentMutation.isError && (
+              <p className="form-error confirm-error">Receiver payment could not be confirmed</p>
             )}
-            {order.paymentMethod === "PAYMENT_ON_DELIVERY" &&
+            
+            {/* {order.paymentMethod === "PAYMENT_ON_DELIVERY" &&
               order.status === "PICKED_UP" &&
               order.receiverCollectionStatus !== "COLLECTED" && (
                 <button
@@ -225,7 +224,7 @@ export default function ConfirmDeliveryPage({ params }: Props) {
               )}
             {receiverPaymentMutation.isError && (
               <p className="form-error confirm-error">Receiver payment could not be confirmed.</p>
-            )}
+            )} */}
             <button
               type="button"
               className="button button-warning button-full"

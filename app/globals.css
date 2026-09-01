@@ -748,6 +748,14 @@ select {
   color: #a63b3b;
   background: #fee9e9;
 }
+.payment-confirmed {
+  color: #a63b3b;
+  background: #fee9e9;
+}
+.payment-pending {
+  color: #9b6500;
+  background: #fff5dd;
+}
 .delivery-type-badge,
 .mini-status {
   display: inline-flex;

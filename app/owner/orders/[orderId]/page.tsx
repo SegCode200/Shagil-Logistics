@@ -200,6 +200,10 @@ export default function OrderDetailsPage({ params }: Props) {
     order.companyPaymentStatus === "PAID" &&
     order.senderPaymentStatus === "PAID" &&
     order.finalPaymentStatus !== "PAID";
+  const getRiderOptionLabel = (rider: { name?: string; bikeId?: string | null; companyBikeId?: string | null; phone?: string | null }) => {
+    const bikeNumber = rider.companyBikeId || rider.bikeId;
+    return bikeNumber ? `${rider.name || "Rider"} - Bike ${bikeNumber}` : rider.name || "Rider";
+  };
   return (
     <AppShell role="OWNER">
       {paymentError && (
@@ -699,7 +703,7 @@ export default function OrderDetailsPage({ params }: Props) {
                   <option value="">Unassigned</option>
                   {(riders.data || []).map((rider) => (
                     <option key={rider.id} value={rider.id}>
-                      {rider.name} - ({rider.phone || "No phone"})
+                      {getRiderOptionLabel(rider)}
                     </option>
                   ))}
                 </select>

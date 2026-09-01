@@ -136,6 +136,10 @@ export default function ManagerOrderDetailsPage({ params }: Props) {
       queryClient.invalidateQueries({ queryKey: ["managerOrders"] });
     },
   });
+  const getRiderOptionLabel = (rider: { name?: string; bikeId?: string | null; companyBikeId?: string | null; phone?: string | null }) => {
+    const bikeNumber = rider.companyBikeId || rider.bikeId;
+    return bikeNumber ? `${rider.name || "Rider"} - Bike ${bikeNumber}` : rider.name || "Rider";
+  };
   if (isLoading || !user) return <LoadingState />;
   if (order.isLoading)
     return (
@@ -552,7 +556,7 @@ export default function ManagerOrderDetailsPage({ params }: Props) {
                   <option value="">Unassigned</option>
                   {(riders.data || []).map((rider) => (
                     <option key={rider.id} value={rider.id}>
-                      {rider.name}
+                      {getRiderOptionLabel(rider)}
                     </option>
                   ))}
                 </select>
