@@ -517,7 +517,7 @@ export default function CreateOrderPage() {
                 set("paymentMethod", e.target.value as Values["paymentMethod"])
               }
             >
-              <option value="ALREADY_PAID">Already paid</option>
+              <option value="ALREADY_PAID">Payment after delivery</option>
               <option value="PAYMENT_ON_DELIVERY">Payment on delivery</option>
             </select>
           </Section>

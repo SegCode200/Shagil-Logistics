@@ -212,7 +212,10 @@ export default function OrderDetailsPage({ params }: Props) {
           >
             <p className="eyebrow">Payment confirmation required</p>
             <h2 id="owner-payment-confirmation-error">Confirm payment first</h2>
-            <p>Tick the payment received checkbox before approving this order.</p>
+            <p>
+              Please tick the checkbox and confirm that the customer has paid
+              before approving this order.
+            </p>
             <button
               type="button"
               className="button button-primary button-full"
@@ -526,7 +529,7 @@ export default function OrderDetailsPage({ params }: Props) {
                 <dd>
                   {order.paymentMethod === "PAYMENT_ON_DELIVERY"
                     ? "Payment on delivery"
-                    : "Already paid"}
+                    : "Payment after delivery"}
                 </dd>
               </div>
               <div>
@@ -580,8 +583,7 @@ export default function OrderDetailsPage({ params }: Props) {
               <label className="payment-confirmation">
                 <input
                   type="checkbox"
-                  checked={paymentConfirmed || order.senderPaymentStatus === "PAID"}
-                  disabled={order.senderPaymentStatus === "PAID"}
+                  checked={paymentConfirmed}
                   onChange={(event) => setPaymentConfirmed(event.target.checked)}
                 />
                 <span>You must fill checkbox to confirm customer payment.</span>
@@ -651,18 +653,18 @@ export default function OrderDetailsPage({ params }: Props) {
                   onClick={() => {
                     if (
                       order.paymentMethod === "ALREADY_PAID" &&
-                      order.senderPaymentStatus !== "PAID" &&
                       !paymentConfirmed
                     ) {
                       setPaymentError(true);
                       return;
                     }
-                    if (
-                      window.confirm(
-                        `Are you sure you want to approve ${order.orderId || "this order"}?`,
-                      )
-                    )
+                    const confirmedMessage =
+                      order.paymentMethod === "ALREADY_PAID"
+                        ? `Are you sure you have confirmed that the customer has paid for ${order.orderId || "this order"}?`
+                        : `Are you sure you want to approve ${order.orderId || "this order"}?`;
+                    if (window.confirm(confirmedMessage)) {
                       action.mutate("approve");
+                    }
                   }}
                 >
                   Approve order

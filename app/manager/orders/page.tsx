@@ -105,9 +105,9 @@ function ManagerOrdersContent() {
                       </td>
                       <td>
                         {order.paymentMethod === "PAYMENT_ON_DELIVERY"
-                          ? "Payment on delivery"
+                          ? "POD"
                           : order.paymentMethod === "ALREADY_PAID"
-                            ? "Already paid"
+                            ? "PBD"
                             : "-"}
                       </td>
                       <td>

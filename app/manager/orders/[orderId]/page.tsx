@@ -338,7 +338,7 @@ export default function ManagerOrderDetailsPage({ params }: Props) {
                     })
                   }
                 >
-                  <option value="ALREADY_PAID">Already paid</option>
+                  <option value="ALREADY_PAID">Payment after delivery</option>
                   <option value="PAYMENT_ON_DELIVERY">
                     Payment on delivery
                   </option>

@@ -199,7 +199,7 @@ function OrdersContent() {
                         <td>
                           {order.paymentMethod === "PAYMENT_ON_DELIVERY"
                             ? "POD"
-                            : "PAID"}
+                            : "PBD"}
                           <small className="muted block">
                             <span
                               className={`mini-status mini-status-${(order.finalPaymentStatus || "PENDING").toLowerCase()}`}
@@ -253,7 +253,7 @@ function OrdersContent() {
                       >
                         {order.paymentMethod === "PAYMENT_ON_DELIVERY"
                           ? "POD"
-                          : "PAID"}
+                          : "PBD"}
                       </span>
                     </div>
 
