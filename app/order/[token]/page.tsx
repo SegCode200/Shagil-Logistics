@@ -456,10 +456,15 @@ export default function PublicOrderPage({ params }: Props) {
   const selectedDistance = stations.data
     ?.find((station) => station.id === values.stationId)
     ?.zoneDistances?.find((distance) => distance.deliveryZoneId === values.deliveryZoneId);
-  const baseFee = selectedDistance
+  const baseFeeBeforeExpress = selectedDistance
     ? Number(settings.data?.fixedDeliveryRate || 0) +
       Number(settings.data?.variableDeliveryRate || 0) * Number(selectedDistance.distanceKm)
     : 0;
+  const expressMultiplier =
+    values.deliveryType === "EXPRESS"
+      ? Number(settings.data?.expressMultiplier || 1)
+      : 1;
+  const baseFee = baseFeeBeforeExpress * expressMultiplier;
   const riderCommissionAmount =
     (Number(settings.data?.riderCommissionRate || 0) * baseFee) / 100;
   const vatAmount =
@@ -860,7 +865,7 @@ export default function PublicOrderPage({ params }: Props) {
                 set("paymentMethod", e.target.value as Values["paymentMethod"])
               }
             >
-              <option value="ALREADY_PAID">Already paid</option>
+              <option value="ALREADY_PAID">Payment after delivery</option>
               <option value="PAYMENT_ON_DELIVERY">Payment on delivery</option>
             </select>
           </Section>
