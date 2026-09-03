@@ -244,7 +244,7 @@ export default function SenderOrderDetailsPage({ params }: Props) {
               <div>
                 <h2>Release payment for sender</h2>
                 <p>
-                  Status: <strong>{order.receiverCollectionStatus === "COLLECTED" ? "Collected" : "Not collected"}</strong>
+                  Status: <strong>{order.receiverCollectionStatus === "COLLECTED" ? "PAID" : "NOT PAID"}</strong>
                 </p>
               </div>
             </div>
