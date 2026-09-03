@@ -7,6 +7,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { LoadingState } from "@/components/ui/primitives";
 import { DeliveryFeedback } from "@/components/feedback/delivery-feedback";
+import { PaymentReceiptViewer } from "@/components/orders/payment-receipt-viewer";
 
 const timeline = [
   "PENDING",
@@ -137,7 +138,7 @@ export default function CustomerDeliveryPage({
           </div>
         </section>
 
-        {order.companyAccountName && (
+        {order.companyAccountName && order.paymentMethod === "PAYMENT_ON_DELIVERY" && (
           <section className="public-info-section">
             <h2>Account information</h2>
             <div className="public-facts">
@@ -219,6 +220,12 @@ export default function CustomerDeliveryPage({
           </div>
     
         </section>
+        {order.paymentReceipts?.length ? (
+          <section className="public-info-section payment-receipts-section">
+            <h2>Payment receipts</h2>
+            <PaymentReceiptViewer receipts={order.paymentReceipts} />
+          </section>
+        ) : null}
         <div className="timeline">
           {timeline.map((status, index) => (
             <div

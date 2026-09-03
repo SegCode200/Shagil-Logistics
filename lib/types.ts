@@ -66,6 +66,14 @@ export type OrderImage = {
   originalFilename?: string;
   name?: string;
 };
+export type PaymentReceipt = {
+  id?: string;
+  publicUrl?: string;
+  originalFilename?: string;
+  mimeType?: string;
+  size?: number;
+  uploadedAt?: string;
+};
 export type PublicSenderOrder = {
   orderId: string;
   createdAt?: string;
@@ -89,7 +97,13 @@ export type PublicSenderOrder = {
     phone?: string | null;
   } | null;
   accountDetails?: AccountDetails | null;
+  companyAccountName?: string | null;
+  companyAccountNumber?: string | null;
+  companyBankName?: string | null;
+  stationPhoneNumber?: string | null;
+  stationPhone?: string | null;
   images?: OrderImage[];
+  paymentReceipts?: PaymentReceipt[];
 };
 export type PublicStation = {
   id: string;
@@ -313,6 +327,7 @@ export type Order = {
   receiverCollectionStatus?: ReceiverCollectionStatus;
   maximumInsuranceValue?: boolean;
   images?: OrderImage[];
+  paymentReceipts?: PaymentReceipt[];
   events?: OrderEvent[];
   notifications?: Notification[];
   rating?: RiderRating | null;

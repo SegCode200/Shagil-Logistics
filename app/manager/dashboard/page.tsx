@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { AppShell } from "@/components/layout/app-shell";
 import { useRoleRedirect } from "@/components/auth/auth-provider";
 import { api } from "@/lib/api";
@@ -15,6 +16,7 @@ export default function ManagerDashboard() {
     queryFn: api.getManagerOrders,
     enabled: Boolean(user),
   });
+  const [fromDate, setFromDate] = useState("");
   if (isLoading || !user) return <LoadingState />;
   if (orders.isLoading)
     return (
@@ -31,16 +33,31 @@ export default function ManagerDashboard() {
       </AppShell>
     );
   const items = orders.data || [];
+  const today = new Date();
+  const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  const filteredItems = items.filter((order) => !fromDate || order.createdAt.slice(0, 10) >= fromDate);
   const data = {
     totalOrders: items.length,
     newOrders: items.filter((order) => ["PENDING_APPROVAL"].includes(order.status)).length,
     alreadyPaid: items.filter((order) => order.paymentMethod === "ALREADY_PAID").length,
     paymentonDelvery: items.filter((order) => order.paymentMethod === "PAYMENT_ON_DELIVERY").length,
-    totalTransactions: items.filter((order) => order.paymentMethod === "ALREADY_PAID" || order.paymentMethod === "PAYMENT_ON_DELIVERY").length,
+    totalTransactions: filteredItems.filter((order) => order.paymentMethod === "ALREADY_PAID" || order.paymentMethod === "PAYMENT_ON_DELIVERY").length,
+    expectedTotal: filteredItems.reduce((sum, order) => sum + Number(order.totalAmountToCollect ?? order.deliveryFee ?? 0), 0),
+    actualTotal: filteredItems.reduce((sum, order) => {
+      const isPaid = order.finalPaymentStatus === "PAID" || order.senderPaymentStatus === "PAID" || order.paymentStatus === "PAID";
+      return sum + (isPaid ? Number(order.totalAmountToCollect ?? order.deliveryFee ?? 0) : 0);
+    }, 0),
     pickedUp: items.filter((order) => order.status === "PICKED_UP").length,
     delivered: items.filter((order) => order.status === "DELIVERED").length,
     express: items.filter((order) => order.deliveryType === "EXPRESS").length,
+    podPendingReconciliation: filteredItems.filter(
+      (order) => order.paymentMethod === "PAYMENT_ON_DELIVERY" && order.finalPaymentStatus !== "PAID",
+    ).length,
+    reconciledPod: filteredItems.filter(
+      (order) => order.paymentMethod === "PAYMENT_ON_DELIVERY" && order.finalPaymentStatus === "PAID",
+    ).length,
   };
+  const balanceTotal = Math.max(0, data.expectedTotal - data.actualTotal);
   const metrics = [
     ["Total orders", data.totalOrders],
     ["Pending Approval", data.newOrders],
@@ -87,6 +104,45 @@ export default function ManagerDashboard() {
             >
               <span>{label}</span>
               <strong>{value ?? "-"}</strong>
+              <ArrowUpRight className="summary-card-arrow" size={16} />
+            </Link>
+          ))}
+        </div>
+        <div className="dashboard-transaction-filter">
+          <label htmlFor="manager-dashboard-from-date">Transactions from</label>
+          <input
+            id="manager-dashboard-from-date"
+            type="date"
+            value={fromDate}
+            max={todayKey}
+            onChange={(event) => setFromDate(event.target.value)}
+          />
+          {fromDate ? <button type="button" onClick={() => setFromDate("")}>Clear</button> : null}
+          <span>through today</span>
+        </div>
+        <div className="summary-grid summary-grid-secondary">
+          {[
+            ["Total transactions", data.totalTransactions, `₦${Number(data.expectedTotal).toLocaleString()}`, "transactions"],
+            ["Expected total", null, `₦${Number(data.expectedTotal).toLocaleString()}`, "expected"],
+            ["Actual total", null, `₦${Number(data.actualTotal).toLocaleString()}`, "actual"],
+            ["Balance total", null, `₦${Number(balanceTotal).toLocaleString()}`, "balance"],
+            ["POD pending reconciliation", data.podPendingReconciliation, null, "pod-pending"],
+            ["Reconciled POD", data.reconciledPod, null, "pod-paid"],
+          ].map(([label, value, amount, transaction]) => (
+            <Link
+              className="summary-card summary-card-secondary summary-card-link"
+              href={`/manager/orders?${[
+                fromDate ? `fromDate=${fromDate}` : "",
+                transaction === "pod-pending" ? "payment=PAYMENT_ON_DELIVERY&finalPaymentStatus=PENDING" : "",
+                transaction === "pod-paid" ? "payment=PAYMENT_ON_DELIVERY&finalPaymentStatus=PAID" : "",
+                ["transactions", "expected", "actual", "balance"].includes(transaction as string)
+                  ? `transaction=${transaction}`
+                  : "",
+              ].filter(Boolean).join("&")}`}
+              key={label}
+            >
+              <span>{label}</span>
+              <strong>{value === null ? amount : amount === null ? value : `${value} · ${amount}`}</strong>
               <ArrowUpRight className="summary-card-arrow" size={16} />
             </Link>
           ))}

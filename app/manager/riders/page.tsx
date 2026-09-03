@@ -56,6 +56,8 @@ export default function ManagerRidersPage() {
             <div className="manager-rider-grid">
               {items.map((rider) => {
                 const zoneNames = rider.riderZones?.map((zone) => zone.name) || [];
+                const today = new Date();
+                const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
                 const assignedOrders =
                   orders.data?.filter(
                     (order) =>
@@ -63,6 +65,10 @@ export default function ManagerRidersPage() {
                   ).length ||
                   rider.assignedOrders ||
                   0;
+                const todayDeliveries = orders.data?.filter((order) => {
+                  const assignedRiderId = order.assignedRider?.id || order.rider?.id;
+                  return assignedRiderId === rider.id && order.createdAt.slice(0, 10) === todayKey;
+                }).length || 0;
                 return (
                   <article className="panel manager-rider-card" key={rider.id}>
                     <header className="card-row">
@@ -71,7 +77,10 @@ export default function ManagerRidersPage() {
                           {rider.name.slice(0, 1).toUpperCase()}
                         </span>
                         <div>
-                          <h3>{rider.name}</h3>
+                          <h3>
+                            {rider.name}
+                            <span className="rider-today-deliveries">{todayDeliveries} today</span>
+                          </h3>
                           <p>
                             <Phone size={13} /> {rider.phone || "No phone"}
                           </p>

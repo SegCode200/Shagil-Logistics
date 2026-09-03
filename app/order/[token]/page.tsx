@@ -453,6 +453,23 @@ export default function PublicOrderPage({ params }: Props) {
   const [created, setCreated] = useState<Awaited<
     ReturnType<typeof api.createOrder>
   > | null>(null);
+  const senderProfile = useQuery({
+    queryKey: ["public-sender", token],
+    queryFn: () => api.getPublicSender(token),
+    enabled: Boolean(token),
+  });
+  useEffect(() => {
+    const sender = senderProfile.data;
+    if (!sender) return;
+    const prefill = window.setTimeout(() => {
+      setValues((current) => ({
+        ...current,
+        senderName: current.senderName || sender.senderName || "",
+        senderPhoneNumber: current.senderPhoneNumber || sender.senderPhoneNumber || "",
+      }));
+    }, 0);
+    return () => window.clearTimeout(prefill);
+  }, [senderProfile.data]);
   const selectedDistance = stations.data
     ?.find((station) => station.id === values.stationId)
     ?.zoneDistances?.find((distance) => distance.deliveryZoneId === values.deliveryZoneId);
@@ -771,8 +788,9 @@ export default function PublicOrderPage({ params }: Props) {
                   required
                   value={values.deliveryZoneId}
                   onChange={(e) => set("deliveryZoneId", e.target.value)}
+                  disabled={!values.stationId}
                 >
-                  <option value="">Select an area</option>
+                  <option value="">{values.stationId ? "Select an area" : "Select the nearest station first"}</option>
                   {(zones.data || [])
                     .filter((zone) => zone.active)
                     .map((zone) => (
@@ -781,6 +799,7 @@ export default function PublicOrderPage({ params }: Props) {
                       </option>
                     ))}
                 </select>
+                {!values.stationId && <small className="field-help">Select the nearest station first.</small>}
               </div>
               {/* Delivery Area fee when selected */}
               <div className="field">

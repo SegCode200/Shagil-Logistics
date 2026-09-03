@@ -22,6 +22,10 @@ function ManagerOrdersContent() {
   const requestedStatus = params.get("status");
   const assignment = params.get("assignment");
   const riderId = params.get("riderId");
+  const fromDate = params.get("fromDate") || "";
+  const transaction = params.get("transaction") || "";
+  const payment = params.get("payment") || "";
+  const finalPaymentStatus = params.get("finalPaymentStatus") || "";
   const orders = useQuery({
     queryKey: ["managerOrders"],
     queryFn: api.getManagerOrders,
@@ -39,7 +43,17 @@ function ManagerOrdersContent() {
       (assignment === "manager" ? !order.managedBy : !order.assignedRider && !order.rider);
     const assignedRiderId = order.assignedRider?.id || order.rider?.id;
     const matchesRider = !riderId || assignedRiderId === riderId;
-    return matchesSearch && matchesStatus && matchesAssignment && matchesRider;
+    const matchesDate = !fromDate || order.createdAt.slice(0, 10) >= fromDate;
+    const matchesPayment = !payment || order.paymentMethod === payment;
+    const matchesFinalPaymentStatus =
+      !finalPaymentStatus || order.finalPaymentStatus === finalPaymentStatus;
+    const isPaid = order.finalPaymentStatus === "PAID" || order.senderPaymentStatus === "PAID" || order.paymentStatus === "PAID";
+    const matchesTransaction =
+      !transaction || transaction === "expected" || transaction === "transactions" ||
+      (transaction === "actual" && isPaid) ||
+      (transaction === "balance" && !isPaid);
+    return matchesSearch && matchesStatus && matchesAssignment && matchesRider && matchesDate &&
+      matchesPayment && matchesFinalPaymentStatus && matchesTransaction;
   });
   return (
     <AppShell role="STATION_MANAGER">
@@ -73,7 +87,8 @@ function ManagerOrdersContent() {
               description="Orders from your assigned stations will appear here."
             />
           ) : (
-            <div className="table-wrap">
+            <>
+            <div className="table-wrap desktop-table">
               <table className="orders-table">
                 <thead>
                   <tr>
@@ -132,6 +147,45 @@ function ManagerOrdersContent() {
                 </tbody>
               </table>
             </div>
+            <div className="mobile-order-list">
+              {filtered.map((order) => (
+                <Link
+                  className="mobile-order-card"
+                  href={`/manager/orders/${order.orderId}`}
+                  key={order.id}
+                >
+                  <div className="mobile-order-main">
+                    <strong className="order-ref">{order.orderId || order.id}</strong>
+                    <span className="muted">{formatDate(order.createdAt)}</span>
+                  </div>
+                  <div className="mobile-order-row mobile-order-row-tight">
+                    <span className="mobile-order-label">Zone</span>
+                    <span className="mobile-order-value">{order.deliveryZone?.name || order.deliveryAddress}</span>
+                  </div>
+                  <div className="mobile-order-row mobile-order-row-tight">
+                    <span className="mobile-order-label">Payment</span>
+                    <span className={`mini-status mini-status-${order.paymentMethod === "PAYMENT_ON_DELIVERY" ? "pending" : "paid"}`}>
+                      {order.paymentMethod === "PAYMENT_ON_DELIVERY" ? "POD" : "PBD"}
+                    </span>
+                  </div>
+                  <div className="mobile-order-row mobile-order-row-tight">
+                    <span className="mobile-order-label">Delivery</span>
+                    <span className={`delivery-type-badge delivery-type-${(order.deliveryType || "NORMAL").toLowerCase()}`}>
+                      {(order.deliveryType || "NORMAL") === "EXPRESS" ? "EXP" : "NOR"}
+                    </span>
+                  </div>
+                  <div className="mobile-order-row mobile-order-row-tight">
+                    <span className="mobile-order-label">Rider</span>
+                    <span className="mobile-order-value">{order.assignedRider?.name || order.rider?.name || "Unassigned"}</span>
+                  </div>
+                  <div className="mobile-order-row">
+                    <span className="mobile-order-address">{order.deliveryAddress || "Delivery address"}</span>
+                    <OrderStatusBadge status={order.status} />
+                  </div>
+                </Link>
+              ))}
+            </div>
+            </>
           )}
         </section>
       </div>

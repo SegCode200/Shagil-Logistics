@@ -8,12 +8,14 @@ import {
   Phone,
   Send,
   ShieldCheck,
+  Upload,
 } from "lucide-react";
 import { use, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/app-shell";
 import { useRoleRedirect } from "@/components/auth/auth-provider";
 import { api } from "@/lib/api";
+import { PaymentReceiptViewer } from "@/components/orders/payment-receipt-viewer";
 import { ErrorState, LoadingState } from "@/components/ui/primitives";
 
 type Props = { params: Promise<{ orderId: string }> };
@@ -22,6 +24,7 @@ export default function ConfirmDeliveryPage({ params }: Props) {
   const { user, isLoading } = useRoleRedirect("RIDER");
   const queryClient = useQueryClient();
   const [code, setCode] = useState("");
+  const [paymentReceipt, setPaymentReceipt] = useState<File | null>(null);
   const [confirmed, setConfirmed] = useState(false);
   const [paymentDialog, setPaymentDialog] = useState<null | {
     type: "success" | "error";
@@ -45,6 +48,16 @@ export default function ConfirmDeliveryPage({ params }: Props) {
     onSuccess: (data) => {
       setConfirmedOrder(data);
       setConfirmed(true);
+    },
+  });
+  const uploadPaymentReceipt = useMutation({
+    mutationFn: () => {
+      if (!paymentReceipt) throw new Error("Select a payment receipt first.");
+      return api.uploadPaymentOnDeliveryReceipts(routeOrderId, paymentReceipt);
+    },
+    onSuccess: () => {
+      setPaymentReceipt(null);
+      queryClient.invalidateQueries({ queryKey: ["rider-orders"] });
     },
   });
   const companyPaymentMutation = useMutation({
@@ -157,6 +170,12 @@ export default function ConfirmDeliveryPage({ params }: Props) {
           <p className="subtext">
             Manage this delivery and confirm it when the receiver provides the code.
           </p>
+          {order.paymentReceipts?.length ? (
+            <section className="payment-receipts-section payment-receipts-top">
+              <h2>Uploaded payment receipts ({order.paymentReceipts.length})</h2>
+              <PaymentReceiptViewer receipts={order.paymentReceipts} />
+            </section>
+          ) : null}
           <div className="delivery-summary delivery-summary-card">
             <div className="receiver-heading">
               <span className="receiver-avatar">
@@ -182,6 +201,25 @@ export default function ConfirmDeliveryPage({ params }: Props) {
                 : "Already paid"}
             </span>
           </div>
+          {order.paymentMethod === "PAYMENT_ON_DELIVERY" && !order.paymentReceipts?.length && (
+            <div className="payment-receipt-upload rider-payment-receipt-upload">
+              <strong>Payment receipt</strong>
+              <p className="subtext">Upload the receipt after collecting payment. A receipt is required before delivery can be confirmed.</p>
+              <label className="receipt-upload-label" htmlFor="rider-payment-receipt">Choose payment receipt</label>
+              <input
+                id="rider-payment-receipt"
+                className="receipt-file-input"
+                type="file"
+                accept="image/jpeg,image/png,image/webp,application/pdf"
+                onChange={(event) => setPaymentReceipt(event.target.files?.[0] || null)}
+              />
+              <span className="receipt-file-name">{paymentReceipt ? paymentReceipt.name : order.paymentReceipts?.length ? "Receipt already uploaded" : "No receipt selected"}</span>
+              <button type="button" className="button button-secondary button-full" disabled={!paymentReceipt || uploadPaymentReceipt.isPending} onClick={() => uploadPaymentReceipt.mutate()}>
+                <Upload size={16} /> {uploadPaymentReceipt.isPending ? "Uploading receipt..." : "Upload payment receipt"}
+              </button>
+              {uploadPaymentReceipt.isError ? <p className="form-error">{uploadPaymentReceipt.error instanceof Error ? uploadPaymentReceipt.error.message : "Could not upload the payment receipt."}</p> : null}
+            </div>
+          )}
           <div className="rider-action-stack">
             <p className="action-section-label">Delivery controls</p>
             <div className="payment-action-row">
@@ -283,10 +321,13 @@ export default function ConfirmDeliveryPage({ params }: Props) {
             )}
             <button
               className="button button-primary button-full"
-              disabled={mutation.isPending}
+              disabled={mutation.isPending || (order.paymentMethod === "PAYMENT_ON_DELIVERY" && !order.paymentReceipts?.length)}
             >
               {mutation.isPending ? "Confirming..." : "CONFIRM DELIVERY"}
             </button>
+            {order.paymentMethod === "PAYMENT_ON_DELIVERY" && !order.paymentReceipts?.length ? (
+              <p className="form-error confirm-error">Upload the payment receipt before confirming delivery.</p>
+            ) : null}
             </div>
           </form>
         </div>

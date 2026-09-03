@@ -2,10 +2,17 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, CheckCircle2, PackageCheck, Send } from "lucide-react";
+import {
+  ArrowLeft,
+  CheckCircle2,
+  PackageCheck,
+  Send,
+  Upload,
+} from "lucide-react";
 import { use, useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { PaymentReceiptViewer } from "@/components/orders/payment-receipt-viewer";
 import {
   ErrorState,
   LoadingState,
@@ -22,6 +29,31 @@ export default function SenderOrderDetailsPage({ params }: Props) {
     type: "success" | "error";
     message: string;
   } | null>(null);
+  const [receipt, setReceipt] = useState<File | null>(null);
+  const uploadReceipt = useMutation({
+    mutationFn: () => {
+      if (!receipt) throw new Error("Select a receipt first.");
+      return api.uploadSenderPaymentReceipt(token, orderId, receipt);
+    },
+    onSuccess: () => {
+      setReceipt(null);
+      setFeedback({
+        type: "success",
+        message: "Payment receipt uploaded successfully.",
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["public-sender-orders", token],
+      });
+    },
+    onError: (uploadError) =>
+      setFeedback({
+        type: "error",
+        message:
+          uploadError instanceof Error
+            ? uploadError.message
+            : "Could not upload the payment receipt.",
+      }),
+  });
   const orders = useQuery({
     queryKey: ["public-sender-orders", token],
     queryFn: () => api.getPublicSenderOrders(token),
@@ -109,6 +141,7 @@ export default function SenderOrderDetailsPage({ params }: Props) {
     (image) => image.publicUrl || image.url,
   );
 
+
   return (
     <main className="public-page">
       {feedback && (
@@ -149,7 +182,7 @@ export default function SenderOrderDetailsPage({ params }: Props) {
           </div>
           <div className="sender-statuses">
             <OrderStatusBadge status={order.status} />
-            
+
             <span
               className={`status ${order.receiverCollectionStatus === "COLLECTED" ? "payment-confirmed" : "payment-pending"}`}
             >
@@ -164,7 +197,84 @@ export default function SenderOrderDetailsPage({ params }: Props) {
             </span>
           </div>
         </header>
+        {order.paymentReceipts?.length ? (
+          <section className="payment-receipts-section payment-receipts-top">
+            <h2>Uploaded payment receipts ({order.paymentReceipts.length})</h2>
+            <PaymentReceiptViewer receipts={order.paymentReceipts} />
+          </section>
+        ) : null}
         <section className="sender-actions" aria-label="Order actions">
+          {order.paymentMethod === "ALREADY_PAID" &&
+          order.status === "PENDING_APPROVAL" ? (
+            <div className="sender-action-card sender-payment-upload-action">
+              <div className="sender-action-heading">
+                <Upload size={20} />
+                <div>
+                  <h2>Payment instructions</h2>
+                  <p>
+                    Transfer the delivery amount, then send the receipt to the
+                    office or upload it here.
+                  </p>
+                </div>
+              </div>
+              <div className="payment-instructions">
+                <p className="payment-instruction-amount">
+                  <strong>Amount to transfer:</strong>{" "}
+                  ₦{Number(order.deliveryFee || 0).toLocaleString()}
+                </p>
+                <p>
+                  <strong>Account name:</strong>{" "}
+                  {order.accountDetails?.accountName ||
+                    order.companyAccountName ||
+                    "Contact the office"}
+                </p>
+                <p>
+                  <strong>Account number:</strong>{" "}
+                  {order.accountDetails?.accountNumber ||
+                    order.companyAccountNumber ||
+                    "Contact the office"}
+                </p>
+                <p>
+                  <strong>Bank:</strong>{" "}
+                  {order.accountDetails?.bankName ||
+                    order.companyBankName ||
+                    "Contact the office"}
+                </p>
+                <p>
+                  <strong>Forward receipt to station:</strong>{" "}
+                  {order.stationPhoneNumber ||
+                    order.stationPhone ||
+                    "Station number will be provided by the office"}
+                </p>
+              </div>
+              {!order.paymentReceipts?.length ? <label className="receipt-upload-field">
+                <span className="receipt-upload-label">Attach transfer receipt</span>
+                <input
+                  className="receipt-file-input"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,application/pdf"
+                  onChange={(event) =>
+                    setReceipt(event.target.files?.[0] || null)
+                  }
+                />
+                <span className="receipt-file-name">{receipt ? receipt.name : "No receipt selected"}</span>
+              </label> : null}
+              {!order.paymentReceipts?.length ? <button
+                type="button"
+                className="button button-primary button-full"
+                disabled={!receipt || uploadReceipt.isPending}
+                onClick={() => uploadReceipt.mutate()}
+              >
+                <Upload size={16} />{" "}
+                {uploadReceipt.isPending
+                  ? "Uploading receipt..."
+                  : "Upload receipt"}
+              </button> : null}
+              {!order.paymentReceipts?.length ? <p className="subtext">
+                Accepted: JPEG, PNG, WebP, or PDF. Maximum size: 3 MB.
+              </p> : null}
+            </div>
+          ) : null}
           <div className="sender-action-card sender-code-action">
             <div className="sender-action-heading">
               <Send size={20} />
@@ -212,7 +322,7 @@ export default function SenderOrderDetailsPage({ params }: Props) {
               className="button button-info button-full"
               disabled={
                 // !order.assignedRiderId ||
-                
+
                 !["APPROVED"].includes(order.status)
               }
               onClick={() => {
@@ -244,7 +354,12 @@ export default function SenderOrderDetailsPage({ params }: Props) {
               <div>
                 <h2>Release payment for sender</h2>
                 <p>
-                  Status: <strong>{order.receiverCollectionStatus === "COLLECTED" ? "PAID" : "NOT PAID"}</strong>
+                  Status:{" "}
+                  <strong>
+                    {order.receiverCollectionStatus === "COLLECTED"
+                      ? "PAID"
+                      : "NOT PAID"}
+                  </strong>
                 </p>
               </div>
             </div>
@@ -257,7 +372,10 @@ export default function SenderOrderDetailsPage({ params }: Props) {
                 senderPaid.isPending
               }
               onClick={() => {
-                if (order.receiverCollectionStatus !== "COLLECTED" && order.status !== "PICKED_UP") {
+                if (
+                  order.receiverCollectionStatus !== "COLLECTED" &&
+                  order.status !== "PICKED_UP"
+                ) {
                   setFeedback({
                     type: "error",
                     message:
@@ -281,7 +399,9 @@ export default function SenderOrderDetailsPage({ params }: Props) {
             {order.receiverCollectionStatus !== "COLLECTED" &&
               order.senderPaymentStatus !== "PAID" && (
                 <p className="text-warning text-red-400">
-                  Waiting for receiver payment collection confirmation. The sender payment can only be released after the receiver confirms collection.
+                  Waiting for receiver payment collection confirmation. The
+                  sender payment can only be released after the receiver
+                  confirms collection.
                 </p>
               )}
           </div>
@@ -333,6 +453,7 @@ export default function SenderOrderDetailsPage({ params }: Props) {
             <p>{order.packageNotes}</p>
           </section>
         )}
+
 
         {images.length > 0 && (
           <section className="sender-images">

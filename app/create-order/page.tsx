@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, Camera, CheckCircle2, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -104,6 +103,26 @@ export default function CreateOrderPage() {
   const [created, setCreated] = useState<Awaited<
     ReturnType<typeof api.createOrder>
   > | null>(null);
+  const senderToken = typeof window !== "undefined"
+    ? new URLSearchParams(window.location.search).get("token")
+    : null;
+  const senderProfile = useQuery({
+    queryKey: ["public-sender", senderToken],
+    queryFn: () => api.getPublicSender(senderToken as string),
+    enabled: Boolean(senderToken),
+  });
+  useEffect(() => {
+    const sender = senderProfile.data;
+    if (!sender) return;
+    const prefill = window.setTimeout(() => {
+      setValues((current) => ({
+        ...current,
+        senderName: current.senderName || sender.senderName || "",
+        senderPhoneNumber: current.senderPhoneNumber || sender.senderPhoneNumber || "",
+      }));
+    }, 0);
+    return () => window.clearTimeout(prefill);
+  }, [senderProfile.data]);
   const selectedDistance = stations.data
     ?.find((station) => station.id === values.stationId)
     ?.zoneDistances?.find((distance) => distance.deliveryZoneId === values.deliveryZoneId);
@@ -421,8 +440,9 @@ export default function CreateOrderPage() {
                   required
                   value={values.deliveryZoneId}
                   onChange={(e) => set("deliveryZoneId", e.target.value)}
+                  disabled={!values.stationId}
                 >
-                  <option value="">Select an area</option>
+                  <option value="">{values.stationId ? "Select an area" : "Select the nearest station first"}</option>
                   {(zones.data || [])
                     .filter((zone) => zone.active)
                     .map((zone) => (
@@ -431,6 +451,7 @@ export default function CreateOrderPage() {
                       </option>
                     ))}
                 </select>
+                {!values.stationId && <small className="field-help">Select the nearest station first.</small>}
               </div>
               {/* Delivery Area fee when selected */}
               <div className="field">
@@ -459,7 +480,7 @@ export default function CreateOrderPage() {
               </div>
             </div>
           </Section>
-          <Section title="4. Product">
+          <Section title="4. Product Photos">
             <div className="form-grid">
               <p className="field-hint field-span">
                 Add a clear picture of the package for price review.
@@ -507,7 +528,7 @@ export default function CreateOrderPage() {
             )}
 
           </Section>
-          <Section title="6. Payment">
+          <Section title="6. Payment Type">
             <select
               className="select"
               value={values.paymentMethod}

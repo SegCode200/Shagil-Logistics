@@ -379,7 +379,7 @@ export default function OwnerShopProductsPage() {
             <div className="panel-heading" style={{ background: "linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%)", padding: "18px 22px" }}>
               <h2 style={{ fontSize: 18, letterSpacing: "-0.02em" }}>Product list</h2>
             </div>
-            <div className="table-wrap">
+            <div className="table-wrap desktop-table">
               <table className="orders-table">
                 <thead>
                   <tr>
@@ -519,6 +519,51 @@ export default function OwnerShopProductsPage() {
                   })}
                 </tbody>
               </table>
+            </div>
+            <div className="mobile-product-list">
+              {products.data?.map((product) => {
+                const isEditing = editingId === product.id;
+                return (
+                  <article className="mobile-product-card" key={product.id}>
+                    <div className="mobile-product-main">
+                      <div>
+                        <strong>{product.name}</strong>
+                        <span>{product.category?.name || "Uncategorized"}</span>
+                      </div>
+                      <span className={product.isActive === false ? "mini-status mini-status-pending" : "mini-status mini-status-paid"}>
+                        {product.isActive === false ? "Inactive" : "Active"}
+                      </span>
+                    </div>
+                    <div className="mobile-product-details">
+                      <span>SKU <strong>{product.sku || "Pending"}</strong></span>
+                      <span>Price <strong>{Number(product.price).toLocaleString()}</strong></span>
+                      <span>Weight <strong>{Number(product.weightKg ?? 0).toLocaleString()} kg</strong></span>
+                      <span>Stock <strong>{product.quantity ?? 0}</strong></span>
+                    </div>
+                    {isEditing ? (
+                      <span className="mobile-product-editing">Edit this product in the desktop product list view.</span>
+                    ) : (
+                      <div className="mobile-product-actions">
+                        <button type="button" className="button button-secondary" onClick={() => {
+                          setEditingId(product.id);
+                          setEditingForm({
+                            name: product.name,
+                            quantity: product.quantity ? String(product.quantity) : "",
+                            weightKg: product.weightKg == null ? "0" : String(product.weightKg),
+                            price: String(product.price),
+                            description: product.description || "",
+                            categoryId: product.categoryId || "",
+                            isFeatured: !!product.isFeatured,
+                            isActive: product.isActive !== false,
+                            images: [],
+                          });
+                        }}>Edit</button>
+                        <button type="button" className="button button-danger" disabled={deleteProduct.isPending} onClick={() => deleteProduct.mutate(product.id)}>Delete</button>
+                      </div>
+                    )}
+                  </article>
+                );
+              })}
             </div>
           </section>
         )}

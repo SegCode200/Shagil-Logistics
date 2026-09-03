@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Plus, ArrowUpRight } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { AppShell } from "@/components/layout/app-shell";
 import { useRoleRedirect } from "@/components/auth/auth-provider";
 import { api } from "@/lib/api";
@@ -16,29 +17,55 @@ import {
 
 export default function OwnerDashboard() {
   const { user, isLoading: authLoading } = useRoleRedirect("OWNER");
+  const [fromDate, setFromDate] = useState("");
   const orders = useQuery({
     queryKey: ["orders"],
-    queryFn: () => api.getOrders(1, 8),
+    queryFn: api.getAllOrders,
     enabled: Boolean(user),
   });
   if (authLoading || !user) return <LoadingState />;
-  const items = orders.data?.items || [];
+  const today = new Date();
+  const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  const allOrders = orders.data || [];
+  const filteredOrders = allOrders.filter((order) => {
+    if (!fromDate) return true;
+    const orderDate = new Date(order.createdAt);
+    const orderKey = `${orderDate.getFullYear()}-${String(orderDate.getMonth() + 1).padStart(2, "0")}-${String(orderDate.getDate()).padStart(2, "0")}`;
+    return orderKey >= fromDate;
+  });
+  const todayOrders = allOrders.filter((order) => {
+    const orderDate = new Date(order.createdAt);
+    return `${orderDate.getFullYear()}-${String(orderDate.getMonth() + 1).padStart(2, "0")}-${String(orderDate.getDate()).padStart(2, "0")}` === todayKey;
+  });
+  const displayOrders = fromDate ? filteredOrders : todayOrders;
+  const expectedTotal = filteredOrders.reduce(
+    (sum, order) => sum + Number(order.totalAmountToCollect ?? order.deliveryFee ?? 0),
+    0,
+  );
+  const actualTotal = filteredOrders.reduce((sum, order) => {
+    const isPaid = order.finalPaymentStatus === "PAID" || order.senderPaymentStatus === "PAID" || order.paymentStatus === "PAID";
+    return sum + (isPaid ? Number(order.totalAmountToCollect ?? order.deliveryFee ?? 0) : 0);
+  }, 0);
+  const balanceTotal = Math.max(0, expectedTotal - actualTotal);
   const counts = {
-    total: items.length,
-    pendingApproval: items.filter((o) =>
+    total: todayOrders.length,
+    transactions: filteredOrders.length,
+    expectedTotal,
+    actualTotal,
+    balanceTotal,
+    pendingApproval: allOrders.filter((o) =>
       ["PENDING", "PENDING_APPROVAL"].includes(o.status),
     ).length,
-    assigned: items.filter((o) => ["APPROVED"].includes(o.status)).length,
-    pickedUp: items.filter((o) => o.status === "PICKED_UP").length,
-    delivered: items.filter((o) => o.status === "DELIVERED").length,
-    express: items.filter((o) => o.deliveryType === "EXPRESS").length,
-    cod: items.filter((o) => o.paymentMethod === "PAYMENT_ON_DELIVERY").length,
-    approved: items.filter(
-      (o) => o.approvalStatus === "APPROVED" || o.status === "APPROVED",
+    assigned: allOrders.filter((o) => ["APPROVED"].includes(o.status)).length,
+    pickedUp: allOrders.filter((o) => o.status === "PICKED_UP").length,
+    delivered: allOrders.filter((o) => o.status === "DELIVERED").length,
+    express: allOrders.filter((o) => o.deliveryType === "EXPRESS").length,
+    podPendingReconciliation: allOrders.filter(
+      (o) => o.paymentMethod === "PAYMENT_ON_DELIVERY" && o.finalPaymentStatus !== "PAID",
     ).length,
-    pendingCompany: items.filter((o) => o.companyPaymentStatus !== "PAID")
-      .length,
-    pendingSender: items.filter((o) => o.senderPaymentStatus !== "PAID").length,
+    reconciledPod: allOrders.filter(
+      (o) => o.paymentMethod === "PAYMENT_ON_DELIVERY" && o.finalPaymentStatus === "PAID",
+    ).length,
   };
   return (
     <AppShell role="OWNER">
@@ -68,7 +95,7 @@ export default function OwnerDashboard() {
               className="summary-card summary-card-link"
               href={
                 label === "Orders today"
-                  ? "/owner/orders"
+                  ? `/owner/orders?date=${todayKey}`
                   : label === "Pending approval"
                     ? "/owner/orders?status=PENDING_APPROVAL"
                     : label === "Assigned"
@@ -86,31 +113,48 @@ export default function OwnerDashboard() {
             </Link>
           ))}
         </div>
+        <div className="dashboard-transaction-filter">
+          <label htmlFor="dashboard-from-date">Transactions from</label>
+          <input
+            id="dashboard-from-date"
+            type="date"
+            value={fromDate}
+            max={todayKey}
+            onChange={(event) => setFromDate(event.target.value)}
+          />
+          {fromDate ? <button type="button" onClick={() => setFromDate("")}>Clear</button> : null}
+          <span>through today</span>
+        </div>
         <div className="summary-grid summary-grid-secondary">
           {[
-            ["Pending company payments", counts.pendingCompany],
-            ["Pending sender payments", counts.pendingSender],
-          ].map(([label, value]) => (
+            ["Total transactions", counts.transactions, `₦${Number(counts.expectedTotal).toLocaleString()}`, "transactions"],
+            ["Expected total", null, `₦${Number(counts.expectedTotal).toLocaleString()}`, "expected"],
+            ["Actual total", null, `₦${Number(counts.actualTotal).toLocaleString()}`, "actual"],
+            ["Balance total", null, `₦${Number(counts.balanceTotal).toLocaleString()}`, "balance"],
+            ["POD pending reconciliation", counts.podPendingReconciliation, null, "pod-pending"],
+            ["Reconciled POD", counts.reconciledPod, null, "pod-paid"],
+          ].map(([label, value, amount, transaction]) => (
             <Link
               className="summary-card summary-card-secondary summary-card-link"
-              href={
-                label === "Picked up"
-                  ? "/owner/orders?status=PICKED_UP"
-                  : label === "Pending company payments"
-                    ? "/owner/orders?paymentStatus=PENDING"
-                    : "/owner/orders?paymentStatus=PENDING"
-              }
+              href={`/owner/orders?${[
+                fromDate ? `fromDate=${fromDate}` : "",
+                transaction === "pod-pending" ? "payment=PAYMENT_ON_DELIVERY&finalPaymentStatus=PENDING" : "",
+                transaction === "pod-paid" ? "payment=PAYMENT_ON_DELIVERY&finalPaymentStatus=PAID" : "",
+                ["transactions", "expected", "actual", "balance"].includes(transaction as string)
+                  ? `transaction=${transaction}`
+                  : "",
+              ].filter(Boolean).join("&")}`}
               key={label}
             >
               <span>{label}</span>
-              <strong>{value}</strong>
+              <strong>{amount === null ? value : value === null ? amount : `${value} · ${amount}`}</strong>
               <ArrowUpRight className="summary-card-arrow" size={16} />
             </Link>
           ))}
         </div>
         <section className="panel">
           <div className="panel-heading">
-            <h2>Recent orders</h2>
+            <h2>{fromDate ? "Orders in selected period" : "Recent orders"}</h2>
             <Link href="/owner/orders" className="text-link">
               View all <ArrowUpRight size={15} />
             </Link>
@@ -119,10 +163,10 @@ export default function OwnerDashboard() {
             <LoadingState label="Loading orders" />
           ) : orders.isError ? (
             <ErrorState />
-          ) : items.length === 0 ? (
+          ) : displayOrders.length === 0 ? (
             <EmptyState
-              title="No orders yet"
-              description="Create your first order to get started."
+              title={fromDate ? "No orders in selected period" : "No orders yet"}
+              description={fromDate ? "Try another date range." : "Create your first order to get started."}
               action={
                 <Link className="button button-primary" href="/create-order">
                   Create order
@@ -130,7 +174,8 @@ export default function OwnerDashboard() {
               }
             />
           ) : (
-            <div className="table-wrap">
+            <>
+            <div className="table-wrap desktop-table">
               <table className="orders-table">
                 <thead>
                   <tr>
@@ -143,12 +188,12 @@ export default function OwnerDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {items.slice(0, 8).map((order) => (
+                  {displayOrders.slice(0, 8).map((order) => (
                     <tr key={order.id}>
                       <td className="order-ref">{order.orderId || order.id}</td>
                       <td>{order.senderName}</td>
                       <td className="muted">
-                        {order.rider?.name || "Unassigned"}
+                        {order.assignedRider?.name || "Unassigned"}
                       </td>
                       <td>
                         <OrderStatusBadge status={order.status} />
@@ -167,6 +212,51 @@ export default function OwnerDashboard() {
                 </tbody>
               </table>
             </div>
+            <div className="mobile-order-list">
+              {displayOrders.slice(0, 8).map((order) => (
+                <Link
+                  className="mobile-order-card"
+                  href={`/owner/orders/${order.orderId}`}
+                  key={order.id}
+                >
+                  <div className="mobile-order-main">
+                    <strong className="order-ref">{order.orderId || order.id}</strong>
+                    <span className="muted">{formatDate(order.createdAt)}</span>
+                  </div>
+                  <div className="mobile-order-row mobile-order-row-tight">
+                    <span className="mobile-order-label">Sender</span>
+                    <span className="mobile-order-value">
+                      {order.senderName || order.customerName || "—"}
+                    </span>
+                  </div>
+                  <div className="mobile-order-row mobile-order-row-tight">
+                    <span className="mobile-order-label">Payment</span>
+                    <span className={`mini-status mini-status-${order.paymentMethod === "PAYMENT_ON_DELIVERY" ? "pending" : "paid"}`}>
+                      {order.paymentMethod === "PAYMENT_ON_DELIVERY" ? "POD" : "PBD"}
+                    </span>
+                  </div>
+                  <div className="mobile-order-row mobile-order-row-tight">
+                    <span className="mobile-order-label">Delivery</span>
+                    <span className={`delivery-type-badge delivery-type-${(order.deliveryType || "NORMAL").toLowerCase()}`}>
+                      {(order.deliveryType || "NORMAL") === "EXPRESS" ? "EXP" : "NOR"}
+                    </span>
+                  </div>
+                  <div className="mobile-order-row mobile-order-row-tight">
+                    <span className="mobile-order-label">Rider</span>
+                    <span className="mobile-order-value">
+                      {order.assignedRider?.name || order.rider?.name || "Unassigned"}
+                    </span>
+                  </div>
+                  <div className="mobile-order-row">
+                    <span className="mobile-order-address">
+                      {order.deliveryAddress || "Delivery address"}
+                    </span>
+                    <OrderStatusBadge status={order.status} />
+                  </div>
+                </Link>
+              ))}
+            </div>
+            </>
           )}
         </section>
       </div>

@@ -42,6 +42,7 @@ const riderLinks = [
 ];
 const managerLinks = [
   { href: "/manager/dashboard", label: "Dashboard", icon: Home },
+  { href: "/create-order", label: "Create order", icon: Plus },
   { href: "/manager/orders", label: "Orders", icon: Package },
   {href: "/manager/riders", label: "Riders", icon: Users  },
   {href: "/manager/link-customer", label: "Link customer", icon: Plus  }

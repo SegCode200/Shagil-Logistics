@@ -34,9 +34,17 @@ function OrdersContent() {
   const requestedStatus = searchParams.get("status");
   const requestedPayment = searchParams.get("payment");
   const requestedPaymentStatus = searchParams.get("paymentStatus");
+  const requestedFinalPaymentStatus = searchParams.get("finalPaymentStatus");
+  const requestedDate = searchParams.get("date");
+  const requestedFromDate = searchParams.get("fromDate");
+  const requestedTransaction = searchParams.get("transaction");
   const activeStatus = status === "ALL" && requestedStatus ? requestedStatus : status;
   const activePayment = payment === "ALL" && requestedPayment ? requestedPayment : payment;
   const activePaymentStatus = requestedPaymentStatus || "ALL";
+  const activeFinalPaymentStatus = requestedFinalPaymentStatus || "ALL";
+  const activeDate = date || requestedDate || "";
+  const activeFromDate = requestedFromDate || "";
+  const activeTransaction = requestedTransaction || "";
   const riders = useQuery({
     queryKey: ["riders"],
     queryFn: api.getRiders,
@@ -56,17 +64,31 @@ function OrdersContent() {
               order.paymentStatus === activePaymentStatus ||
               order.companyPaymentStatus === activePaymentStatus ||
               order.senderPaymentStatus === activePaymentStatus) &&
+            (activeFinalPaymentStatus === "ALL" ||
+              order.finalPaymentStatus === activeFinalPaymentStatus) &&
             (rider === "ALL" ||
               order.assignedRider?.id === rider ||
               order.rider?.id === rider) &&
-            (!date || order.createdAt.slice(0, 10) === date),
+            (!activeDate || order.createdAt.slice(0, 10) === activeDate) &&
+            (!activeFromDate || order.createdAt.slice(0, 10) >= activeFromDate) &&
+            (activeTransaction === "" ||
+              activeTransaction === "expected" ||
+              activeTransaction === "transactions" ||
+              (activeTransaction === "actual" &&
+                (order.finalPaymentStatus === "PAID" ||
+                  order.senderPaymentStatus === "PAID" ||
+                  order.paymentStatus === "PAID")) ||
+              (activeTransaction === "balance" &&
+                order.finalPaymentStatus !== "PAID" &&
+                order.senderPaymentStatus !== "PAID" &&
+                order.paymentStatus !== "PAID")),
         )
         .sort((left, right) =>
           sort === "oldest"
             ? left.createdAt.localeCompare(right.createdAt)
             : right.createdAt.localeCompare(left.createdAt),
         ),
-    [query.data, search, activeStatus, activePayment, activePaymentStatus, rider, date, sort],
+    [query.data, search, activeStatus, activePayment, activePaymentStatus, activeFinalPaymentStatus, rider, activeDate, activeFromDate, activeTransaction, sort],
   );
   if (authLoading || !user) return <LoadingState />;
   return (
@@ -194,7 +216,7 @@ function OrdersContent() {
                           </small>
                         </td>
                         <td className="muted">
-                          {order.rider?.name || "Unassigned"}
+                          {order.assignedRider?.name || "Unassigned"}
                         </td>
                         <td>
                           {order.paymentMethod === "PAYMENT_ON_DELIVERY"

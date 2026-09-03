@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft, Check, Pencil, Save } from "lucide-react";
+import { ArrowLeft, Check, Pencil, Save, Upload } from "lucide-react";
 import { use, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/app-shell";
+import { PaymentReceiptViewer } from "@/components/orders/payment-receipt-viewer";
 import { useRoleRedirect } from "@/components/auth/auth-provider";
 import { api } from "@/lib/api";
 import {
@@ -72,7 +73,9 @@ export default function ManagerOrderDetailsPage({ params }: Props) {
   const [replacementRiderId, setReplacementRiderId] = useState("");
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
   const [paymentError, setPaymentError] = useState(false);
+  const [paymentReceipt, setPaymentReceipt] = useState<File | null>(null);
   const [notice, setNotice] = useState("");
+
   const [editValues, setEditValues] = useState<EditValues>({});
   const order = useQuery({
     queryKey: ["managerOrder", orderId],
@@ -128,10 +131,28 @@ export default function ManagerOrderDetailsPage({ params }: Props) {
       queryClient.invalidateQueries({ queryKey: ["managerOrders"] });
     },
   });
+    const confirmFinalPayment = useMutation({
+      mutationFn: () => api.confirmFinalPayment(orderId),
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["order", orderId] });
+        queryClient.invalidateQueries({ queryKey: ["orders"] });
+      },
+    });
   const confirmReceiverPayment = useMutation({
     mutationFn: () => api.confirmReceiverPaymentForUser(orderId),
     onSuccess: () => {
       setNotice("Receiver payment confirmed successfully.");
+      queryClient.invalidateQueries({ queryKey: ["managerOrder", orderId] });
+      queryClient.invalidateQueries({ queryKey: ["managerOrders"] });
+    },
+  });
+  const uploadPaymentReceipt = useMutation({
+    mutationFn: () => {
+      if (!paymentReceipt) throw new Error("Select a receipt first.");
+      return api.uploadAlreadyPaidReceipts(orderId, paymentReceipt);
+    },
+    onSuccess: () => {
+      setPaymentReceipt(null);
       queryClient.invalidateQueries({ queryKey: ["managerOrder", orderId] });
       queryClient.invalidateQueries({ queryKey: ["managerOrders"] });
     },
@@ -161,6 +182,11 @@ export default function ManagerOrderDetailsPage({ params }: Props) {
     settings.data,
     data.deliveryType,
   );
+      const isFinalPaymentReady =
+    data.status === "DELIVERED" &&
+    data.companyPaymentStatus === "PAID" &&
+    data.senderPaymentStatus === "PAID" &&
+    data.finalPaymentStatus !== "PAID";
   const editableBaseFee = Number(deliveryBreakdown?.baseFee ?? data.deliveryFee ?? 0);
   function beginEditing() {
     setEditValues({
@@ -263,6 +289,12 @@ export default function ManagerOrderDetailsPage({ params }: Props) {
             )}
           </div>
         </header>
+        {data.paymentReceipts?.length ? (
+          <section className="payment-receipts-section payment-receipts-top">
+            <h2>Uploaded payment receipts ({data.paymentReceipts.length})</h2>
+            <PaymentReceiptViewer receipts={data.paymentReceipts} />
+          </section>
+        ) : null}
         {notice && (
           <p className="success-text">
             <Check size={16} /> {notice}
@@ -500,16 +532,40 @@ export default function ManagerOrderDetailsPage({ params }: Props) {
                 </dd>
               </div>
             </dl>
-            {data.paymentMethod === "ALREADY_PAID" && (
+            {data.paymentMethod === "ALREADY_PAID" && data.status !== "APPROVED" && (
               <label className="payment-confirmation">
                 <input
                   type="checkbox"
-                  checked={paymentConfirmed || data.senderPaymentStatus === "PAID"}
-                  disabled={data.senderPaymentStatus === "PAID"}
+                  checked={paymentConfirmed}
                   onChange={(event) => setPaymentConfirmed(event.target.checked)}
                 />
                 <span>You must fill checkbox to confirm customer payment.</span>
               </label>
+            )}
+            {data.paymentMethod === "ALREADY_PAID" && data.status === "PENDING_APPROVAL" && !data.paymentReceipts?.length && (
+              <div className="payment-receipt-upload">
+                <p className="action-label">Attach sender payment receipt</p>
+                <label className="receipt-upload-label" htmlFor="manager-payment-receipt">Choose payment receipt</label>
+                <input
+                  id="manager-payment-receipt"
+                  className="receipt-file-input"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,application/pdf"
+                  onChange={(event) => setPaymentReceipt(event.target.files?.[0] || null)}
+                />
+                <span className="receipt-file-name">{paymentReceipt ? paymentReceipt.name : "No receipt selected"}</span>
+                <button
+                  type="button"
+                  className="button button-secondary button-full"
+                  disabled={!paymentReceipt || uploadPaymentReceipt.isPending}
+                  onClick={() => uploadPaymentReceipt.mutate()}
+                >
+                  <Upload size={16} />
+                  {uploadPaymentReceipt.isPending ? "Uploading receipt..." : "Upload payment receipt"}
+                </button>
+                {uploadPaymentReceipt.isSuccess && <p className="success-text">Payment receipt uploaded.</p>}
+                {uploadPaymentReceipt.isError && <p className="form-error">{uploadPaymentReceipt.error instanceof Error ? uploadPaymentReceipt.error.message : "Could not upload the payment receipt."}</p>}
+              </div>
             )}
             <div className="action-stack section-gap">
               {data.status === "PENDING_APPROVAL" && (
@@ -532,6 +588,44 @@ export default function ManagerOrderDetailsPage({ params }: Props) {
                 </button>
               )}
 
+              {(data.finalPaymentStatus !== "PAID" && data.paymentMethod === "PAYMENT_ON_DELIVERY")   &&  (
+                <button
+                  className="button button-success button-full"
+                  disabled={
+                    confirmFinalPayment.isPending ||
+                    !isFinalPaymentReady
+                  }
+                  title={
+                    !isFinalPaymentReady
+                      ? "Final payment can be confirmed only when all payments are settled and the order is delivered."
+                      : undefined
+                  }
+                  onClick={() => {
+                    if (!isFinalPaymentReady) {
+                      return;
+                    }
+                    if (
+                      window.confirm(
+                        `Are you sure you want to confirm the final payment for ${data.orderId || "this order"}? This action cannot be undone.`,
+                      )
+                    ) {
+                      confirmFinalPayment.mutate();
+                    }
+                  }}
+                >
+                  {confirmFinalPayment.isPending
+                    ? "Confirming final payment..."
+                    : "POD payment confirmation"}
+                </button>
+              )}
+              {!isFinalPaymentReady && data.finalPaymentStatus !== "PAID" && data.paymentMethod === "PAYMENT_ON_DELIVERY" && (
+                <p className="form-error">
+                  Final payment cannot be confirmed until all payments are made and the order is delivered.
+                </p>
+              )}
+            {confirmFinalPayment.isError && (
+                <p className="form-error">Final payment could not be confirmed.</p>
+              )}
               <div className="field">
                 <label htmlFor="manager-rider">
                   {data.assignedRider?.id || data.rider?.id

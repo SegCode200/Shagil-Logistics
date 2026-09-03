@@ -9,10 +9,12 @@ import {
   Save,
   LoaderCircle,
   Send,
+  Upload,
 } from "lucide-react";
 import { use, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/app-shell";
+import { PaymentReceiptViewer } from "@/components/orders/payment-receipt-viewer";
 import { useRoleRedirect } from "@/components/auth/auth-provider";
 import { api } from "@/lib/api";
 import {
@@ -90,6 +92,7 @@ export default function OrderDetailsPage({ params }: Props) {
   const [replacementRiderId, setReplacementRiderId] = useState("");
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
   const [paymentError, setPaymentError] = useState(false);
+  const [paymentReceipt, setPaymentReceipt] = useState<File | null>(null);
   const [editValues, setEditValues] = useState<Record<string, string>>({});
   const action = useMutation({
     mutationFn: (type: "approve" | "cancel") => {
@@ -162,6 +165,17 @@ export default function OrderDetailsPage({ params }: Props) {
   });
   const resendReceiverAccess = useMutation({
     mutationFn: () => api.resendReceiverAccessToken(orderId),
+  });
+  const uploadPaymentReceipt = useMutation({
+    mutationFn: () => {
+      if (!paymentReceipt) throw new Error("Select a receipt first.");
+      return api.uploadAlreadyPaidReceipts(orderId, paymentReceipt);
+    },
+    onSuccess: () => {
+      setPaymentReceipt(null);
+      queryClient.invalidateQueries({ queryKey: ["order", orderId] });
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+    },
   });
   if (isLoading || !user || query.isLoading) return <LoadingState />;
   if (query.isError || !query.data)
@@ -265,6 +279,12 @@ export default function OrderDetailsPage({ params }: Props) {
             </button>
           </div>
         </header>
+        {order.paymentReceipts?.length ? (
+          <section className="payment-receipts-section payment-receipts-top">
+            <h2>Uploaded payment receipts ({order.paymentReceipts.length})</h2>
+            <PaymentReceiptViewer receipts={order.paymentReceipts} />
+          </section>
+        ) : null}
         {editing && (
           <section className="panel edit-order-panel">
             <form
@@ -583,7 +603,7 @@ export default function OrderDetailsPage({ params }: Props) {
                 </div>
               )}
             </dl>
-            {order.paymentMethod === "ALREADY_PAID" && (
+            {order.paymentMethod === "ALREADY_PAID" && order?.status !== "APPROVED" && (
               <label className="payment-confirmation">
                 <input
                   type="checkbox"
@@ -592,6 +612,31 @@ export default function OrderDetailsPage({ params }: Props) {
                 />
                 <span>You must fill checkbox to confirm customer payment.</span>
               </label>
+            )}
+            {order.paymentMethod === "ALREADY_PAID" && order.status === "PENDING_APPROVAL" && !order.paymentReceipts?.length && (
+              <div className="payment-receipt-upload">
+                <p className="action-label">Attach sender payment receipt</p>
+                <label className="receipt-upload-label" htmlFor="owner-payment-receipt">Choose payment receipt</label>
+                <input
+                  id="owner-payment-receipt"
+                  className="receipt-file-input"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,application/pdf"
+                  onChange={(event) => setPaymentReceipt(event.target.files?.[0] || null)}
+                />
+                <span className="receipt-file-name">{paymentReceipt ? paymentReceipt.name : "No receipt selected"}</span>
+                <button
+                  type="button"
+                  className="button button-secondary button-full"
+                  disabled={!paymentReceipt || uploadPaymentReceipt.isPending}
+                  onClick={() => uploadPaymentReceipt.mutate()}
+                >
+                  <Upload size={16} />
+                  {uploadPaymentReceipt.isPending ? "Uploading receipt..." : "Upload payment receipt"}
+                </button>
+                {uploadPaymentReceipt.isSuccess && <p className="success-text">Payment receipt uploaded.</p>}
+                {uploadPaymentReceipt.isError && <p className="form-error">{uploadPaymentReceipt.error instanceof Error ? uploadPaymentReceipt.error.message : "Could not upload the payment receipt."}</p>}
+              </div>
             )}
             <div className="action-stack section-gap">
               {isApproved && (
@@ -671,7 +716,7 @@ export default function OrderDetailsPage({ params }: Props) {
                     }
                   }}
                 >
-                  Approve order
+                  {action.isPending ? "Approving..." : "Approve order"}
                 </button>
               )}
               {order.status === "PENDING" && (
@@ -728,7 +773,7 @@ export default function OrderDetailsPage({ params }: Props) {
                   </p>
                 )}
               </div>
-              {order.finalPaymentStatus !== "PAID" && (
+              {(order.finalPaymentStatus !== "PAID" && order?.paymentMethod === "PAYMENT_ON_DELIVERY")   &&  (
                 <button
                   className="button button-success button-full"
                   disabled={
@@ -755,10 +800,10 @@ export default function OrderDetailsPage({ params }: Props) {
                 >
                   {confirmFinalPayment.isPending
                     ? "Confirming final payment..."
-                    : "Confirm final payment"}
+                    : "POD payment confirmation"}
                 </button>
               )}
-              {!isFinalPaymentReady && order.finalPaymentStatus !== "PAID" && (
+              {!isFinalPaymentReady && order.finalPaymentStatus !== "PAID" && order?.paymentMethod === "PAYMENT_ON_DELIVERY" && (
                 <p className="form-error">
                   Final payment cannot be confirmed until all payments are made and the order is delivered.
                 </p>

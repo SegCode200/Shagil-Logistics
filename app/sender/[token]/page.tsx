@@ -75,10 +75,10 @@ export default function SenderAccessPage({ params }: Props) {
           <section className="sender-order-history" aria-label="Sender orders">
             <div className="stack-list">
               {orders.map((order) => (
+                <div className="detail-card sender-order-list-item" key={order.orderId}>
                 <Link
-                  className="detail-card sender-order-link"
+                  className="sender-order-link"
                   href={`/sender/${token}/orders/${encodeURIComponent(order.orderId)}`}
-                  key={order.orderId}
                 >
                   <div className="sender-order-main">
                     <strong>{order.orderId}</strong>
@@ -96,6 +96,15 @@ export default function SenderAccessPage({ params }: Props) {
                   </div>
 
                 </Link>
+                {order.paymentMethod === "ALREADY_PAID" && order.status === "PENDING_APPROVAL" ? (
+                  <Link
+                    className="button button-primary sender-payment-link"
+                    href={`/sender/${token}/orders/${encodeURIComponent(order.orderId)}`}
+                  >
+                    Payment
+                  </Link>
+                ) : null}
+                </div>
               ))}
             </div>
           </section>

@@ -130,6 +130,17 @@ async function requestBlob(path: string) {
   return response.blob();
 }
 
+async function getAllOrders() {
+  const firstPage = await request<PaginatedResponse<Order>>("/orders?page=1&pageSize=100");
+  if (firstPage.pagination.totalPages <= 1) return firstPage.items;
+  const remainingPages = await Promise.all(
+    Array.from({ length: firstPage.pagination.totalPages - 1 }, (_, index) =>
+      request<PaginatedResponse<Order>>(`/orders?page=${index + 2}&pageSize=100`),
+    ),
+  );
+  return [firstPage, ...remainingPages].flatMap((page) => page.items);
+}
+
 export const api = {
   login: (payload: { phone: string; password: string }) =>
     request<LoginResponse>("/auth/login", {
@@ -150,6 +161,7 @@ export const api = {
     request<PaginatedResponse<Order>>(
       `/orders${paginationQuery(page, pageSize)}`,
     ),
+  getAllOrders,
   getOrder: (orderId: string) => request<Order>(`/orders/${orderId}`),
   createOrder: (payload: Partial<Order>, files: File[] = []) => {
     if (files.length) {
@@ -518,6 +530,30 @@ export const api = {
         method: "POST",
       },
     ),
+  uploadSenderPaymentReceipt: (token: string, orderId: string, file: File) => {
+    const body = new FormData();
+    body.append("receipts", file, file.name);
+    return request<unknown>(`/public/sender/${encodeURIComponent(token)}/orders/${encodeURIComponent(orderId)}/already-paid-receipt`, {
+      method: "POST",
+      body,
+    });
+  },
+  uploadAlreadyPaidReceipts: (orderId: string, file: File) => {
+    const body = new FormData();
+    body.append("receipts", file, file.name);
+    return request<unknown>(`/orders/${encodeURIComponent(orderId)}/already-paid-receipts`, {
+      method: "POST",
+      body,
+    });
+  },
+  uploadPaymentOnDeliveryReceipts: (orderId: string, file: File) => {
+    const body = new FormData();
+    body.append("receipts", file, file.name);
+    return request<unknown>(`/orders/${encodeURIComponent(orderId)}/payment-on-delivery-receipts`, {
+      method: "POST",
+      body,
+    });
+  },
   senderPickedUp: (token: string, orderId: string) =>
     request<PublicSenderOrder>(
       `/public/sender/${encodeURIComponent(token)}/orders/${encodeURIComponent(orderId)}/pickup`,
