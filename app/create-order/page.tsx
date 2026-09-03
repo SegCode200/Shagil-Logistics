@@ -7,7 +7,6 @@ import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { normalizeNigerianPhone } from "@/lib/phone";
-import { error } from "console";
 
 type Values = {
   senderName: string;
@@ -96,7 +95,6 @@ export default function CreateOrderPage() {
   });
   const [values, setValues] = useState(initialValues);
   const [validationMessage, setValidationMessage] = useState("");
-  const [error, setError] = useState<React.ReactNode>(null);
   const [validationTarget, setValidationTarget] = useState("");
   const [images, setImages] = useState<{ file: File; url: string }[]>([]);
   const [cameraOpen, setCameraOpen] = useState(false);
@@ -517,7 +515,7 @@ export default function CreateOrderPage() {
                 set("paymentMethod", e.target.value as Values["paymentMethod"])
               }
             >
-              <option value="ALREADY_PAID">Payment after delivery</option>
+              <option value="ALREADY_PAID">Payment before delivery</option>
               <option value="PAYMENT_ON_DELIVERY">Payment on delivery</option>
             </select>
           </Section>

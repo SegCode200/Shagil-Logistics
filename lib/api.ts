@@ -22,6 +22,9 @@ import type {
   ReceiverCollectionStatus,
   Sender,
   RiderCommissionSummary,
+  ShopCategory,
+  ShopProduct,
+  ShopOrder,
 } from "@/lib/types";
 import { normalizeNigerianPhone } from "@/lib/phone";
 
@@ -58,15 +61,35 @@ function listFromResponse<T>(value: unknown): T[] {
       reports?: unknown;
       riders?: unknown;
       data?: unknown;
-      orders?:unknown;
+      orders?: unknown;
+      products?: unknown;
+      categories?: unknown;
     };
     if (Array.isArray(result.items)) return result.items as T[];
     if (Array.isArray(result.reports)) return result.reports as T[];
     if (Array.isArray(result.riders)) return result.riders as T[];
     if (Array.isArray(result.orders)) return result.orders as T[];
+    if (Array.isArray(result.products)) return result.products as T[];
+    if (Array.isArray(result.categories)) return result.categories as T[];
     if (Array.isArray(result.data)) return result.data as T[];
   }
   return [];
+}
+
+function appendFormField(formData: FormData, key: string, value: unknown) {
+  if (value === undefined || value === null || value === "") return;
+
+  if (typeof value === "boolean") {
+    formData.append(key, value ? "true" : "false");
+    return;
+  }
+
+  if (typeof value === "string" && (key === "isFeatured" || key === "isActive")) {
+    formData.append(key, value.toLowerCase() === "true" ? "true" : "false");
+    return;
+  }
+
+  formData.append(key, typeof value === "string" || typeof value === "number" ? String(value) : JSON.stringify(value));
 }
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
@@ -219,6 +242,93 @@ export const api = {
       `/riders/${encodeURIComponent(riderId)}/resend-login-link`,
       { method: "POST" },
     ),
+  getPublicShopCategories: async () =>
+    listFromResponse<ShopCategory>(await request<unknown>("/shop/categories")),
+  getPublicShopProducts: async () =>
+    listFromResponse<ShopProduct>(await request<unknown>("/shop/products")),
+  getPublicShopProduct: (slug: string) =>
+    request<ShopProduct>(`/shop/products/${encodeURIComponent(slug)}`),
+  getPublicShopCategoryProducts: async (slug: string) =>
+    listFromResponse<ShopProduct>(await request<unknown>(`/shop/categories/${encodeURIComponent(slug)}/products`)),
+  createShopOrder: (payload: {
+    customerName: string;
+    customerPhone: string;
+    customerEmail?: string;
+    customerAddress: string;
+    customerNote?: string;
+    deliveryZoneId: string;
+    items: Array<{ productId: string; quantity: number }>;
+  }) =>
+    request<ShopOrder>("/shop/orders", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+  getShopCategories: async () =>
+    listFromResponse<ShopCategory>(await request<unknown>("/shop/admin/categories")),
+  getShopCategory: (categoryId: string) =>
+    request<ShopCategory>(`/shop/admin/categories/${encodeURIComponent(categoryId)}`),
+  createShopCategory: (payload: { name: string; isActive?: boolean }) =>
+    request<ShopCategory>("/shop/admin/categories", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+  updateShopCategory: (categoryId: string, payload: { name?: string; isActive?: boolean }) =>
+    request<ShopCategory>(`/shop/admin/categories/${encodeURIComponent(categoryId)}`, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    }),
+  deleteShopCategory: (categoryId: string) =>
+    request<{ deleted: boolean }>(`/shop/admin/categories/${encodeURIComponent(categoryId)}`, {
+      method: "DELETE",
+    }),
+  getShopProducts: async () =>
+    listFromResponse<ShopProduct>(await request<unknown>("/shop/admin/products")),
+  createShopProduct: (payload: Record<string, unknown>, files: File[] = []) => {
+    const formData = new FormData();
+    Object.entries(payload).forEach(([key, value]) => {
+      if (key === "sku") return;
+      appendFormField(formData, key, value);
+    });
+    files.forEach((file) => formData.append("images", file, file.name));
+    return request<ShopProduct>("/shop/admin/products", {
+      method: "POST",
+      body: formData,
+    });
+  },
+  updateShopProduct: (productId: string, payload: Record<string, unknown>, files: File[] = []) => {
+    if (files.length === 0) {
+      return request<ShopProduct>(`/shop/admin/products/${encodeURIComponent(productId)}`, {
+        method: "PATCH",
+        body: JSON.stringify(payload),
+      });
+    }
+
+    const formData = new FormData();
+    Object.entries(payload).forEach(([key, value]) => {
+      appendFormField(formData, key, value);
+    });
+    files.forEach((file) => formData.append("images", file, file.name));
+    return request<ShopProduct>(`/shop/admin/products/${encodeURIComponent(productId)}`, {
+      method: "PATCH",
+      body: formData,
+    });
+  },
+  deleteShopProduct: (productId: string) =>
+    request<{ deleted: boolean }>(`/shop/admin/products/${encodeURIComponent(productId)}`, {
+      method: "DELETE",
+    }),
+  deleteShopProductImage: (productId: string, imageId: string) =>
+    request<{ deleted: boolean }>(`/shop/admin/products/${encodeURIComponent(productId)}/images/${encodeURIComponent(imageId)}`, {
+      method: "DELETE",
+    }),
+  getShopOrders: (page = 1, pageSize = 20) =>
+    request<PaginatedResponse<ShopOrder>>(`/shop/admin/orders${paginationQuery(page, pageSize)}`),
+  getShopOrder: (orderId: string) => request<ShopOrder>(`/shop/admin/orders/${encodeURIComponent(orderId)}`),
+  updateShopOrderStatus: (orderId: string, status: "NEW" | "PROCESSING" | "COMPLETED" | "CANCELLED") =>
+    request<ShopOrder>(`/shop/admin/orders/${encodeURIComponent(orderId)}/status`, {
+      method: "PATCH",
+      body: JSON.stringify({ status }),
+    }),
   getRiderOrders: (page = 1, pageSize = 20) =>
     request<PaginatedResponse<Order>>(
       `/rider/orders${paginationQuery(page, pageSize)}`,

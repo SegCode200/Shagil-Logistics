@@ -533,7 +533,7 @@ export default function OrderDetailsPage({ params }: Props) {
                 <dd>
                   {order.paymentMethod === "PAYMENT_ON_DELIVERY"
                     ? "Payment on delivery"
-                    : "Payment after delivery"}
+                    : "Payment before delivery"}
                 </dd>
               </div>
               <div>

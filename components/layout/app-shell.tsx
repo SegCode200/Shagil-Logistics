@@ -24,6 +24,8 @@ const ownerLinks = [
   { href: "/owner/settings", label: "Settings", icon: Settings },
   { href: "/create-order", label: "Create order", icon: Plus },
   { href: "/owner/orders", label: "Orders", icon: Package },
+  { href: "/owner/shop", label: "Shop", icon: Package },
+  { href: "/owner/shop/settings", label: "Shop settings", icon: Settings },
   { href: "/owner/bike", label: "Bike", icon: Truck },
   { href: "/owner/riders", label: "Riders", icon: Users },
   // { href: "/owner/zones", label: "Delivery zones", icon: MapPinned },

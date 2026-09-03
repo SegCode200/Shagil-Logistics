@@ -11,6 +11,7 @@ export type OrderStatus =
 export type PaymentMethod = "ALREADY_PAID" | "PAYMENT_ON_DELIVERY";
 export type PaymentStatus = "NOT_REQUIRED" | "PENDING" | "PAID";
 export type CompanyPaymentStatus = "PENDING" | "PAID";
+export type ShopOrderStatus = "NEW" | "PROCESSING" | "COMPLETED" | "CANCELLED";
 export type FinalPaymentStatus = "PENDING" | "PAID";
 export type RiderCommissionStatus = "PENDING" | "PAID";
 export type SenderPaymentStatus = "PENDING" | "PAID";
@@ -26,6 +27,9 @@ export type CompanySettings = {
   maximumInsuranceValue: number | string;
   fixedDeliveryRate: number | string;
   variableDeliveryRate: number | string;
+  shopBaseDeliveryFee: number | string;
+  shopIncludedWeightKg: number | string;
+  shopExtraWeightFee: number | string;
   riderCommissionRate: number | string;
   expressMultiplier: number | string;
   vat: number | string;
@@ -104,6 +108,77 @@ export type Notification = {
   type: string;
   status: "SENT" | "FAILED";
   createdAt: string;
+};
+export type ShopProductImage = {
+  id: string;
+  productId?: string;
+  imageUrl: string;
+  publicId?: string;
+  isPrimary?: boolean;
+  sortOrder?: number;
+  createdAt?: string;
+};
+export type ShopCategory = {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string | null;
+  isActive?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  products?: ShopProduct[];
+};
+export type ShopProduct = {
+  id: string;
+  name: string;
+  slug: string;
+  sku?: string | null;
+  quantity?: number | string | null;
+  weightKg?: number | string | null;
+  description?: string | null;
+  price: number | string;
+  isActive?: boolean;
+  isFeatured?: boolean;
+  categoryId?: string | null;
+  category?: ShopCategory | null;
+  categoryName?: string | null;
+  images: Array<ShopProductImage | string>;
+  createdAt?: string;
+  updatedAt?: string;
+};
+export type ShopOrderItem = {
+  id: string;
+  productId: string;
+  productName: string;
+  unitPrice: number | string;
+  quantity: number;
+  subtotal: number | string;
+};
+export type ShopOrder = {
+  id: string;
+  orderNumber: string;
+  customerName: string;
+  customerPhone: string;
+  customerEmail?: string | null;
+  customerAddress: string;
+  deliveryZoneId: string;
+  customerNote?: string | null;
+  subtotal: number | string;
+  totalWeightKg: number | string;
+  deliveryFee: number | string;
+  total: number | string;
+  paymentMethod?: "PAYMENT_ON_DELIVERY" | "PBD";
+  paymentStatus?: string;
+  deliveryZone?: DeliveryZone | null;
+  deliveryOrderStatus?: string | null;
+  deliveryToken?: string | null;
+  deliveryCode?: string | null;
+  customerDeliveryLink?: string | null;
+  rider?: { name?: string | null; phone?: string | null } | null;
+  status: ShopOrderStatus;
+  createdAt: string;
+  updatedAt?: string;
+  items: ShopOrderItem[];
 };
 export type RiderRating = {
   id: string;

@@ -84,3 +84,29 @@ export function formatDate(date?: string | null) {
       }).format(new Date(date))
     : "—";
 }
+
+export function Button({
+  children,
+  className = "",
+  variant = "primary",
+  type = "button",
+  ...props
+}: {
+  children: React.ReactNode;
+  className?: string;
+  variant?: "primary" | "secondary" | "danger";
+  type?: "button" | "submit" | "reset";
+} & React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  const variantClass =
+    variant === "secondary"
+      ? "button-secondary"
+      : variant === "danger"
+        ? "button-danger"
+        : "button-primary";
+
+  return (
+    <button type={type} className={`button ${variantClass} ${className}`.trim()} {...props}>
+      {children}
+    </button>
+  );
+}
