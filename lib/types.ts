@@ -259,6 +259,11 @@ export type StationManager = {
   currentOrders?: number;
 };
 
+export type CompanyBikes ={
+  id: string;
+  bikeId: string;
+  companyPhoneNumber: string;
+}
 export type StationRider = {
   id: string;
   riderId: string;
@@ -269,7 +274,7 @@ export type StationRider = {
   active?: boolean | null;
   riderZones?: DeliveryZone[];
   bikeId?: string | null;
-  companyBikeId?: string | null;
+  companyBikes?: CompanyBikes;
   ratingsReceived?: RiderRating[];
 };
 
@@ -406,6 +411,7 @@ export type Rider = Omit<User, "stationId"> & {
   totalRatings?: number;
   totalDeliveries?: number;
   bikeId?: string | null;
+  bike?: CompanyBikes;
   ratingDistribution?: Partial<Record<1 | 2 | 3 | 4 | 5, number>>;
 };
 

@@ -76,6 +76,10 @@ export default function NewOrderPage() {
     const bikeNumber = rider.companyBikeId || rider.bikeId;
     return bikeNumber ? `${rider.name || "Rider"} - Bike ${bikeNumber}` : rider.name || "Rider";
   };
+  
+  const assignableRiders = (riders.data || []).filter(
+    (rider) =>  Boolean(rider.bike?.bikeId || rider.bikeId),
+  );
   const mutation = useMutation({
     mutationFn: (values: FormValues) => api.createOrder(values),
     onSuccess: (order) => {
@@ -253,7 +257,7 @@ export default function NewOrderPage() {
                   {...form.register("assignedRiderId")}
                 >
                   <option value="">Unassigned</option>
-                  {(riders.data || [])
+                  {assignableRiders
                     .filter((rider) => rider.active !== false)
                     .map((rider) => (
                       <option key={rider.id} value={rider.id}>

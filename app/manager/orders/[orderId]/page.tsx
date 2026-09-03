@@ -161,6 +161,10 @@ export default function ManagerOrderDetailsPage({ params }: Props) {
     const bikeNumber = rider.companyBikeId || rider.bikeId;
     return bikeNumber ? `${rider.name || "Rider"} - Bike ${bikeNumber}` : rider.name || "Rider";
   };
+  console.log("riders", riders.data);
+  const assignableRiders = (riders.data || []).filter(
+    (rider) => Boolean(rider.companyBikes?.bikeId || rider.bikeId),
+  );
   if (isLoading || !user) return <LoadingState />;
   if (order.isLoading)
     return (
@@ -648,7 +652,7 @@ export default function ManagerOrderDetailsPage({ params }: Props) {
                   }}
                 >
                   <option value="">Unassigned</option>
-                  {(riders.data || []).map((rider) => (
+                  {assignableRiders.map((rider) => (
                     <option key={rider.id} value={rider.id}>
                       {getRiderOptionLabel(rider)}
                     </option>
