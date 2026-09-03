@@ -98,7 +98,7 @@ export default function ManagerRidersPage() {
                       <span>
                         <Bike size={14} />
                         <strong>Company bike</strong>
-                        {rider.companyBikeId || rider.bikeId || "Assigned bike"}
+                        {rider.companyBikes?.bikeId || rider.bikeId || "Assigned bike"}
                       </span>
                       <span>
                         <Star size={14} />
