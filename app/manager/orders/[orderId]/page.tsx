@@ -157,8 +157,8 @@ export default function ManagerOrderDetailsPage({ params }: Props) {
       queryClient.invalidateQueries({ queryKey: ["managerOrders"] });
     },
   });
-  const getRiderOptionLabel = (rider: { name?: string; bikeId?: string | null; companyBikeId?: string | null; phone?: string | null }) => {
-    const bikeNumber = rider.companyBikeId || rider.bikeId;
+  const getRiderOptionLabel = (rider: { name?: string; bikeId?: string | null; companyBikes?: { bikeId?: string | null } | null; phone?: string | null }) => {
+    const bikeNumber = rider.companyBikes?.bikeId || rider.bikeId;
     return bikeNumber ? `${rider.name || "Rider"} - Bike ${bikeNumber}` : rider.name || "Rider";
   };
   console.log("riders", riders.data);
