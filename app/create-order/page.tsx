@@ -117,8 +117,8 @@ export default function CreateOrderPage() {
     const prefill = window.setTimeout(() => {
       setValues((current) => ({
         ...current,
-        senderName: current.senderName || sender.senderName || "",
-        senderPhoneNumber: current.senderPhoneNumber || sender.senderPhoneNumber || "",
+        senderName: sender.senderName || "",
+        senderPhoneNumber: sender.senderPhoneNumber || "",
       }));
     }, 0);
     return () => window.clearTimeout(prefill);

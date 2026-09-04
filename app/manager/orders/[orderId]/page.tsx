@@ -308,9 +308,25 @@ export default function ManagerOrderDetailsPage({ params }: Props) {
           </section>
         ) : null}
         {notice && (
-          <p className="success-text">
-            <Check size={16} /> {notice}
-          </p>
+          <div className="validation-dialog-backdrop">
+            <section
+              className="validation-dialog action-feedback-success"
+              role="alertdialog"
+              aria-modal="true"
+              aria-labelledby="manager-payment-authorization-success"
+            >
+              <p className="eyebrow">Success</p>
+              <h2 id="manager-payment-authorization-success">Payment authorized</h2>
+              <p>{notice}</p>
+              <button
+                type="button"
+                className="button button-primary button-full"
+                onClick={() => setNotice("")}
+              >
+                Continue
+              </button>
+            </section>
+          </div>
         )}
         {editing && (
           <section className="panel edit-order-panel">

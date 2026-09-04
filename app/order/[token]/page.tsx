@@ -453,6 +453,16 @@ export default function PublicOrderPage({ params }: Props) {
   const [created, setCreated] = useState<Awaited<
     ReturnType<typeof api.createOrder>
   > | null>(null);
+    const [senderToken, setSenderToken] = useState<string | null>(null);
+    useEffect(() => {
+      const token = new URLSearchParams(window.location.search).get("token") ||
+        localStorage.getItem("sender_access_token");
+      if (token) {
+        localStorage.setItem("sender_access_token", token);
+        window.setTimeout(() => setSenderToken(token), 0);
+      }
+    }, []);
+    
   const senderProfile = useQuery({
     queryKey: ["public-sender", token],
     queryFn: () => api.getPublicSender(token),
@@ -470,6 +480,7 @@ export default function PublicOrderPage({ params }: Props) {
     }, 0);
     return () => window.clearTimeout(prefill);
   }, [senderProfile.data]);
+    const senderFieldsLocked = Boolean(senderToken);
   const selectedDistance = stations.data
     ?.find((station) => station.id === values.stationId)
     ?.zoneDistances?.find((distance) => distance.deliveryZoneId === values.deliveryZoneId);
@@ -693,6 +704,7 @@ export default function PublicOrderPage({ params }: Props) {
                 id="create-senderName"
                 value={values.senderName}
                 required
+                disabled={senderFieldsLocked}
                 onChange={(v) => set("senderName", v)}
               />
               <Field
@@ -701,6 +713,7 @@ export default function PublicOrderPage({ params }: Props) {
                 type="tel"
                 required
                 value={values.senderPhoneNumber}
+                disabled={senderFieldsLocked}
                 onChange={(v) => set("senderPhoneNumber", v)}
                 onBlur={() =>
                   set(
@@ -994,6 +1007,7 @@ function Field({
   required = false,
   onBlur,
   id,
+  disabled,
 }: {
   label: string;
   value: string;
@@ -1002,6 +1016,7 @@ function Field({
   required?: boolean;
   onBlur?: () => void;
   id?: string;
+  disabled?: boolean;
 }) {
   return (
     <div className="field">
@@ -1014,6 +1029,7 @@ function Field({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onBlur={onBlur}
+        disabled={disabled}
       />
     </div>
   );

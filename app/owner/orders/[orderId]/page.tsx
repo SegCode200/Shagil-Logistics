@@ -93,6 +93,7 @@ export default function OrderDetailsPage({ params }: Props) {
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
   const [paymentError, setPaymentError] = useState(false);
   const [paymentReceipt, setPaymentReceipt] = useState<File | null>(null);
+  const [authorizationSuccess, setAuthorizationSuccess] = useState(false);
   const [editValues, setEditValues] = useState<Record<string, string>>({});
   const action = useMutation({
     mutationFn: (type: "approve" | "cancel") => {
@@ -163,6 +164,7 @@ export default function OrderDetailsPage({ params }: Props) {
   const authorizePayment = useMutation({
     mutationFn: () => api.authorizePayment(orderId),
     onSuccess: () => {
+      setAuthorizationSuccess(true);
       queryClient.invalidateQueries({ queryKey: ["order", orderId] });
       queryClient.invalidateQueries({ queryKey: ["orders"] });
     },
@@ -231,6 +233,27 @@ export default function OrderDetailsPage({ params }: Props) {
   );
   return (
     <AppShell role="OWNER">
+      {authorizationSuccess && (
+        <div className="validation-dialog-backdrop">
+          <section
+            className="validation-dialog action-feedback-success"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="owner-payment-authorization-success"
+          >
+            <p className="eyebrow">Success</p>
+            <h2 id="owner-payment-authorization-success">Payment authorized</h2>
+            <p>The sender can now complete the payment step for this order.</p>
+            <button
+              type="button"
+              className="button button-primary button-full"
+              onClick={() => setAuthorizationSuccess(false)}
+            >
+              Continue
+            </button>
+          </section>
+        </div>
+      )}
       {paymentError && (
         <div className="validation-dialog-backdrop">
           <section
