@@ -57,7 +57,22 @@ export default function ConfirmDeliveryPage({ params }: Props) {
     },
     onSuccess: () => {
       setPaymentReceipt(null);
+      setPaymentDialog({
+        type: "success",
+        title: "Payment receipt uploaded",
+        message: "The payment receipt was uploaded successfully.",
+      });
       queryClient.invalidateQueries({ queryKey: ["rider-orders"] });
+    },
+    onError: (uploadError) => {
+      setPaymentDialog({
+        type: "error",
+        title: "Receipt upload failed",
+        message:
+          uploadError instanceof Error && uploadError.message !== "REQUEST_FAILED"
+            ? uploadError.message
+            : "Could not upload the payment receipt. Please try again.",
+      });
     },
   });
   const companyPaymentMutation = useMutation({
@@ -211,7 +226,39 @@ export default function ConfirmDeliveryPage({ params }: Props) {
                 className="receipt-file-input"
                 type="file"
                 accept="image/jpeg,image/png,image/webp,application/pdf"
-                onChange={(event) => setPaymentReceipt(event.target.files?.[0] || null)}
+                onChange={(event) => {
+                  const selectedReceipt = event.target.files?.[0] || null;
+                  if (!selectedReceipt) {
+                    setPaymentReceipt(null);
+                    return;
+                  }
+                  const acceptedTypes = [
+                    "image/jpeg",
+                    "image/png",
+                    "image/webp",
+                    "application/pdf",
+                  ];
+                  if (!acceptedTypes.includes(selectedReceipt.type)) {
+                    setPaymentReceipt(null);
+                    setPaymentDialog({
+                      type: "error",
+                      title: "Invalid receipt file",
+                      message: "Receipt must be a JPEG, PNG, WebP, or PDF file.",
+                    });
+                    return;
+                  }
+                  if (selectedReceipt.size > 3 * 1024 * 1024) {
+                    setPaymentReceipt(null);
+                    setPaymentDialog({
+                      type: "error",
+                      title: "Receipt file is too large",
+                      message: "Receipt must be 3 MB or smaller.",
+                    });
+                    return;
+                  }
+                  setPaymentReceipt(selectedReceipt);
+                  setPaymentDialog(null);
+                }}
               />
               <span className="receipt-file-name">{paymentReceipt ? paymentReceipt.name : order.paymentReceipts?.length ? "Receipt already uploaded" : "No receipt selected"}</span>
               <button type="button" className="button button-secondary button-full" disabled={!paymentReceipt || uploadPaymentReceipt.isPending} onClick={() => uploadPaymentReceipt.mutate()}>

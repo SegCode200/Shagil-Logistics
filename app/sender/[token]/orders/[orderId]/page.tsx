@@ -23,7 +23,6 @@ type Props = { params: Promise<{ token: string; orderId: string }> };
 
 export default function SenderOrderDetailsPage({ params }: Props) {
   const { token, orderId } = use(params);
-  const [error, setError] = useState<React.ReactNode>(null);
   const queryClient = useQueryClient();
   const [feedback, setFeedback] = useState<{
     type: "success" | "error";
@@ -32,7 +31,7 @@ export default function SenderOrderDetailsPage({ params }: Props) {
   const [receipt, setReceipt] = useState<File | null>(null);
   const uploadReceipt = useMutation({
     mutationFn: () => {
-      if (!receipt) throw new Error("Select a receipt first.");
+      if (!receipt) throw new Error("Please select a payment receipt first.");
       return api.uploadSenderPaymentReceipt(token, orderId, receipt);
     },
     onSuccess: () => {
@@ -49,9 +48,9 @@ export default function SenderOrderDetailsPage({ params }: Props) {
       setFeedback({
         type: "error",
         message:
-          uploadError instanceof Error
+          uploadError instanceof Error && uploadError.message !== "REQUEST_FAILED"
             ? uploadError.message
-            : "Could not upload the payment receipt.",
+            : "Could not upload the payment receipt. Please try again.",
       }),
   });
   const orders = useQuery({
@@ -275,9 +274,37 @@ export default function SenderOrderDetailsPage({ params }: Props) {
                   className="receipt-file-input"
                   type="file"
                   accept="image/jpeg,image/png,image/webp,application/pdf"
-                  onChange={(event) =>
-                    setReceipt(event.target.files?.[0] || null)
-                  }
+                  onChange={(event) => {
+                    const selectedReceipt = event.target.files?.[0] || null;
+                    if (!selectedReceipt) {
+                      setReceipt(null);
+                      return;
+                    }
+                    const acceptedTypes = [
+                      "image/jpeg",
+                      "image/png",
+                      "image/webp",
+                      "application/pdf",
+                    ];
+                    if (!acceptedTypes.includes(selectedReceipt.type)) {
+                      setReceipt(null);
+                      setFeedback({
+                        type: "error",
+                        message: "Receipt must be a JPEG, PNG, WebP, or PDF file.",
+                      });
+                      return;
+                    }
+                    if (selectedReceipt.size > 3 * 1024 * 1024) {
+                      setReceipt(null);
+                      setFeedback({
+                        type: "error",
+                        message: "Receipt must be 3 MB or smaller.",
+                      });
+                      return;
+                    }
+                    setReceipt(selectedReceipt);
+                    setFeedback(null);
+                  }}
                 />
                 <span className="receipt-file-name">{receipt ? receipt.name : "No receipt selected"}</span>
               </label> : null}

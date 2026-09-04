@@ -30,10 +30,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const hasSession =
     hydrated &&
     (Boolean(localStorage.getItem("auth_token")) ||
+      Boolean(localStorage.getItem("rider_access_token")) ||
       document.cookie.length > 0);
   const query = useQuery({
     queryKey: ["me"],
-    queryFn: api.getCurrentUser,
+    queryFn: async () => {
+      const authToken = localStorage.getItem("auth_token");
+      const riderAccessToken = localStorage.getItem("rider_access_token");
+      try {
+        if (authToken) return await api.getCurrentUser();
+      } catch (error) {
+        if (!riderAccessToken || !(error instanceof Error) || error.message !== "SESSION_EXPIRED") {
+          throw error;
+        }
+      }
+      if (riderAccessToken) {
+        const result = await api.accessRider(riderAccessToken);
+        const sessionToken = result.token || result.accessToken;
+        if (sessionToken) localStorage.setItem("auth_token", sessionToken);
+        return result.user || api.getCurrentUser();
+      }
+      return api.getCurrentUser();
+    },
     enabled: hydrated && hasSession,
     retry: false,
   });
@@ -53,6 +71,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   async function logout() {
     await api.logout();
     localStorage.removeItem("auth_token");
+    localStorage.removeItem("rider_access_token");
     queryClient.clear();
   }
   return (
