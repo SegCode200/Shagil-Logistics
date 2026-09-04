@@ -547,8 +547,8 @@ export default function CreateOrderPage() {
               }
             >
               <option value="">Select payment type</option>
-              <option value="ALREADY_PAID">Payment before delivery</option>
-              <option value="PAYMENT_ON_DELIVERY">Payment on delivery</option>
+              <option value="ALREADY_PAID">Payment by sender before delivery</option>
+              <option value="PAYMENT_ON_DELIVERY">Payment by receiver on delivery </option>
             </select>
           </Section>
             {validationTarget === "productImages" && (
