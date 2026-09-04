@@ -139,7 +139,8 @@ export default function CreateOrderPage() {
     (Number(settings.data?.riderCommissionRate || 0) * baseFee) / 100;
   const vatAmount =
     (Number(settings.data?.vat || 0) * (baseFee + riderCommissionAmount)) / 100;
-  const deliveryFee = baseFee + riderCommissionAmount + vatAmount;
+  const calculatedDeliveryFee = baseFee + riderCommissionAmount + vatAmount;
+  const deliveryFee = Math.ceil(calculatedDeliveryFee / 100) * 100;
   const mutation = useMutation({
     mutationFn: () =>
       api.createOrder(

@@ -355,6 +355,7 @@ import { use, useEffect, useRef, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { normalizeNigerianPhone } from "@/lib/phone";
+import { ErrorState, LoadingState } from "@/components/ui/primitives";
 
 type Values = {
   senderName: string;
@@ -453,16 +454,6 @@ export default function PublicOrderPage({ params }: Props) {
   const [created, setCreated] = useState<Awaited<
     ReturnType<typeof api.createOrder>
   > | null>(null);
-    const [senderToken, setSenderToken] = useState<string | null>(null);
-    useEffect(() => {
-      const token = new URLSearchParams(window.location.search).get("token") ||
-        localStorage.getItem("sender_access_token");
-      if (token) {
-        localStorage.setItem("sender_access_token", token);
-        window.setTimeout(() => setSenderToken(token), 0);
-      }
-    }, []);
-    
   const senderProfile = useQuery({
     queryKey: ["public-sender", token],
     queryFn: () => api.getPublicSender(token),
@@ -474,13 +465,13 @@ export default function PublicOrderPage({ params }: Props) {
     const prefill = window.setTimeout(() => {
       setValues((current) => ({
         ...current,
-        senderName: current.senderName || sender.senderName || "",
-        senderPhoneNumber: current.senderPhoneNumber || sender.senderPhoneNumber || "",
+        senderName: sender.senderName || "",
+        senderPhoneNumber: sender.senderPhoneNumber || "",
       }));
     }, 0);
     return () => window.clearTimeout(prefill);
   }, [senderProfile.data]);
-    const senderFieldsLocked = Boolean(senderToken);
+  const senderFieldsLocked = true;
   const selectedDistance = stations.data
     ?.find((station) => station.id === values.stationId)
     ?.zoneDistances?.find((distance) => distance.deliveryZoneId === values.deliveryZoneId);
@@ -497,7 +488,8 @@ export default function PublicOrderPage({ params }: Props) {
     (Number(settings.data?.riderCommissionRate || 0) * baseFee) / 100;
   const vatAmount =
     (Number(settings.data?.vat || 0) * (baseFee + riderCommissionAmount)) / 100;
-  const deliveryFee = baseFee + riderCommissionAmount + vatAmount;
+  const calculatedDeliveryFee = baseFee + riderCommissionAmount + vatAmount;
+  const deliveryFee = Math.ceil(calculatedDeliveryFee / 100) * 100;
   const mutation = useMutation({
     mutationFn: () =>
       api.createOrder(
@@ -623,6 +615,9 @@ export default function PublicOrderPage({ params }: Props) {
     );
   }
   useEffect(() => closeCamera, []);
+  if (senderProfile.isLoading) return <LoadingState label="Loading sender information" />;
+  if (senderProfile.isError || !senderProfile.data)
+    return <ErrorState message="We could not load the sender information." />;
   if (created)
     return (
       <main className="public-page">
