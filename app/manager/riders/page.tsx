@@ -55,7 +55,6 @@ export default function ManagerRidersPage() {
           ) : (
             <div className="manager-rider-grid">
               {items.map((rider) => {
-                const zoneNames = rider.riderZones?.map((zone) => zone.name) || [];
                 const today = new Date();
                 const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
                 const assignedOrders =
@@ -124,11 +123,6 @@ export default function ManagerRidersPage() {
                         </Link>
                       </span>
                     </div>
-                    {zoneNames.length > 0 && (
-                      <p className="manager-rider-zones">
-                        <strong>Zones:</strong> {zoneNames.join(", ")}
-                      </p>
-                    )}
                     <Link
                       className="button button-secondary button-full"
                       href={`/manager/orders?riderId=${encodeURIComponent(rider.id)}`}

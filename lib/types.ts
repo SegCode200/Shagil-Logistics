@@ -278,7 +278,6 @@ export type StationRider = {
   status: string;
   assignedOrders?: number;
   active?: boolean | null;
-  riderZones?: DeliveryZone[];
   bikeId?: string | null;
   companyBikes?: CompanyBikes;
   ratingsReceived?: RiderRating[];
@@ -410,8 +409,6 @@ export type DeliveryZoneImport = {
 
 export type Rider = Omit<User, "stationId"> & {
   address?: string | null;
-  zoneIds?: string[];
-  zones?: DeliveryZone[];
   active?: boolean;
   assignedOrders?: number;
   averageRating?: number;

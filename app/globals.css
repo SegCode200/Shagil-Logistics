@@ -1338,41 +1338,6 @@ select {
   color: var(--muted);
   font-size: 12px;
 }
-.rider-zone-picker {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 9px;
-  margin-top: 10px;
-}
-.rider-zone-option {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  align-items: center;
-  column-gap: 8px;
-  row-gap: 3px;
-  min-width: 0;
-  padding: 11px 12px;
-  border: 1px solid var(--line);
-  border-radius: 9px;
-  background: white;
-  color: var(--foreground);
-  font-size: 13px;
-  cursor: pointer;
-}
-.rider-zone-option.selected {
-  border-color: var(--brand);
-  background: #fff7f4;
-  box-shadow: 0 0 0 1px var(--brand);
-}
-.rider-zone-option input {
-  grid-row: span 2;
-  accent-color: var(--brand);
-}
-.rider-zone-option small {
-  grid-column: 2;
-  color: var(--muted);
-  font-size: 11px;
-}
 .users-table th,
 .users-table td {
   white-space: nowrap;
@@ -1505,8 +1470,6 @@ select {
 .manager-rider-facts svg { flex: 0 0 auto; color: var(--brand-dark); }
 .manager-rider-facts strong { min-width: 92px; color: var(--foreground); }
 .manager-rider-facts a { gap: 4px; color: var(--brand-dark); font-weight: 750; }
-.manager-rider-zones { margin: 0 0 16px; color: var(--muted); font-size: 12px; line-height: 1.5; }
-.manager-rider-zones strong { color: var(--foreground); }
 .rider-card header,
 .card-row {
   display: flex;
@@ -2519,7 +2482,7 @@ select {
   gap: 6px;
   margin: 0;
   padding-left: 20px;
-  color: #b42318;
+  color: #000;
   font-weight: 800;
   line-height: 1.45;
 }
@@ -3210,9 +3173,6 @@ select {
   .checkbox-grid {
     grid-template-columns: 1fr;
     gap: 14px;
-  }
-  .rider-zone-picker {
-    grid-template-columns: 1fr;
   }
   .form-actions {
     flex-direction: column-reverse;

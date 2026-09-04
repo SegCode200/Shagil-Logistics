@@ -234,7 +234,6 @@ export const api = {
     name: string;
     phone: string;
     address: string;
-    zoneIds: string[];
     bikeId: string;
   }) =>
     request<Rider>("/riders", {
@@ -243,7 +242,7 @@ export const api = {
     }),
   updateRider: (
     riderId: string,
-    payload: { name: string; zoneIds: string[] },
+    payload: { name: string },
   ) =>
     request<Rider>(`/riders/${encodeURIComponent(riderId)}`, {
       method: "PATCH",

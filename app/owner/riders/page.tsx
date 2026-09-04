@@ -2,7 +2,7 @@
 
 import { Pencil, Plus, Send, Users } from "lucide-react";
 import { useState } from "react";
-import { useForm, useWatch } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/app-shell";
 import { useRoleRedirect } from "@/components/auth/auth-provider";
@@ -26,23 +26,14 @@ export default function RidersPage() {
     queryFn: api.getBikes,
     enabled: Boolean(user),
   });
-  const zones = useQuery({
-    queryKey: ["delivery-zones"],
-    queryFn: api.getDeliveryZones,
-    enabled: Boolean(user),
-  });
   const [showForm, setShowForm] = useState(false);
   const queryClient = useQueryClient();
   const form = useForm({
-    defaultValues: { name: "", phone: "", address: "", zoneIds: [] as string[], bikeId: "" },
+    defaultValues: { name: "", phone: "", address: "", bikeId: "" },
   });
   const [editingId, setEditingId] = useState<string | null>(null);
   const editForm = useForm({
-    defaultValues: { name: "", zoneIds: [] as string[] },
-  });
-  const selectedEditZoneIds = useWatch({
-    control: editForm.control,
-    name: "zoneIds",
+    defaultValues: { name: "" },
   });
   const mutation = useMutation({
     mutationFn: api.createRider,
@@ -53,7 +44,7 @@ export default function RidersPage() {
     },
   });
   const update = useMutation({
-    mutationFn: (values: { name: string; zoneIds: string[] }) =>
+    mutationFn: (values: { name: string }) =>
       api.updateRider(editingId as string, values),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["riders"] });
@@ -131,38 +122,6 @@ export default function RidersPage() {
                     <span className="field-hint">Add an unassigned active bike first.</span>
                   )}
                 </div>
-                {/* <div className="field field-span">
-                  <span className="field-label">Delivery zones</span>
-                  <span className="field-hint">Select all zones this rider can serve.</span>
-                  <div className="rider-zone-picker">
-                    {(zones.data || []).filter((zone) => zone.active).map((zone) => {
-                      const selected = selectedZoneIds.includes(zone.id);
-                      return (
-                        <label className={`rider-zone-option${selected ? " selected" : ""}`} key={zone.id}>
-                          <input
-                            type="checkbox"
-                            checked={selected}
-                            onChange={(event) =>
-                              form.setValue(
-                                "zoneIds",
-                                event.target.checked
-                                  ? [...selectedZoneIds, zone.id]
-                                  : selectedZoneIds.filter((id) => id !== zone.id),
-                                { shouldDirty: true },
-                              )
-                            }
-                          />
-                          <span>{zone.name}</span>
-                          <small>₦{Number(zone.fee).toLocaleString()}</small>
-                        </label>
-                      );
-                    })}
-                  </div>
-                  {!zones.isLoading && !zones.isError && !(zones.data || []).some((zone) => zone.active) && (
-                    <span className="muted">No active delivery zones available.</span>
-                  )}
-                </div> */}
-
               </div>
               {mutation.isError && (
                 <p className="form-error">
@@ -240,7 +199,7 @@ export default function RidersPage() {
                   className="button button-secondary rider-access-button"
                   onClick={() => {
                     setEditingId(rider.id);
-                    editForm.reset({ name: rider.name, zoneIds: rider.zoneIds || [] });
+                    editForm.reset({ name: rider.name });
                   }}
                 >
                   <Pencil size={15} /> Edit assignment
@@ -248,30 +207,6 @@ export default function RidersPage() {
                 {editingId === rider.id && (
                   <form className="rider-edit-form" onSubmit={editForm.handleSubmit((values) => update.mutate(values))}>
                     <input className="input" aria-label="Rider name" {...editForm.register("name")} required />
-                    <div className="rider-zone-picker">
-                      {(zones.data || []).filter((zone) => zone.active).map((zone) => {
-                        const selected = selectedEditZoneIds.includes(zone.id);
-                        return (
-                          <label className={`rider-zone-option${selected ? " selected" : ""}`} key={zone.id}>
-                            <input
-                              type="checkbox"
-                              checked={selected}
-                              onChange={(event) =>
-                                editForm.setValue(
-                                  "zoneIds",
-                                  event.target.checked
-                                    ? [...selectedEditZoneIds, zone.id]
-                                    : selectedEditZoneIds.filter((id) => id !== zone.id),
-                                  { shouldDirty: true },
-                                )
-                              }
-                            />
-                            <span>{zone.name}</span>
-                            <small>₦{Number(zone.fee).toLocaleString()}</small>
-                          </label>
-                        );
-                      })}
-                    </div>
                     <button className="button button-primary" disabled={update.isPending}>{update.isPending ? "Saving..." : "Save changes"}</button>
                   </form>
                 )}
