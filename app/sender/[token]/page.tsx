@@ -102,7 +102,7 @@ export default function SenderAccessPage({ params }: Props) {
                   </div>
                   <span className="sender-order-view">View delivery <ChevronRight size={17} /></span>
                 </Link>
-                {order.paymentMethod === "ALREADY_PAID" && order.status === "PENDING_APPROVAL" ? (
+                {order.paymentMethod === "ALREADY_PAID" && order.status === "PENDING_APPROVAL" && order.authorizePayment === true ? (
                   <Link
                     className="button button-primary sender-payment-link"
                     href={`/sender/${token}/orders/${encodeURIComponent(order.orderId)}`}
