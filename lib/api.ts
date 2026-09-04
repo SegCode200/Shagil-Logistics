@@ -521,6 +521,10 @@ export const api = {
     }>(`/public/delivery/${encodeURIComponent(token)}/confirm-payment`, {
       method: "POST",
     }),
+  authorizePayment: (orderId: string) =>
+    request<Order>(`/orders/${encodeURIComponent(orderId)}/authorize-payment`, {
+      method: "POST",
+    }),
   getPublicSender: (token: string) =>
     request<PublicSenderOrder>(`/public/sender/${encodeURIComponent(token)}`),
   senderPaid: (orderId: string) =>

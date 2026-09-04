@@ -146,6 +146,14 @@ export default function ManagerOrderDetailsPage({ params }: Props) {
       queryClient.invalidateQueries({ queryKey: ["managerOrders"] });
     },
   });
+  const authorizePayment = useMutation({
+    mutationFn: () => api.authorizePayment(orderId),
+    onSuccess: () => {
+      setNotice("Payment authorization enabled.");
+      queryClient.invalidateQueries({ queryKey: ["managerOrder", orderId] });
+      queryClient.invalidateQueries({ queryKey: ["managerOrders"] });
+    },
+  });
   const uploadPaymentReceipt = useMutation({
     mutationFn: () => {
       if (!paymentReceipt) throw new Error("Select a receipt first.");
@@ -572,6 +580,21 @@ export default function ManagerOrderDetailsPage({ params }: Props) {
               </div>
             )}
             <div className="action-stack section-gap">
+              {data.paymentMethod === "ALREADY_PAID" && !data.authorizedPayment && (
+                <button
+                  type="button"
+                  className="button button-warning button-full"
+                  disabled={authorizePayment.isPending}
+                  onClick={() => {
+                    if (window.confirm("Are you sure you want to authorize the customer to make payment now?")) {
+                      authorizePayment.mutate();
+                    }
+                  }}
+                >
+                  {authorizePayment.isPending ? "Authorizing payment..." : "Customer authorized to make payment"}
+                </button>
+              )}
+              {authorizePayment.isError && <p className="form-error">Payment authorization could not be completed.</p>}
               {data.status === "PENDING_APPROVAL" && (
                 <button
                   className="button button-primary button-full"
@@ -592,7 +615,7 @@ export default function ManagerOrderDetailsPage({ params }: Props) {
                 </button>
               )}
 
-              {(data.finalPaymentStatus !== "PAID" && data.paymentMethod === "PAYMENT_ON_DELIVERY")   &&  (
+              {/* {(data.finalPaymentStatus !== "PAID" && data.paymentMethod === "PAYMENT_ON_DELIVERY")   &&  (
                 <button
                   className="button button-success button-full"
                   disabled={
@@ -629,7 +652,7 @@ export default function ManagerOrderDetailsPage({ params }: Props) {
               )}
             {confirmFinalPayment.isError && (
                 <p className="form-error">Final payment could not be confirmed.</p>
-              )}
+              )} */}
               <div className="field">
                 <label htmlFor="manager-rider">
                   {data.assignedRider?.id || data.rider?.id

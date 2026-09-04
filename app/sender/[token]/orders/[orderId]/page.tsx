@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   ArrowLeft,
   CheckCircle2,
+  MessageCircle,
   PackageCheck,
   Send,
   Upload,
@@ -12,7 +13,6 @@ import {
 import { use, useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { PaymentReceiptViewer } from "@/components/orders/payment-receipt-viewer";
 import {
   ErrorState,
   LoadingState,
@@ -140,6 +140,11 @@ export default function SenderOrderDetailsPage({ params }: Props) {
   const images = (order.images || []).filter(
     (image) => image.publicUrl || image.url,
   );
+  const stationManagerPhone =
+    order.stationPhoneNumber ||
+    order.stationPhone ||
+    order.station?.managers?.find((manager) => manager.user?.phone)?.user?.phone ||
+    "";
 
 
   return (
@@ -183,7 +188,7 @@ export default function SenderOrderDetailsPage({ params }: Props) {
           <div className="sender-statuses">
             <OrderStatusBadge status={order.status} />
 
-            <span
+            {/* <span
               className={`status ${order.receiverCollectionStatus === "COLLECTED" ? "payment-confirmed" : "payment-pending"}`}
             >
               {order.receiverCollectionStatus === "COLLECTED"
@@ -194,18 +199,12 @@ export default function SenderOrderDetailsPage({ params }: Props) {
               className={`status sender-payment-status status-${order.senderPaymentStatus.toLowerCase()}`}
             >
               Sender payment: {order.senderPaymentStatus}
-            </span>
+            </span> */}
           </div>
         </header>
-        {order.paymentReceipts?.length ? (
-          <section className="payment-receipts-section payment-receipts-top">
-            <h2>Uploaded payment receipts ({order.paymentReceipts.length})</h2>
-            <PaymentReceiptViewer receipts={order.paymentReceipts} />
-          </section>
-        ) : null}
         <section className="sender-actions" aria-label="Order actions">
           {order.paymentMethod === "ALREADY_PAID" &&
-          order.status === "PENDING_APPROVAL" ? (
+          order.status === "PENDING_APPROVAL" && order.authorizePayment ? (
             <div className="sender-action-card sender-payment-upload-action">
               <div className="sender-action-heading">
                 <Upload size={20} />
@@ -241,12 +240,31 @@ export default function SenderOrderDetailsPage({ params }: Props) {
                     "Contact the office"}
                 </p>
                 <p>
-                  <strong>Forward receipt to station:</strong>{" "}
-                  {order.stationPhoneNumber ||
-                    order.stationPhone ||
-                    "Station number will be provided by the office"}
+                  <strong>Station WhatsApp:</strong>{" "}
+                  {stationManagerPhone || "Station number will be provided by the office"}
                 </p>
               </div>
+              {!order.paymentReceipts?.length ? (
+                <div className="receipt-help" aria-label="How to send your payment receipt">
+                  <strong>How to send your receipt</strong>
+                  <ol>
+                    <li>Take a screenshot of your payment confirmation or download the receipt.</li>
+                    <li>Go to recent on your device to see the file.</li>
+                    <li>Attach the file below and tap Upload receipt.</li>
+                    <li>If you cannot attach it, forward the receipt on WhatsApp to the station number.</li>
+                  </ol>
+                  {stationManagerPhone ? (
+                    <a
+                      className="button button-secondary button-full"
+                      href={`https://wa.me/${stationManagerPhone.replace(/\D/g, "")}?text=${encodeURIComponent(`Hello, I am sending the payment receipt for order ${order.orderId}.`)}`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <MessageCircle size={16} /> Open station WhatsApp
+                    </a>
+                  ) : null}
+                </div>
+              ) : null}
               {!order.paymentReceipts?.length ? <label className="receipt-upload-field">
                 <span className="receipt-upload-label">Attach transfer receipt</span>
                 <input
@@ -273,6 +291,16 @@ export default function SenderOrderDetailsPage({ params }: Props) {
               {!order.paymentReceipts?.length ? <p className="subtext">
                 Accepted: JPEG, PNG, WebP, or PDF. Maximum size: 3 MB.
               </p> : null}
+            </div>
+          ) : order.paymentMethod === "ALREADY_PAID" && order.status === "PENDING_APPROVAL" && !order.authorizePayment ? (
+            <div className="sender-action-card sender-payment-waiting-action">
+              <div className="sender-action-heading">
+                <Upload size={20} />
+                <div>
+                  <h2>Payment not authorized yet</h2>
+                  <p>The office must authorize payment before you can upload or forward your receipt.</p>
+                </div>
+              </div>
             </div>
           ) : null}
           <div className="sender-action-card sender-code-action">

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowUpRight, Plus } from "lucide-react";
+import { ChevronRight, MapPin, Plus, UserRound } from "lucide-react";
 import { use, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
@@ -75,26 +75,32 @@ export default function SenderAccessPage({ params }: Props) {
           <section className="sender-order-history" aria-label="Sender orders">
             <div className="stack-list">
               {orders.map((order) => (
-                <div className="detail-card sender-order-list-item" key={order.orderId}>
+                <article className="sender-order-list-item" key={order.orderId}>
                 <Link
                   className="sender-order-link"
                   href={`/sender/${token}/orders/${encodeURIComponent(order.orderId)}`}
                 >
-                  <div className="sender-order-main">
-                    <strong>{order.orderId}</strong>
-                    <span>{order.deliveryZone?.name || "Delivery area not set"}</span>
-                    <small>{order.deliveryAddress}</small>
+                  <div className="sender-order-topline">
+                    <div className="sender-order-main">
+                      <strong>{order.orderId}</strong>
+                      <span>{formatDate(order.createdAt)}</span>
+                    </div>
+                    <span className={`status status-${order.status.toLowerCase()}`}>
+                      {labels[order.status] || order.status}
+                    </span>
                   </div>
-                  <div className="flex-col gap-3">
-                <span className={`status status-${order.status.toLowerCase()}`}>
-                    {labels[order.status] || order.status}
-                  </span>
+                  <div className="sender-order-destination">
+                    <MapPin size={16} aria-hidden="true" />
+                    <div>
+                      <small>{order.deliveryZone?.name || "Delivery area not set"}</small>
+                      <strong>{order.deliveryAddress}</strong>
+                    </div>
+                  </div>
                   <div className="sender-order-meta">
-                    <span><b>Receiver</b>{order.receiverName || "—"}</span>
-                    <span><b>Fee</b>₦{Number(order.deliveryFee).toLocaleString()}</span>
+                    <span><UserRound size={14} aria-hidden="true" /><b>Receiver</b>{order.receiverName || "Not provided"}</span>
+                    <span><b>Delivery fee</b>₦{Number(order.deliveryFee || 0).toLocaleString()}</span>
                   </div>
-                  </div>
-
+                  <span className="sender-order-view">View delivery <ChevronRight size={17} /></span>
                 </Link>
                 {order.paymentMethod === "ALREADY_PAID" && order.status === "PENDING_APPROVAL" ? (
                   <Link
@@ -104,7 +110,7 @@ export default function SenderAccessPage({ params }: Props) {
                     Payment
                   </Link>
                 ) : null}
-                </div>
+                </article>
               ))}
             </div>
           </section>

@@ -37,6 +37,7 @@ function OrdersContent() {
   const requestedFinalPaymentStatus = searchParams.get("finalPaymentStatus");
   const requestedDate = searchParams.get("date");
   const requestedFromDate = searchParams.get("fromDate");
+  const requestedToDate = searchParams.get("toDate");
   const requestedTransaction = searchParams.get("transaction");
   const activeStatus = status === "ALL" && requestedStatus ? requestedStatus : status;
   const activePayment = payment === "ALL" && requestedPayment ? requestedPayment : payment;
@@ -44,6 +45,7 @@ function OrdersContent() {
   const activeFinalPaymentStatus = requestedFinalPaymentStatus || "ALL";
   const activeDate = date || requestedDate || "";
   const activeFromDate = requestedFromDate || "";
+  const activeToDate = requestedToDate || "";
   const activeTransaction = requestedTransaction || "";
   const riders = useQuery({
     queryKey: ["riders"],
@@ -71,6 +73,7 @@ function OrdersContent() {
               order.rider?.id === rider) &&
             (!activeDate || order.createdAt.slice(0, 10) === activeDate) &&
             (!activeFromDate || order.createdAt.slice(0, 10) >= activeFromDate) &&
+            (!activeToDate || order.createdAt.slice(0, 10) <= activeToDate) &&
             (activeTransaction === "" ||
               activeTransaction === "expected" ||
               activeTransaction === "transactions" ||
@@ -81,14 +84,20 @@ function OrdersContent() {
               (activeTransaction === "balance" &&
                 order.finalPaymentStatus !== "PAID" &&
                 order.senderPaymentStatus !== "PAID" &&
-                order.paymentStatus !== "PAID")),
+                order.paymentStatus !== "PAID") ||
+              (activeTransaction === "pbd-pending" &&
+                order.paymentMethod === "ALREADY_PAID" &&
+                order.finalPaymentStatus !== "PAID") ||
+              (activeTransaction === "pbd-paid" &&
+                order.paymentMethod === "ALREADY_PAID" &&
+                order.finalPaymentStatus === "PAID")),
         )
         .sort((left, right) =>
           sort === "oldest"
             ? left.createdAt.localeCompare(right.createdAt)
             : right.createdAt.localeCompare(left.createdAt),
         ),
-    [query.data, search, activeStatus, activePayment, activePaymentStatus, activeFinalPaymentStatus, rider, activeDate, activeFromDate, activeTransaction, sort],
+    [query.data, search, activeStatus, activePayment, activePaymentStatus, activeFinalPaymentStatus, rider, activeDate, activeFromDate, activeToDate, activeTransaction, sort],
   );
   if (authLoading || !user) return <LoadingState />;
   return (

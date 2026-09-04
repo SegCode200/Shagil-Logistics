@@ -2055,11 +2055,15 @@ select {
 .sender-order-list-item {
   display: grid;
   gap: 10px;
-  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: white;
+  box-shadow: 0 5px 18px #183b560b;
 }
 .sender-order-list-item .sender-order-link {
   border: 0;
-  border-radius: 10px 10px 0 0;
+  border-radius: 0;
 }
 .sender-payment-link {
   justify-content: center;
@@ -2095,6 +2099,15 @@ select {
   gap: 5px;
   min-width: 0;
 }
+.sender-order-topline {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.sender-order-topline .status {
+  flex-shrink: 0;
+}
 .sender-order-main span,
 .sender-order-main small {
   grid-column: 1;
@@ -2107,18 +2120,35 @@ select {
   white-space: nowrap;
   font-size: 12px;
 }
-.sender-order-destination-label {
-  margin-top: 5px;
-  color: var(--muted);
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
 .sender-order-destination {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
   color: var(--navy);
   font-size: 14px;
   font-weight: 750;
+}
+.sender-order-destination > svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: var(--brand-dark);
+}
+.sender-order-destination div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.sender-order-destination small {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+.sender-order-destination strong {
+  overflow: hidden;
+  font-size: 14px;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .sender-order-meta {
   display: grid;
@@ -2131,15 +2161,38 @@ select {
 }
 .sender-order-meta span {
   display: grid;
-  gap: 3px;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 3px 6px;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .sender-order-meta b {
+  grid-column: 2;
   color: var(--foreground);
   font-size: 11px;
+}
+.sender-order-meta span > svg {
+  grid-row: 1 / span 2;
+  color: var(--brand-dark);
+}
+.sender-order-meta span:not(:has(svg)) b,
+.sender-order-meta span:not(:has(svg)) {
+  display: grid;
+}
+.sender-order-meta span:not(:has(svg)) b {
+  grid-column: 1;
+}
+.sender-order-view {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 3px;
+  color: var(--brand-dark);
+  font-size: 12px;
+  font-weight: 800;
 }
 .sender-order-arrow {
   grid-column: 2;
@@ -2450,6 +2503,27 @@ select {
 }
 .payment-instruction-amount strong {
   color: #624900;
+}
+.receipt-help {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid #c9dced;
+  border-radius: 10px;
+  background: #f5f9fd;
+  color: var(--navy);
+  font-size: 13px;
+}
+.receipt-help ol {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding-left: 20px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+.receipt-help .button {
+  margin-top: 2px;
 }
 .payment-receipts-list {
   display: grid;
@@ -2893,9 +2967,20 @@ select {
     gap: 9px 10px;
     padding: 16px;
   }
-  .sender-order-heading .status {
+  .sender-order-topline .status {
     max-width: 132px;
     text-align: right;
+  }
+  .sender-order-link {
+    gap: 12px;
+    padding: 14px;
+  }
+  .sender-order-destination strong {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .sender-payment-link {
+    margin: 0 14px 14px;
   }
   .sender-order-meta span {
     font-size: 11px;

@@ -23,6 +23,7 @@ function ManagerOrdersContent() {
   const assignment = params.get("assignment");
   const riderId = params.get("riderId");
   const fromDate = params.get("fromDate") || "";
+  const toDate = params.get("toDate") || "";
   const transaction = params.get("transaction") || "";
   const payment = params.get("payment") || "";
   const finalPaymentStatus = params.get("finalPaymentStatus") || "";
@@ -43,7 +44,8 @@ function ManagerOrdersContent() {
       (assignment === "manager" ? !order.managedBy : !order.assignedRider && !order.rider);
     const assignedRiderId = order.assignedRider?.id || order.rider?.id;
     const matchesRider = !riderId || assignedRiderId === riderId;
-    const matchesDate = !fromDate || order.createdAt.slice(0, 10) >= fromDate;
+    const orderDate = order.createdAt.slice(0, 10);
+    const matchesDate = (!fromDate || orderDate >= fromDate) && (!toDate || orderDate <= toDate);
     const matchesPayment = !payment || order.paymentMethod === payment;
     const matchesFinalPaymentStatus =
       !finalPaymentStatus || order.finalPaymentStatus === finalPaymentStatus;

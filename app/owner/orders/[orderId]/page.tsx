@@ -160,6 +160,13 @@ export default function OrderDetailsPage({ params }: Props) {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
     },
   });
+  const authorizePayment = useMutation({
+    mutationFn: () => api.authorizePayment(orderId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["order", orderId] });
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+    },
+  });
   const resendSenderAccess = useMutation({
     mutationFn: () => api.resendSenderAccessToken(orderId),
   });
@@ -643,6 +650,21 @@ export default function OrderDetailsPage({ params }: Props) {
               </div>
             )}
             <div className="action-stack section-gap">
+              {order.paymentMethod === "ALREADY_PAID" && !order.authorizedPayment && (
+                <button
+                  type="button"
+                  className="button button-warning button-full"
+                  disabled={authorizePayment.isPending}
+                  onClick={() => {
+                    if (window.confirm("Are you sure you want to authorize the customer to make payment now?")) {
+                      authorizePayment.mutate();
+                    }
+                  }}
+                >
+                  {authorizePayment.isPending ? "Authorizing payment..." : "Customer authorized to make payment"}
+                </button>
+              )}
+              {authorizePayment.isError && <p className="form-error">Payment authorization could not be completed.</p>}
               {isApproved && (
                 <div className="access-token-actions">
                   <p className="action-label">Public access links</p>
@@ -777,7 +799,7 @@ export default function OrderDetailsPage({ params }: Props) {
                   </p>
                 )}
               </div>
-              {(order.finalPaymentStatus !== "PAID" && order?.paymentMethod === "PAYMENT_ON_DELIVERY")   &&  (
+              {(order.finalPaymentStatus !== "PAID" && (order?.paymentMethod === "PAYMENT_ON_DELIVERY" || order?.paymentMethod === "ALREADY_PAID") )   &&  (
                 <button
                   className="button button-success button-full"
                   disabled={
@@ -804,10 +826,10 @@ export default function OrderDetailsPage({ params }: Props) {
                 >
                   {confirmFinalPayment.isPending
                     ? "Confirming final payment..."
-                    : "POD payment confirmation"}
+                    : order.paymentMethod === "PAYMENT_ON_DELIVERY" ? "POD payment confirmation" : "PBD payment confirmation"}
                 </button>
               )}
-              {!isFinalPaymentReady && order.finalPaymentStatus !== "PAID" && order?.paymentMethod === "PAYMENT_ON_DELIVERY" && (
+              {!isFinalPaymentReady && order.finalPaymentStatus !== "PAID" && (order?.paymentMethod === "PAYMENT_ON_DELIVERY" || order?.paymentMethod === "ALREADY_PAID") && (
                 <p className="form-error">
                   Final payment cannot be confirmed until all payments are made and the order is delivered.
                 </p>

@@ -18,6 +18,7 @@ import {
 export default function OwnerDashboard() {
   const { user, isLoading: authLoading } = useRoleRedirect("OWNER");
   const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
   const orders = useQuery({
     queryKey: ["orders"],
     queryFn: api.getAllOrders,
@@ -28,16 +29,15 @@ export default function OwnerDashboard() {
   const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
   const allOrders = orders.data || [];
   const filteredOrders = allOrders.filter((order) => {
-    if (!fromDate) return true;
     const orderDate = new Date(order.createdAt);
     const orderKey = `${orderDate.getFullYear()}-${String(orderDate.getMonth() + 1).padStart(2, "0")}-${String(orderDate.getDate()).padStart(2, "0")}`;
-    return orderKey >= fromDate;
+    return (!fromDate || orderKey >= fromDate) && (!toDate || orderKey <= toDate);
   });
   const todayOrders = allOrders.filter((order) => {
     const orderDate = new Date(order.createdAt);
     return `${orderDate.getFullYear()}-${String(orderDate.getMonth() + 1).padStart(2, "0")}-${String(orderDate.getDate()).padStart(2, "0")}` === todayKey;
   });
-  const displayOrders = fromDate ? filteredOrders : todayOrders;
+  const displayOrders = fromDate || toDate ? filteredOrders : todayOrders;
   const expectedTotal = filteredOrders.reduce(
     (sum, order) => sum + Number(order.totalAmountToCollect ?? order.deliveryFee ?? 0),
     0,
@@ -60,11 +60,17 @@ export default function OwnerDashboard() {
     pickedUp: allOrders.filter((o) => o.status === "PICKED_UP").length,
     delivered: allOrders.filter((o) => o.status === "DELIVERED").length,
     express: allOrders.filter((o) => o.deliveryType === "EXPRESS").length,
-    podPendingReconciliation: allOrders.filter(
+    podPendingReconciliation: filteredOrders.filter(
       (o) => o.paymentMethod === "PAYMENT_ON_DELIVERY" && o.finalPaymentStatus !== "PAID",
     ).length,
-    reconciledPod: allOrders.filter(
+    reconciledPod: filteredOrders.filter(
       (o) => o.paymentMethod === "PAYMENT_ON_DELIVERY" && o.finalPaymentStatus === "PAID",
+    ).length,
+    pbdPendingReconciliation: filteredOrders.filter(
+      (o) => o.paymentMethod === "ALREADY_PAID" && o.finalPaymentStatus !== "PAID",
+    ).length,
+    reconciledPbd: filteredOrders.filter(
+      (o) => o.paymentMethod === "ALREADY_PAID" && o.finalPaymentStatus === "PAID",
     ).length,
   };
   return (
@@ -122,8 +128,17 @@ export default function OwnerDashboard() {
             max={todayKey}
             onChange={(event) => setFromDate(event.target.value)}
           />
-          {fromDate ? <button type="button" onClick={() => setFromDate("")}>Clear</button> : null}
-          <span>through today</span>
+          <label htmlFor="dashboard-to-date">to</label>
+          <input
+            id="dashboard-to-date"
+            type="date"
+            value={toDate}
+            min={fromDate || undefined}
+            max={todayKey}
+            onChange={(event) => setToDate(event.target.value)}
+          />
+          {fromDate || toDate ? <button type="button" onClick={() => { setFromDate(""); setToDate(""); }}>Clear</button> : null}
+          <span>Choose a date range</span>
         </div>
         <div className="summary-grid summary-grid-secondary">
           {[
@@ -133,13 +148,18 @@ export default function OwnerDashboard() {
             ["Balance total", null, `₦${Number(counts.balanceTotal).toLocaleString()}`, "balance"],
             ["POD pending reconciliation", counts.podPendingReconciliation, null, "pod-pending"],
             ["Reconciled POD", counts.reconciledPod, null, "pod-paid"],
+            ["PBD pending reconciliation", counts.pbdPendingReconciliation, null, "pbd-pending"],
+            ["Reconciled PBD", counts.reconciledPbd, null, "pbd-paid"],
           ].map(([label, value, amount, transaction]) => (
             <Link
               className="summary-card summary-card-secondary summary-card-link"
               href={`/owner/orders?${[
                 fromDate ? `fromDate=${fromDate}` : "",
+                toDate ? `toDate=${toDate}` : "",
                 transaction === "pod-pending" ? "payment=PAYMENT_ON_DELIVERY&finalPaymentStatus=PENDING" : "",
                 transaction === "pod-paid" ? "payment=PAYMENT_ON_DELIVERY&finalPaymentStatus=PAID" : "",
+                transaction === "pbd-pending" ? "payment=ALREADY_PAID&finalPaymentStatus=PENDING" : "",
+                transaction === "pbd-paid" ? "payment=ALREADY_PAID&finalPaymentStatus=PAID" : "",
                 ["transactions", "expected", "actual", "balance"].includes(transaction as string)
                   ? `transaction=${transaction}`
                   : "",
@@ -154,7 +174,7 @@ export default function OwnerDashboard() {
         </div>
         <section className="panel">
           <div className="panel-heading">
-            <h2>{fromDate ? "Orders in selected period" : "Recent orders"}</h2>
+            <h2>{fromDate || toDate ? "Orders in selected period" : "Recent orders"}</h2>
             <Link href="/owner/orders" className="text-link">
               View all <ArrowUpRight size={15} />
             </Link>
@@ -165,8 +185,8 @@ export default function OwnerDashboard() {
             <ErrorState />
           ) : displayOrders.length === 0 ? (
             <EmptyState
-              title={fromDate ? "No orders in selected period" : "No orders yet"}
-              description={fromDate ? "Try another date range." : "Create your first order to get started."}
+              title={fromDate || toDate ? "No orders in selected period" : "No orders yet"}
+              description={fromDate || toDate ? "Try another date range." : "Create your first order to get started."}
               action={
                 <Link className="button button-primary" href="/create-order">
                   Create order

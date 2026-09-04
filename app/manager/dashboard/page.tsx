@@ -17,6 +17,7 @@ export default function ManagerDashboard() {
     enabled: Boolean(user),
   });
   const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
   if (isLoading || !user) return <LoadingState />;
   if (orders.isLoading)
     return (
@@ -35,7 +36,10 @@ export default function ManagerDashboard() {
   const items = orders.data || [];
   const today = new Date();
   const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-  const filteredItems = items.filter((order) => !fromDate || order.createdAt.slice(0, 10) >= fromDate);
+  const filteredItems = items.filter((order) => {
+    const orderDate = order.createdAt.slice(0, 10);
+    return (!fromDate || orderDate >= fromDate) && (!toDate || orderDate <= toDate);
+  });
   const data = {
     totalOrders: items.length,
     newOrders: items.filter((order) => ["PENDING_APPROVAL"].includes(order.status)).length,
@@ -50,12 +54,6 @@ export default function ManagerDashboard() {
     pickedUp: items.filter((order) => order.status === "PICKED_UP").length,
     delivered: items.filter((order) => order.status === "DELIVERED").length,
     express: items.filter((order) => order.deliveryType === "EXPRESS").length,
-    podPendingReconciliation: filteredItems.filter(
-      (order) => order.paymentMethod === "PAYMENT_ON_DELIVERY" && order.finalPaymentStatus !== "PAID",
-    ).length,
-    reconciledPod: filteredItems.filter(
-      (order) => order.paymentMethod === "PAYMENT_ON_DELIVERY" && order.finalPaymentStatus === "PAID",
-    ).length,
   };
   const balanceTotal = Math.max(0, data.expectedTotal - data.actualTotal);
   const metrics = [
@@ -117,8 +115,17 @@ export default function ManagerDashboard() {
             max={todayKey}
             onChange={(event) => setFromDate(event.target.value)}
           />
-          {fromDate ? <button type="button" onClick={() => setFromDate("")}>Clear</button> : null}
-          <span>through today</span>
+          <label htmlFor="manager-dashboard-to-date">to</label>
+          <input
+            id="manager-dashboard-to-date"
+            type="date"
+            value={toDate}
+            min={fromDate || undefined}
+            max={todayKey}
+            onChange={(event) => setToDate(event.target.value)}
+          />
+          {fromDate || toDate ? <button type="button" onClick={() => { setFromDate(""); setToDate(""); }}>Clear</button> : null}
+          <span>Choose a date range</span>
         </div>
         <div className="summary-grid summary-grid-secondary">
           {[
@@ -126,13 +133,12 @@ export default function ManagerDashboard() {
             ["Expected total", null, `₦${Number(data.expectedTotal).toLocaleString()}`, "expected"],
             ["Actual total", null, `₦${Number(data.actualTotal).toLocaleString()}`, "actual"],
             ["Balance total", null, `₦${Number(balanceTotal).toLocaleString()}`, "balance"],
-            ["POD pending reconciliation", data.podPendingReconciliation, null, "pod-pending"],
-            ["Reconciled POD", data.reconciledPod, null, "pod-paid"],
           ].map(([label, value, amount, transaction]) => (
             <Link
               className="summary-card summary-card-secondary summary-card-link"
               href={`/manager/orders?${[
                 fromDate ? `fromDate=${fromDate}` : "",
+                toDate ? `toDate=${toDate}` : "",
                 transaction === "pod-pending" ? "payment=PAYMENT_ON_DELIVERY&finalPaymentStatus=PENDING" : "",
                 transaction === "pod-paid" ? "payment=PAYMENT_ON_DELIVERY&finalPaymentStatus=PAID" : "",
                 ["transactions", "expected", "actual", "balance"].includes(transaction as string)

@@ -364,11 +364,11 @@ type Values = {
   deliveryAddress: string;
   stationId: string;
   deliveryZoneId: string;
-  pickupMethod: "SENDER_DROPOFF" | "RIDER_PICKUP";
+  pickupMethod: "RIDER_PICKUP";
   pickupAddress: string;
   pickupInstructions: string;
-  paymentMethod: "ALREADY_PAID" | "PAYMENT_ON_DELIVERY";
-  deliveryType: "NORMAL" | "EXPRESS";
+  paymentMethod: "" | "ALREADY_PAID" | "PAYMENT_ON_DELIVERY";
+  deliveryType: "" | "NORMAL" | "EXPRESS";
 };
 const initialValues: Values = {
   senderName: "",
@@ -381,8 +381,8 @@ const initialValues: Values = {
   pickupMethod: "RIDER_PICKUP",
   pickupAddress: "",
   pickupInstructions: "",
-  paymentMethod: "PAYMENT_ON_DELIVERY",
-  deliveryType: "NORMAL",
+  paymentMethod: "",
+  deliveryType: "",
 };
 function removeEmptyValues(values: Values) {
   return Object.fromEntries(
@@ -518,6 +518,8 @@ export default function PublicOrderPage({ params }: Props) {
       ["deliveryAddress", "Delivery address not filled."],
       ["stationId", "Select a station."],
       ["deliveryZoneId", "Select a delivery area."],
+      ["deliveryType", "Select a delivery type."],
+      ["paymentMethod", "Select a payment type."],
     ];
     const missingField = requiredFields.find(([key]) => !values[key].trim());
     if (missingField) {
@@ -655,7 +657,11 @@ export default function PublicOrderPage({ params }: Props) {
                         ? "create-station"
                         : validationTarget === "deliveryZoneId"
                           ? "create-area"
-                          : `create-${validationTarget}`;
+                            : validationTarget === "deliveryType"
+                              ? "delivery-type"
+                              : validationTarget === "paymentMethod"
+                                ? "payment-type"
+                                : `create-${validationTarget}`;
                   const target = document.getElementById(targetId);
                   target?.scrollIntoView({ behavior: "smooth", block: "center" });
                   if (target instanceof HTMLElement) target.focus();
@@ -749,6 +755,7 @@ export default function PublicOrderPage({ params }: Props) {
                   set("deliveryType", event.target.value as Values["deliveryType"])
                 }
               >
+                <option value="">Select delivery type</option>
                 <option value="NORMAL">Normal delivery</option>
                 <option value="EXPRESS">Express/Charter delivery</option>
               </select>
@@ -828,7 +835,7 @@ export default function PublicOrderPage({ params }: Props) {
               </div>
             </div>
           </Section>
-          <Section title="4. Product">
+          <Section title="4. Product Photo">
             <div className="form-grid">
               <p className="field-hint field-span">
                 Add a clear picture of the package for price review.
@@ -876,14 +883,17 @@ export default function PublicOrderPage({ params }: Props) {
             )}
           </Section>
 
-          <Section title="6. Payment">
+          <Section title="6. Payment Type">
             <select
               className="select"
+              id="payment-type"
+              required
               value={values.paymentMethod}
               onChange={(e) =>
                 set("paymentMethod", e.target.value as Values["paymentMethod"])
               }
             >
+              <option value="">Select payment type</option>
               <option value="ALREADY_PAID">Payment before delivery</option>
               <option value="PAYMENT_ON_DELIVERY">Payment on delivery</option>
             </select>

@@ -86,6 +86,7 @@ export type PublicSenderOrder = {
   packageNotes?: string | null;
   deliveryFee: number | string;
   paymentMethod: PaymentMethod;
+  authorizePayment?: boolean;
   deliveryType?: DeliveryType;
   assignedRiderId?: string | null;
   senderPaymentStatus: SenderPaymentStatus;
@@ -102,6 +103,11 @@ export type PublicSenderOrder = {
   companyBankName?: string | null;
   stationPhoneNumber?: string | null;
   stationPhone?: string | null;
+  station?: {
+    managers?: Array<{
+      user?: { phone?: string | null } | null;
+    }>;
+  } | null;
   images?: OrderImage[];
   paymentReceipts?: PaymentReceipt[];
 };
@@ -311,6 +317,7 @@ export type Order = {
   companyBikeId?: string | null;
   managedBy?: User | null;
   paymentMethod?: PaymentMethod;
+  authorizedPayment?: boolean;
   deliveryType?: DeliveryType;
   paymentStatus?: PaymentStatus;
   deliveryFee?: number | string;
