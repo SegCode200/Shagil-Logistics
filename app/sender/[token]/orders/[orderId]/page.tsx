@@ -252,10 +252,10 @@ export default function SenderOrderDetailsPage({ params }: Props) {
                 <div className="receipt-help" aria-label="How to send your payment receipt">
                   <strong className="receipt-help-title">How to send your receipt</strong>
                   <ol>
-                    <li>Take a screenshot of your payment confirmation or download the receipt.</li>
-                    <li>Go to recent on your device to see the file.</li>
-                    <li>Attach the file below and tap Upload receipt.</li>
-                    <li>If you cannot attach it, forward the receipt on WhatsApp to the station number.</li>
+                    <li>- Take a screenshot of your payment confirmation or download the receipt.</li>
+                    <li>- Go to recent on your device to see the file.</li>
+                    <li>- Attach the file below and tap Upload receipt.</li>
+                    <li>- If you cannot attach it, forward the receipt on WhatsApp to the station number.</li>
                   </ol>
                   {stationManagerPhone ? (
                     <a
