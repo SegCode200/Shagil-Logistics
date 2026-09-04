@@ -2519,8 +2519,13 @@ select {
   gap: 6px;
   margin: 0;
   padding-left: 20px;
-  color: var(--muted);
+  color: #b42318;
+  font-weight: 800;
   line-height: 1.45;
+}
+.receipt-help-title {
+  color: #b42318;
+  font-weight: 800;
 }
 .receipt-help .button {
   margin-top: 2px;

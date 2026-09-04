@@ -907,7 +907,7 @@ export default function PublicOrderPage({ params }: Props) {
               <option value="PAYMENT_ON_DELIVERY">Payment by receiver on delivery </option>
             </select>
           </Section>
-                      {validationTarget === "productImages" && (
+            {validationTarget === "productImages" && (
               <p className="form-error" role="alert">
                 {validationMessage
                   ? validationMessage

@@ -145,6 +145,10 @@ export default function SenderOrderDetailsPage({ params }: Props) {
     order.stationPhone ||
     order.station?.managers?.find((manager) => manager.user?.phone)?.user?.phone ||
     "";
+  const isPaymentOnlyView =
+    order.paymentMethod === "ALREADY_PAID" &&
+    order.status === "PENDING_APPROVAL" &&
+    order.authorizePayment === true;
 
 
   return (
@@ -246,7 +250,7 @@ export default function SenderOrderDetailsPage({ params }: Props) {
               </div>
               {!order.paymentReceipts?.length ? (
                 <div className="receipt-help" aria-label="How to send your payment receipt">
-                  <strong>How to send your receipt</strong>
+                  <strong className="receipt-help-title">How to send your receipt</strong>
                   <ol>
                     <li>Take a screenshot of your payment confirmation or download the receipt.</li>
                     <li>Go to recent on your device to see the file.</li>
@@ -303,6 +307,7 @@ export default function SenderOrderDetailsPage({ params }: Props) {
               </div>
             </div>
           ) : null}
+          {!isPaymentOnlyView && <>
           <div className="sender-action-card sender-code-action">
             <div className="sender-action-heading">
               <Send size={20} />
@@ -433,8 +438,10 @@ export default function SenderOrderDetailsPage({ params }: Props) {
                 </p>
               )}
           </div>
+        </>}
         </section>
 
+        {!isPaymentOnlyView && <>
         <div className="public-facts">
           <div>
             <span>Sender</span>
@@ -511,6 +518,7 @@ export default function SenderOrderDetailsPage({ params }: Props) {
             </div>
           </section>
         )}
+        </>}
       </div>
     </main>
   );
