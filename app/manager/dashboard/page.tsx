@@ -42,6 +42,7 @@ export default function ManagerDashboard() {
   });
   const data = {
     totalOrders: items.length,
+    todayOrders: items.filter((order) => order.createdAt.slice(0, 10) === todayKey).length,
     newOrders: items.filter((order) => ["PENDING_APPROVAL"].includes(order.status)).length,
     alreadyPaid: items.filter((order) => order.paymentMethod === "ALREADY_PAID").length,
     paymentonDelvery: items.filter((order) => order.paymentMethod === "PAYMENT_ON_DELIVERY").length,
@@ -57,7 +58,8 @@ export default function ManagerDashboard() {
   };
   const balanceTotal = Math.max(0, data.expectedTotal - data.actualTotal);
   const metrics = [
-    ["Total orders", data.totalOrders],
+    ["Total order", data.totalOrders],
+    ["Today's order", data.todayOrders],
     ["Pending Approval", data.newOrders],
     ["Paid before Delivery", data.alreadyPaid],
     ["Payment on Delivery", data.paymentonDelvery],
@@ -86,11 +88,13 @@ export default function ManagerDashboard() {
             <Link
               className="summary-card summary-card-link"
               href={
-                label === "Total orders"
+                label === "Total order"
                   ? "/manager/orders"
-                  : label === "Pending Approval"
-                    ? "/manager/orders?status=PENDING_APPROVAL"
-                        : label === "Picked up"
+                  : label === "Today's order"
+                    ? `/manager/orders?fromDate=${todayKey}&toDate=${todayKey}`
+                    : label === "Pending Approval"
+                      ? "/manager/orders?status=PENDING_APPROVAL"
+                      : label === "Picked up"
                         ? "/manager/payment?:paymentMethod=PAYMENT_ON_DELIVERY"
                         : label === ""
                           ? "/manager/orders?status=PICKED_UP"

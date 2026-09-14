@@ -27,11 +27,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     () => true,
     () => false,
   );
-  const hasSession =
-    hydrated &&
-    (Boolean(localStorage.getItem("auth_token")) ||
-      Boolean(localStorage.getItem("rider_access_token")) ||
-      document.cookie.length > 0);
   const query = useQuery({
     queryKey: ["me"],
     queryFn: async () => {
@@ -52,7 +47,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       return api.getCurrentUser();
     },
-    enabled: hydrated && hasSession,
+    enabled: hydrated,
     retry: false,
   });
   useEffect(() => {
@@ -78,7 +73,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     <AuthContext.Provider
       value={{
         user: query.data || null,
-        isLoading: !hydrated || (hasSession && query.isLoading),
+        isLoading: !hydrated || query.isLoading,
         login,
         logout,
       }}
