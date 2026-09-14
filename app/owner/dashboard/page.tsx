@@ -48,7 +48,8 @@ export default function OwnerDashboard() {
   }, 0);
   const balanceTotal = Math.max(0, expectedTotal - actualTotal);
   const counts = {
-    total: todayOrders.length,
+    total: allOrders.length,
+    today: todayOrders.length,
     transactions: filteredOrders.length,
     expectedTotal,
     actualTotal,
@@ -90,7 +91,8 @@ export default function OwnerDashboard() {
         </header>
         <div className="summary-grid summary-grid-primary">
           {[
-            ["Orders today", counts.total, ""],
+            ["Total order", counts.total, ""],
+            ["Today's order", counts.today, ""],
             ["Pending approval", counts.pendingApproval, ""],
             ["Assigned", counts.assigned, "dot-blue"],
             ["Picked up", counts.pickedUp, "dot-blue"],
@@ -100,15 +102,17 @@ export default function OwnerDashboard() {
             <Link
               className="summary-card summary-card-link"
               href={
-                label === "Orders today"
-                  ? `/owner/orders?date=${todayKey}`
-                  : label === "Pending approval"
-                    ? "/owner/orders?status=PENDING_APPROVAL"
-                    : label === "Assigned"
-                      ? "/owner/orders?status=APPROVED"
-                      : label === "Picked up"
-                        ? "/owner/orders?status=PICKED_UP"
-                        : "/owner/orders?status=DELIVERED"
+                label === "Total order"
+                  ? "/owner/orders"
+                  : label === "Today's order"
+                    ? `/owner/orders?date=${todayKey}`
+                    : label === "Pending approval"
+                      ? "/owner/orders?status=PENDING_APPROVAL"
+                      : label === "Assigned"
+                        ? "/owner/orders?status=APPROVED"
+                        : label === "Picked up"
+                          ? "/owner/orders?status=PICKED_UP"
+                          : "/owner/orders?status=DELIVERED"
               }
               key={label as string}
             >
