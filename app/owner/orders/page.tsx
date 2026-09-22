@@ -38,6 +38,7 @@ function OrdersContent() {
   const requestedDate = searchParams.get("date");
   const requestedFromDate = searchParams.get("fromDate");
   const requestedToDate = searchParams.get("toDate");
+  const requestedDeliveryType = searchParams.get("deliveryType");
   const requestedTransaction = searchParams.get("transaction");
   const activeStatus = status === "ALL" && requestedStatus ? requestedStatus : status;
   const activePayment = payment === "ALL" && requestedPayment ? requestedPayment : payment;
@@ -46,6 +47,7 @@ function OrdersContent() {
   const activeDate = date || requestedDate || "";
   const activeFromDate = requestedFromDate || "";
   const activeToDate = requestedToDate || "";
+  const activeDeliveryType = requestedDeliveryType || "ALL";
   const activeTransaction = requestedTransaction || "";
   const riders = useQuery({
     queryKey: ["riders"],
@@ -74,6 +76,7 @@ function OrdersContent() {
             (!activeDate || order.createdAt.slice(0, 10) === activeDate) &&
             (!activeFromDate || order.createdAt.slice(0, 10) >= activeFromDate) &&
             (!activeToDate || order.createdAt.slice(0, 10) <= activeToDate) &&
+            (activeDeliveryType === "ALL" || order.deliveryType === activeDeliveryType) &&
             (activeTransaction === "" ||
               activeTransaction === "expected" ||
               activeTransaction === "transactions" ||
@@ -97,7 +100,7 @@ function OrdersContent() {
             ? left.createdAt.localeCompare(right.createdAt)
             : right.createdAt.localeCompare(left.createdAt),
         ),
-    [query.data, search, activeStatus, activePayment, activePaymentStatus, activeFinalPaymentStatus, rider, activeDate, activeFromDate, activeToDate, activeTransaction, sort],
+    [query.data, search, activeStatus, activePayment, activePaymentStatus, activeFinalPaymentStatus, rider, activeDate, activeFromDate, activeToDate, activeDeliveryType, activeTransaction, sort],
   );
   if (authLoading || !user) return <LoadingState />;
   return (

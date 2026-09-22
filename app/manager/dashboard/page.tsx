@@ -54,7 +54,7 @@ export default function ManagerDashboard() {
     }, 0),
     pickedUp: items.filter((order) => order.status === "PICKED_UP").length,
     delivered: items.filter((order) => order.status === "DELIVERED").length,
-    express: items.filter((order) => order.deliveryType === "EXPRESS").length,
+    express: filteredItems.filter((order) => order.deliveryType === "EXPRESS").length,
   };
   const balanceTotal = Math.max(0, data.expectedTotal - data.actualTotal);
   const metrics = [
@@ -100,7 +100,9 @@ export default function ManagerDashboard() {
                           ? "/manager/orders?status=PICKED_UP"
                           : label === "Delivered"
                             ? "/manager/orders?status=DELIVERED"
-                            : "/manager/orders"
+                            : label === "Express delivery"
+                              ? "/manager/orders?deliveryType=EXPRESS"
+                              : "/manager/orders"
               }
               key={label}
             >

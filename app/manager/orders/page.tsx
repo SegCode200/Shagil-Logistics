@@ -27,6 +27,7 @@ function ManagerOrdersContent() {
   const transaction = params.get("transaction") || "";
   const payment = params.get("payment") || "";
   const finalPaymentStatus = params.get("finalPaymentStatus") || "";
+  const deliveryType = params.get("deliveryType") || "";
   const orders = useQuery({
     queryKey: ["managerOrders"],
     queryFn: api.getManagerOrders,
@@ -49,13 +50,14 @@ function ManagerOrdersContent() {
     const matchesPayment = !payment || order.paymentMethod === payment;
     const matchesFinalPaymentStatus =
       !finalPaymentStatus || order.finalPaymentStatus === finalPaymentStatus;
+    const matchesDeliveryType = !deliveryType || order.deliveryType === deliveryType;
     const isPaid = order.finalPaymentStatus === "PAID" || order.senderPaymentStatus === "PAID" || order.paymentStatus === "PAID";
     const matchesTransaction =
       !transaction || transaction === "expected" || transaction === "transactions" ||
       (transaction === "actual" && isPaid) ||
       (transaction === "balance" && !isPaid);
     return matchesSearch && matchesStatus && matchesAssignment && matchesRider && matchesDate &&
-      matchesPayment && matchesFinalPaymentStatus && matchesTransaction;
+      matchesPayment && matchesFinalPaymentStatus && matchesDeliveryType && matchesTransaction;
   });
   return (
     <AppShell role="STATION_MANAGER">

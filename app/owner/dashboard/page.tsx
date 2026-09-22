@@ -60,7 +60,7 @@ export default function OwnerDashboard() {
     assigned: allOrders.filter((o) => ["APPROVED"].includes(o.status)).length,
     pickedUp: allOrders.filter((o) => o.status === "PICKED_UP").length,
     delivered: allOrders.filter((o) => o.status === "DELIVERED").length,
-    express: allOrders.filter((o) => o.deliveryType === "EXPRESS").length,
+    express: filteredOrders.filter((o) => o.deliveryType === "EXPRESS").length,
     podPendingReconciliation: filteredOrders.filter(
       (o) => o.paymentMethod === "PAYMENT_ON_DELIVERY" && o.finalPaymentStatus !== "PAID",
     ).length,
@@ -112,7 +112,9 @@ export default function OwnerDashboard() {
                         ? "/owner/orders?status=APPROVED"
                         : label === "Picked up"
                           ? "/owner/orders?status=PICKED_UP"
-                          : "/owner/orders?status=DELIVERED"
+                          : label === "Delivered"
+                            ? "/owner/orders?status=DELIVERED"
+                            : "/owner/orders?deliveryType=EXPRESS"
               }
               key={label as string}
             >
