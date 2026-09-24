@@ -1,7 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { ArrowRight, Camera, CheckCircle2, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Camera, CheckCircle2, X } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
@@ -80,6 +81,7 @@ function compressImage(file: File): Promise<File> {
 }
 
 export default function CreateOrderPage() {
+  const router = useRouter();
   const zones = useQuery({
     queryKey: ["delivery-zones"],
     queryFn: api.getDeliveryZones,
@@ -328,6 +330,14 @@ export default function CreateOrderPage() {
       )}
       <div className="public-card">
         <header className="public-header">
+          <button
+            type="button"
+            className="back-link"
+            onClick={() => router.back()}
+            aria-label="Go back"
+          >
+            <ArrowLeft size={16} /> Back
+          </button>
           <p className="eyebrow">Shagil Delivery Service</p>
           <h1>Create Your Delivery</h1>
           <p className="subtext">

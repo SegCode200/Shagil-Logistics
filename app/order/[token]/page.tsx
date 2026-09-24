@@ -350,7 +350,8 @@
 "use client";
 
 import Image from "next/image";
-import { ArrowRight, Camera, CheckCircle2, X } from "lucide-react";
+import Link from "next/link";
+import { ArrowLeft, ArrowRight, Camera, CheckCircle2, X } from "lucide-react";
 import { use, useEffect, useRef, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
@@ -682,6 +683,9 @@ export default function PublicOrderPage({ params }: Props) {
       )}
       <div className="public-card">
         <header className="public-header">
+          <Link className="back-link" href={`/sender/${token}`}>
+            <ArrowLeft size={16} /> Back to deliveries
+          </Link>
           <p className="eyebrow">Shagil Delivery Service</p>
           <h1>Create Your Delivery</h1>
           <p className="subtext">
