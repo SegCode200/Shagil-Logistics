@@ -169,7 +169,6 @@ export default function ManagerOrderDetailsPage({ params }: Props) {
     const bikeNumber = rider.companyBikes?.bikeId || rider.bikeId;
     return bikeNumber ? `${rider.name || "Rider"} - Bike ${bikeNumber}` : rider.name || "Rider";
   };
-  console.log("riders", riders.data);
   const assignableRiders = (riders.data || []).filter(
     (rider) => Boolean(rider.companyBikes?.bikeId || rider.bikeId),
   );

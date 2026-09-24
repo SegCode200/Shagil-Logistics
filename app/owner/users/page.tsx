@@ -1,11 +1,13 @@
 "use client";
 
-import { Eye, EyeOff, Plus, X } from "lucide-react";
+import { Edit3, Eye, EyeOff, Plus, X } from "lucide-react";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { StationManager } from "@/lib/types";
 import { AppShell } from "@/components/layout/app-shell";
 import { useRoleRedirect } from "@/components/auth/auth-provider";
 import { api } from "@/lib/api";
+import { normalizeNigerianPhone } from "@/lib/phone";
 import {
   EmptyState,
   ErrorState,
@@ -26,6 +28,8 @@ export default function UsersPage() {
     enabled: Boolean(user),
   });
   const [open, setOpen] = useState(false);
+  const [editingManager, setEditingManager] = useState<StationManager | null>(null);
+  const [managerPhone, setManagerPhone] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [draft, setDraft] = useState({
     name: "",
@@ -43,7 +47,18 @@ export default function UsersPage() {
       queryClient.invalidateQueries({ queryKey: ["stations"] });
     },
   });
-  console.log("managers")
+  const update = useMutation({
+    mutationFn: () =>
+      api.updateManager(editingManager?.id || "", {
+        phone: normalizeNigerianPhone(managerPhone),
+      }),
+    onSuccess: () => {
+      setEditingManager(null);
+      setManagerPhone("");
+      queryClient.invalidateQueries({ queryKey: ["managers"] });
+    },
+  });
+
   if (isLoading || !user) return <LoadingState />;
   const stationForManager = (managerId: string) =>
     stations.data?.find((station) =>
@@ -206,6 +221,68 @@ export default function UsersPage() {
             </section>
           </div>
         )}
+        {editingManager && (
+          <div
+            className="import-modal-backdrop"
+            role="presentation"
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget) setEditingManager(null);
+            }}
+          >
+            <section
+              className="import-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="edit-manager-title"
+            >
+              <button
+                type="button"
+                className="icon-button"
+                aria-label="Close edit manager dialog"
+                onClick={() => setEditingManager(null)}
+              >
+                <X size={19} />
+              </button>
+              <h2 id="edit-manager-title">Edit Station Manager phone</h2>
+              <form
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  update.mutate();
+                }}
+              >
+                <div className="field">
+                  <label htmlFor="edit-manager-phone">Phone number</label>
+                  <input
+                    className="input"
+                    id="edit-manager-phone"
+                    type="tel"
+                    required
+                    minLength={7}
+                    maxLength={30}
+                    value={managerPhone}
+                    onChange={(event) => setManagerPhone(event.target.value)}
+                    onBlur={() => setManagerPhone(normalizeNigerianPhone(managerPhone))}
+                  />
+                </div>
+                {update.isError && (
+                  <p className="form-error">
+                    {update.error instanceof Error && update.error.message !== "REQUEST_FAILED"
+                      ? update.error.message
+                      : "Station manager phone could not be updated. Please try again."}
+                  </p>
+                )}
+                <div className="form-actions">
+                  <button type="button" className="button button-secondary" onClick={() => setEditingManager(null)}>
+                    Cancel
+                  </button>
+                  <button className="button button-primary" disabled={update.isPending}>
+                    {update.isPending ? "Saving..." : "Save phone number"}
+                  </button>
+                </div>
+              </form>
+            </section>
+          </div>
+        )}
         <section className="panel">
           <div className="panel-heading">
             <h2>Station Managers</h2>
@@ -230,6 +307,7 @@ export default function UsersPage() {
                       <th>Station</th>
                       <th>Status</th>
                       <th>Active orders</th>
+                      <th />
                     </tr>
                   </thead>
                   <tbody>
@@ -252,6 +330,19 @@ export default function UsersPage() {
                         </td>
                         <td><span className={`status status-${managerStatus(manager.active, manager.status).toLowerCase()}`}>{managerStatus(manager.active, manager.status)}</span></td>
                         <td>{manager.currentOrders ?? 0}</td>
+                        <td>
+                          <button
+                            type="button"
+                            className="button button-secondary"
+                            onClick={() => {
+                              setEditingManager(manager);
+                              setManagerPhone(manager.phone || "");
+                              setOpen(false);
+                            }}
+                          >
+                            <Edit3 size={15} /> Edit phone
+                          </button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -278,6 +369,18 @@ export default function UsersPage() {
                         </dd>
                       </div>
                       <div><dt>Active orders</dt><dd>{manager.currentOrders ?? 0}</dd></div>
+                      <div>
+                        <button
+                          type="button"
+                          className="button button-secondary"
+                          onClick={() => {
+                            setEditingManager(manager);
+                            setManagerPhone(manager.phone || "");
+                          }}
+                        >
+                          <Edit3 size={15} /> Edit phone
+                        </button>
+                      </div>
                     </dl>
                   </article>
                 ))}

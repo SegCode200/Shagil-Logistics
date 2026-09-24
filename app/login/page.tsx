@@ -25,9 +25,7 @@ export default function LoginPage() {
     setBusy(true);
     setError("");
     try {
-      console.log("Attempting login with identifier:", identifier);
       const user = await login({ phone: identifier, password });
-      console.log("Login successful, user:", user);
       router.replace(
         user.role === "OWNER"
           ? "/owner/dashboard"

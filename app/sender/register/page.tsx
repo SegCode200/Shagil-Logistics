@@ -9,7 +9,6 @@ import { normalizeNigerianPhone } from "@/lib/phone";
 export default function SenderRegisterPage() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [whatsappPhone, setWhatsappPhone] = useState("");
   const [additionalPhones, setAdditionalPhones] = useState([""]);
   const [error, setError] = useState("");
   const [created, setCreated] = useState<{ accessToken?: string } | null>(null);
@@ -18,11 +17,11 @@ export default function SenderRegisterPage() {
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
-    const normalizedPhones = [
-      phone,
-      ...(whatsappPhone ? [whatsappPhone] : []),
-      ...additionalPhones.filter(Boolean),
-    ].map(normalizeNigerianPhone);
+    const normalizedPhone = normalizeNigerianPhone(phone);
+    const normalizedAdditionalPhones = additionalPhones
+      .filter(Boolean)
+      .map(normalizeNigerianPhone);
+    const normalizedPhones = [normalizedPhone, ...normalizedAdditionalPhones];
     if (new Set(normalizedPhones).size !== normalizedPhones.length) {
       setError("Phone numbers must be unique. Please remove any duplicate numbers.");
       return;
@@ -31,9 +30,8 @@ export default function SenderRegisterPage() {
     try {
       const sender = await api.createSenderPublic({
         name: name.trim(),
-        phone: normalizedPhones[0],
-        whatsappPhone: whatsappPhone ? normalizeNigerianPhone(whatsappPhone) : undefined,
-        additionalPhones: additionalPhones.filter(Boolean).map(normalizeNigerianPhone),
+        phone: normalizedPhone,
+        additionalPhones: normalizedAdditionalPhones,
       });
       setCreated(sender);
     } catch (registrationError) {
@@ -78,18 +76,15 @@ export default function SenderRegisterPage() {
             <input className="input" id="sender-register-name" required value={name} onChange={(event) => setName(event.target.value)} />
           </div>
           <div className="field">
-            <label htmlFor="sender-register-phone">Main phone number</label>
-            <input className="input" id="sender-register-phone" type="tel" required value={phone} onChange={(event) => setPhone(event.target.value)} />
-          </div>
-          <div className="field">
-            <label htmlFor="sender-register-whatsapp">WhatsApp number</label>
-            <input className="input" id="sender-register-whatsapp" type="tel" placeholder="Defaults to main phone" value={whatsappPhone} onChange={(event) => setWhatsappPhone(event.target.value)} />
+            <label htmlFor="sender-register-phone">WhatsApp / main phone number</label>
+            <input className="input" id="sender-register-phone" type="tel" required value={phone} onChange={(event) => setPhone(event.target.value)} onBlur={() => setPhone(normalizeNigerianPhone(phone))} />
+            <small className="field-help">This number will be used as your main and WhatsApp number.</small>
           </div>
           <div className="field">
             <label>Additional phone numbers</label>
             {additionalPhones.map((additionalPhone, index) => (
               <div className="input-icon" key={index}>
-                <input className="input" type="tel" value={additionalPhone} onChange={(event) => setAdditionalPhones((current) => current.map((item, itemIndex) => itemIndex === index ? event.target.value : item))} />
+                <input className="input" type="tel" value={additionalPhone} onChange={(event) => setAdditionalPhones((current) => current.map((item, itemIndex) => itemIndex === index ? event.target.value : item))} onBlur={() => setAdditionalPhones((current) => current.map((item, itemIndex) => itemIndex === index ? normalizeNigerianPhone(item) : item))} />
                 {additionalPhones.length > 1 && <button type="button" className="icon-button" aria-label="Remove phone number" onClick={() => setAdditionalPhones((current) => current.filter((_, itemIndex) => itemIndex !== index))}><X size={16} /></button>}
               </div>
             ))}

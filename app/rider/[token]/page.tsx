@@ -23,13 +23,10 @@ export default function RiderAccessPage({
       .accessRider(token)
       .then(async (result) => {
           if (!active) return;
-          
-          console.log("Rider access result:", result);
         const sessionToken = result.token || result.accessToken;
           localStorage.setItem("rider_access_token", token);
         if (sessionToken) localStorage.setItem("auth_token", sessionToken);
         if (result.user) queryClient.setQueryData(["me"], result.user);
-        // console.log("Rider access successful, redirecting to dashboard");
         else if (!sessionToken)
           await api
             .getCurrentUser()

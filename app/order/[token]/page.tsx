@@ -463,7 +463,6 @@ export default function PublicOrderPage({ params }: Props) {
   });
   useEffect(() => {
     const sender = senderProfile.data;
-    console.log("senderProfile.data", senderProfile);
     if (!sender) return;
     const prefill = window.setTimeout(() => {
       setValues((current) => ({

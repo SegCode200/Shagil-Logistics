@@ -227,7 +227,6 @@ export default function OrderDetailsPage({ params }: Props) {
     const bikeNumber = rider.companyBikeId || rider.bikeId;
     return bikeNumber ? `${rider.name || "Rider"} - Bike ${bikeNumber}` : rider.name || "Rider";
   };
-  console.log("riders", riders.data);
   const assignableRiders = (riders.data || []).filter(
     (rider) => Boolean(rider.bike?.bikeId || rider.bikeId),
   );

@@ -52,7 +52,6 @@ export default function CustomerDeliveryPage({
       </main>
     );
     const order = query.data;
-    console.log("query", order);
   const current = timeline.indexOf(order.status);
   const amount = order.totalAmountToCollect;
   const senderPhone = order.senderPhoneNumber || order.senderPhone;

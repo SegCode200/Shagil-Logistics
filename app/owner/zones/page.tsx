@@ -73,7 +73,6 @@ export default function ZonesPage() {
   const upload = useMutation({
     mutationFn: () => api.uploadDeliveryZoneExcel(file as File),
     onSuccess: (data) => {
-        console.log("Upload result:", data);
       setFile(null);
       setResult(data);
       queryClient.invalidateQueries({ queryKey: ["delivery-zones"] });

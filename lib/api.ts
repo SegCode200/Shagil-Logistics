@@ -109,7 +109,6 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   if (!response.ok) {
     if (response.status === 401) throw new Error("SESSION_EXPIRED");
     const body = await response.json().catch(() => null);
-    console.error("API request failed:", { body });
     throw new Error(body?.message || body?.error || "REQUEST_FAILED");
   }
   if (response.status === 204) return undefined as T;
@@ -439,6 +438,14 @@ export const api = {
       method: "POST",
       body: JSON.stringify(normalizePhoneFields(payload)),
     }),
+  updateManager: (managerId: string, payload: { phone: string }) =>
+    request<StationManager>(
+      `/stations/managers/${encodeURIComponent(managerId)}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify(normalizePhoneFields(payload)),
+      },
+    ),
   assignManagerToStation: (stationId: string, userId: string) =>
     request<StationManager>(
       `/stations/${encodeURIComponent(stationId)}/managers`,

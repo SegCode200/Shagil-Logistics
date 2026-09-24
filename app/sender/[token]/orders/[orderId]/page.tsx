@@ -120,7 +120,6 @@ export default function SenderOrderDetailsPage({ params }: Props) {
     );
 
   const order = orders.data?.find((item) => item.orderId === orderId);
-  console.log("order", order);
   if (!order)
     return (
       <main className="public-page">
