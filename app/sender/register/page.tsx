@@ -31,6 +31,7 @@ export default function SenderRegisterPage() {
       const sender = await api.createSenderPublic({
         name: name.trim(),
         phone: normalizedPhone,
+        whatsappPhone: normalizedPhone,
         additionalPhones: normalizedAdditionalPhones,
       });
       setCreated(sender);
