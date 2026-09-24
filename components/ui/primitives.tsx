@@ -1,6 +1,7 @@
 "use client";
 
 import { AlertCircle, CheckCircle2, PackageOpen } from "lucide-react";
+import { useState } from "react";
 import type { OrderStatus } from "@/lib/types";
 
 export function LoadingState({ label = "Loading" }: { label?: string }) {
@@ -108,5 +109,78 @@ export function Button({
     <button type={type} className={`button ${variantClass} ${className}`.trim()} {...props}>
       {children}
     </button>
+  );
+}
+
+export function SearchableSelect({
+  id,
+  value,
+  options,
+  placeholder,
+  disabled = false,
+  onChange,
+}: {
+  id: string;
+  value: string;
+  options: Array<{ value: string; label: string }>;
+  placeholder: string;
+  disabled?: boolean;
+  onChange: (value: string) => void;
+}) {
+  const selectedLabel = options.find((option) => option.value === value)?.label || "";
+  const [query, setQuery] = useState(selectedLabel);
+  const [open, setOpen] = useState(false);
+
+  const filteredOptions = options.filter((option) =>
+    option.label.toLowerCase().includes(query.trim().toLowerCase()),
+  );
+
+  return (
+    <div className="searchable-select">
+      <input
+        className="input"
+        id={id}
+        role="combobox"
+        aria-expanded={open}
+        aria-controls={`${id}-options`}
+        value={query}
+        placeholder={placeholder}
+        disabled={disabled}
+        onFocus={() => setOpen(true)}
+        onChange={(event) => {
+          setQuery(event.target.value);
+          onChange("");
+          setOpen(true);
+        }}
+        onBlur={() => window.setTimeout(() => setOpen(false), 150)}
+        autoComplete="off"
+        required
+      />
+      {open && !disabled && (
+        <div className="searchable-select-options" id={`${id}-options`} role="listbox">
+          {filteredOptions.length > 0 ? (
+            filteredOptions.map((option) => (
+              <button
+                type="button"
+                className="searchable-select-option"
+                role="option"
+                aria-selected={option.value === value}
+                key={option.value}
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => {
+                  setQuery(option.label);
+                  onChange(option.value);
+                  setOpen(false);
+                }}
+              >
+                {option.label}
+              </button>
+            ))
+          ) : (
+            <span className="searchable-select-empty">No matching delivery area</span>
+          )}
+        </div>
+      )}
+    </div>
   );
 }

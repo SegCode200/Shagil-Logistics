@@ -357,6 +357,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { normalizeNigerianPhone } from "@/lib/phone";
 import { ErrorState, LoadingState } from "@/components/ui/primitives";
+import { SearchableSelect } from "@/components/ui/primitives";
 
 type Values = {
   senderName: string;
@@ -802,23 +803,16 @@ export default function PublicOrderPage({ params }: Props) {
               </div>
               <div className="field">
                 <label htmlFor="create-area">Delivery Area</label>
-                <select
-                  className="select"
+                <SearchableSelect
                   id="create-area"
-                  required
                   value={values.deliveryZoneId}
-                  onChange={(e) => set("deliveryZoneId", e.target.value)}
+                  onChange={(value) => set("deliveryZoneId", value)}
                   disabled={!values.stationId}
-                >
-                  <option value="">{values.stationId ? "Select an area" : "Select the nearest station first"}</option>
-                  {(zones.data || [])
+                  placeholder={values.stationId ? "Search delivery area" : "Select the nearest station first"}
+                  options={(zones.data || [])
                     .filter((zone) => zone.active)
-                    .map((zone) => (
-                      <option key={zone.id} value={zone.id}>
-                        {zone.name}
-                      </option>
-                    ))}
-                </select>
+                    .map((zone) => ({ value: zone.id, label: zone.name }))}
+                />
                 {!values.stationId && <small className="field-help">Select the nearest station first.</small>}
               </div>
               {/* Delivery Area fee when selected */}
