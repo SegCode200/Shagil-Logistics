@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import {
   LockKeyhole,
   ArrowRight,
@@ -110,6 +111,9 @@ export default function LoginPage() {
               </>
             )}
           </button>
+          <p className="subtext" style={{ textAlign: "center" }}>
+            New sender? <Link href="/sender/register" className="text-link">Register here</Link>
+          </p>
         </form>
       </section>
     </main>

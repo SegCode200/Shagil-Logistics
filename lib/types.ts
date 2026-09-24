@@ -45,6 +45,8 @@ export type Sender = {
   id: string;
   name: string;
   phone: string;
+  whatsappPhone?: string | null;
+  additionalPhones?: string[];
   accessToken?: string;
   active: boolean;
   createdAt?: string;

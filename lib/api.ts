@@ -602,11 +602,36 @@ export const api = {
     }),
   getSenders: async () =>
     listFromResponse<Sender>(await request<unknown>("/senders/")),
-  createSenderAccess: (payload: { name: string; phone: string }) =>
-  request<Sender>('/senders/', {
-    method: "POST",
-    body: JSON.stringify(normalizePhoneFields(payload)),
-  }),
+  createSenderAccess: (payload: {
+    name: string;
+    phone: string;
+    whatsappPhone?: string;
+    additionalPhones?: string[];
+  }) =>
+    request<Sender>("/senders/", {
+      method: "POST",
+      body: JSON.stringify({
+        ...normalizePhoneFields(payload),
+        additionalPhones: payload.additionalPhones?.map((phone) =>
+          normalizeNigerianPhone(phone),
+        ),
+      }),
+    }),
+  createSenderPublic: (payload: {
+    name: string;
+    phone: string;
+    whatsappPhone?: string;
+    additionalPhones?: string[];
+  }) =>
+    request<Sender>("/senders/public", {
+      method: "POST",
+      body: JSON.stringify({
+        ...normalizePhoneFields(payload),
+        additionalPhones: payload.additionalPhones?.map((phone) =>
+          normalizeNigerianPhone(phone),
+        ),
+      }),
+    }),
   resendSenderAccess: (senderId: string) =>
     request<{ notificationStatus?: string }>(
       `/senders/${encodeURIComponent(senderId)}/resend-access-token`,

@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, Search, Send } from "lucide-react";
+import { Plus, Search, Send, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/app-shell";
@@ -18,7 +18,7 @@ export default function ManagerLinkCustomerPage() {
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [search, setSearch] = useState("");
-  const [draft, setDraft] = useState({ name: "", phone: "" });
+  const [draft, setDraft] = useState({ name: "", phone: "", whatsappPhone: "", additionalPhones: [""] });
   const [notice, setNotice] = useState("");
   const senders = useQuery({
     queryKey: ["senders"],
@@ -30,9 +30,11 @@ export default function ManagerLinkCustomerPage() {
       api.createSenderAccess({
         name: draft.name,
         phone: normalizeNigerianPhone(draft.phone),
+        whatsappPhone: draft.whatsappPhone ? normalizeNigerianPhone(draft.whatsappPhone) : undefined,
+        additionalPhones: draft.additionalPhones.filter(Boolean).map(normalizeNigerianPhone),
       }),
     onSuccess: () => {
-      setDraft({ name: "", phone: "" });
+      setDraft({ name: "", phone: "", whatsappPhone: "", additionalPhones: [""] });
       setShowForm(false);
       setNotice("Customer access link created successfully.");
       queryClient.invalidateQueries({ queryKey: ["senders"] });
@@ -45,7 +47,7 @@ export default function ManagerLinkCustomerPage() {
   const filteredSenders = useMemo(() => {
     const term = search.trim().toLowerCase();
     return (senders.data || []).filter((sender) =>
-      `${sender.name} ${sender.phone}`.toLowerCase().includes(term),
+      `${sender.name} ${sender.phone} ${sender.whatsappPhone || ""} ${(sender.additionalPhones || []).join(" ")}`.toLowerCase().includes(term),
     );
   }, [senders.data, search]);
 
@@ -93,6 +95,8 @@ export default function ManagerLinkCustomerPage() {
                     }
                   />
                 </div>
+                <div className="field"><label htmlFor="manager-customer-whatsapp">WhatsApp number</label><input className="input" id="manager-customer-whatsapp" type="tel" placeholder="Defaults to phone number" value={draft.whatsappPhone} onChange={(event) => setDraft({ ...draft, whatsappPhone: event.target.value })} /></div>
+                <div className="field field-span"><label>Additional phone numbers</label>{draft.additionalPhones.map((phone, index) => <div className="input-icon" key={index}><input className="input" type="tel" value={phone} onChange={(event) => setDraft({ ...draft, additionalPhones: draft.additionalPhones.map((item, itemIndex) => itemIndex === index ? event.target.value : item) })} />{draft.additionalPhones.length > 1 && <button type="button" className="icon-button" aria-label="Remove phone number" onClick={() => setDraft({ ...draft, additionalPhones: draft.additionalPhones.filter((_, itemIndex) => itemIndex !== index) })}><X size={16} /></button>}</div>)}{draft.additionalPhones.length < 10 && <button type="button" className="button button-secondary" onClick={() => setDraft({ ...draft, additionalPhones: [...draft.additionalPhones, ""] })}>Add another number</button>}</div>
                 <div className="field">
                   <label htmlFor="manager-customer-phone">Phone number</label>
                   <input
@@ -174,6 +178,7 @@ export default function ManagerLinkCustomerPage() {
                   <tr>
                     <th>Name</th>
                     <th>Phone</th>
+                    <th>WhatsApp</th>
                     <th>Status</th>
                     <th>Access</th>
                   </tr>
@@ -183,6 +188,7 @@ export default function ManagerLinkCustomerPage() {
                     <tr key={sender.id}>
                       <td className="order-ref">{sender.name}</td>
                       <td>{sender.phone}</td>
+                      <td>{sender.whatsappPhone || sender.phone}</td>
                       <td>
                         <span
                           className={
