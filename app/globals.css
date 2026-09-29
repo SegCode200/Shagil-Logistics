@@ -958,6 +958,174 @@ select {
   font-size: 12px;
   font-weight: 800;
 }
+.rider-picker {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f9fbfc;
+}
+.rider-picker-heading,
+.rider-picker-heading > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.rider-picker-heading strong {
+  color: var(--navy);
+  font-size: 13px;
+}
+.rider-picker-heading > div > span,
+.rider-current-assignment {
+  color: var(--muted);
+  font-size: 11px;
+}
+.rider-current-assignment {
+  max-width: 48%;
+  overflow: hidden;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rider-picker-search {
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  border: 1px solid #d8dde5;
+  border-radius: 6px;
+  color: var(--muted);
+  background: white;
+}
+.rider-picker-search:focus-within {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px #fce5df;
+}
+.rider-picker-search input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  color: var(--foreground);
+  background: transparent;
+  font-size: 12px;
+}
+.rider-picker-list {
+  display: grid;
+  gap: 6px;
+  max-height: 310px;
+  overflow-y: auto;
+}
+.rider-choice {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto 20px;
+  align-items: center;
+  gap: 9px;
+  padding: 9px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  color: var(--foreground);
+  background: white;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 140ms ease, background 140ms ease, box-shadow 140ms ease;
+}
+.rider-choice:hover:not(:disabled) {
+  border-color: #a8bcc8;
+  box-shadow: 0 2px 7px rgba(24, 59, 86, 0.08);
+}
+.rider-choice.is-selected {
+  border-color: var(--brand);
+  background: #fff8f5;
+  box-shadow: 0 0 0 1px var(--brand);
+}
+.rider-choice:focus-visible {
+  outline: 2px solid var(--navy);
+  outline-offset: 2px;
+}
+.rider-choice:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+.rider-choice-avatar {
+  width: 34px;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #873b28;
+  background: #f4c5b7;
+  font-size: 11px;
+  font-weight: 800;
+}
+.rider-choice-main,
+.rider-choice-details {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+.rider-choice-name {
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rider-choice-details {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 3px 8px;
+  color: var(--muted);
+  font-size: 10px;
+}
+.rider-choice-details > span,
+.rider-choice-load {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.rider-choice-details > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rider-choice-details svg,
+.rider-choice-load svg {
+  flex: 0 0 auto;
+}
+.rider-choice-load {
+  color: var(--navy);
+  font-size: 11px;
+}
+.rider-choice-load small {
+  color: var(--muted);
+  font-size: 9px;
+}
+.rider-choice-check {
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  color: var(--brand-dark);
+}
+.rider-picker-empty,
+.rider-picker-selection {
+  margin: 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+.rider-picker-empty {
+  padding: 12px 4px;
+  text-align: center;
+}
+.rider-picker-selection strong {
+  color: var(--navy);
+}
 .access-token-actions .success-text,
 .access-token-actions .form-error {
   margin: -2px 0 3px;
@@ -3564,6 +3732,25 @@ select {
 @media (max-width: 420px) {
   .shop-product-grid-wide {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .rider-choice {
+    grid-template-columns: 30px minmax(0, 1fr) 20px;
+    gap: 7px;
+    padding: 8px;
+  }
+  .rider-choice-avatar {
+    width: 30px;
+  }
+  .rider-choice-details {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .rider-choice-load {
+    grid-column: 2;
+    grid-row: 2;
+  }
+  .rider-choice-check {
+    grid-column: 3;
+    grid-row: 1;
   }
 }
 .shop-product-card {

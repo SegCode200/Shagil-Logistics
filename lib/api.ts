@@ -26,7 +26,9 @@ import type {
   ShopProduct,
   ShopOrder,
 } from "@/lib/types";
-import { normalizeNigerianPhone } from "@/lib/phone";
+import {
+  requireCompleteNigerianPhone,
+} from "@/lib/phone";
 
 const API_URL = (
   process.env.NEXT_PUBLIC_API_URL as string
@@ -36,11 +38,21 @@ function normalizePhoneFields(payload: Record<string, unknown>) {
   return Object.fromEntries(
     Object.entries(payload).map(([key, value]) => [
       key,
-      typeof value === "string" && key.toLowerCase().includes("phone")
-        ? normalizeNigerianPhone(value)
+      typeof value === "string" && key.toLowerCase().includes("phone") && value.trim()
+        ? value.includes("@")
+          ? value.trim()
+          : requireCompleteNigerianPhone(value, key)
         : value,
     ]),
   );
+}
+
+function normalizePhoneList(phones: string[] = []) {
+  return phones
+    .filter((phone) => phone.trim())
+    .map((phone, index) =>
+      requireCompleteNigerianPhone(phone, `Additional phone number ${index + 1}`),
+    );
 }
 
 function unwrap<T>(value: unknown): T {
@@ -144,7 +156,12 @@ export const api = {
   login: (payload: { phone: string; password: string }) =>
     request<LoginResponse>("/auth/login", {
       method: "POST",
-      body: JSON.stringify(payload),
+      body: JSON.stringify({
+        ...payload,
+        phone: payload.phone.includes("@")
+          ? payload.phone.trim()
+          : requireCompleteNigerianPhone(payload.phone),
+      }),
     }),
 
   getCurrentUser: () => request<User>("/auth/me"),
@@ -271,7 +288,7 @@ export const api = {
   }) =>
     request<ShopOrder>("/shop/orders", {
       method: "POST",
-      body: JSON.stringify(payload),
+      body: JSON.stringify(normalizePhoneFields(payload)),
     }),
   getShopCategories: async () =>
     listFromResponse<ShopCategory>(await request<unknown>("/shop/admin/categories")),
@@ -619,9 +636,7 @@ export const api = {
       method: "POST",
       body: JSON.stringify({
         ...normalizePhoneFields(payload),
-        additionalPhones: payload.additionalPhones?.map((phone) =>
-          normalizeNigerianPhone(phone),
-        ),
+        additionalPhones: normalizePhoneList(payload.additionalPhones),
       }),
     }),
   createSenderPublic: (payload: {
@@ -634,9 +649,7 @@ export const api = {
       method: "POST",
       body: JSON.stringify({
         ...normalizePhoneFields(payload),
-        additionalPhones: payload.additionalPhones?.map((phone) =>
-          normalizeNigerianPhone(phone),
-        ),
+        additionalPhones: normalizePhoneList(payload.additionalPhones),
       }),
     }),
   resendSenderAccess: (senderId: string) =>

@@ -130,9 +130,10 @@ export default function RiderDashboard() {
                     <strong>Payment</strong>
                     <span>
                       <Wallet size={13} />{" "}
+                      {order.paymentMethod === "PAYMENT_ON_DELIVERY" ? "POD" : "PBD"}
                       {order.paymentMethod === "PAYMENT_ON_DELIVERY"
-                        ? `Collect ₦${Number(order.deliveryFee ?? 0).toLocaleString()}`
-                        : "Already paid"}
+                        ? ` · Collect ₦${Number(order.deliveryFee ?? 0).toLocaleString()}`
+                        : " · Already paid"}
                     </span>
                   </span>
                   {order.riderCommission != null && order.riderCommission !== "" && (
@@ -144,15 +145,14 @@ export default function RiderDashboard() {
                     </span>
                   )}
                 </div>
-                {order.status !== "DELIVERED" &&
-                  order.status !== "CANCELLED" && (
-                    <Link
-                      href={`/rider/deliveries/${order.orderId || order.id}/confirm`}
-                      className="button button-primary button-full"
-                    >
-                      See delivery <ArrowRight size={17} />
-                    </Link>
-                  )}
+                {order.status !== "CANCELLED" && (
+                  <Link
+                    href={`/rider/deliveries/${order.orderId || order.id}/confirm`}
+                    className="button button-primary button-full"
+                  >
+                    {order.status === "DELIVERED" ? "Upload receipt" : "See delivery"} <ArrowRight size={17} />
+                  </Link>
+                )}
               </article>
             ))}
           </div>

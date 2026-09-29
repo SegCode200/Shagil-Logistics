@@ -6,6 +6,7 @@ import { useState, type FormEvent } from "react";
 import { useCart } from "@/components/shop/cart-context";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { isNigerianPhone } from "@/lib/phone";
 
 const formatMoney = (value: number) =>
   new Intl.NumberFormat("en-NG", {
@@ -28,6 +29,7 @@ export default function ShopCheckoutPage() {
     deliveryZoneId: "",
   });
   const [confirm, setConfirm] = useState(false);
+  const [phoneError, setPhoneError] = useState("");
   const totalWeightKg = items.reduce((sum, item) => sum + item.weightKg * item.quantity, 0);
   const shopBaseDeliveryFee = Number(settings.data?.shopBaseDeliveryFee ?? 0);
   const shopIncludedWeightKg = Number(settings.data?.shopIncludedWeightKg ?? 0);
@@ -66,6 +68,11 @@ export default function ShopCheckoutPage() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!isNigerianPhone(customer.customerPhone)) {
+      setPhoneError("Enter a complete Nigerian mobile number.");
+      return;
+    }
+    setPhoneError("");
     if (!confirm) return;
     createOrder.mutate();
   }
@@ -88,7 +95,8 @@ export default function ShopCheckoutPage() {
             </label>
             <label>
               Customer phone <span className="required-mark">Required</span>
-              <input id="customer-phone" name="customerPhone" type="tel" inputMode="tel" required value={customer.customerPhone} onChange={(event) => setCustomer({ ...customer, customerPhone: event.target.value })} />
+              <input id="customer-phone" name="customerPhone" type="tel" inputMode="tel" required value={customer.customerPhone} onChange={(event) => { setCustomer({ ...customer, customerPhone: event.target.value }); setPhoneError(""); }} />
+              {phoneError && <small className="form-error">{phoneError}</small>}
             </label>
             <label className="full-width">
               Email address <span className="required-mark">Required</span>

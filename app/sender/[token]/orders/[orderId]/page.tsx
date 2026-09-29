@@ -412,7 +412,7 @@ export default function SenderOrderDetailsPage({ params }: Props) {
             <div className="sender-action-heading">
               <CheckCircle2 size={20} />
               <div>
-                <h2>Release payment for sender</h2>
+                <h2>Release payment for confirmation</h2>
                 <p>
                   Status:{" "}
                   <strong>

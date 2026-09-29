@@ -15,6 +15,7 @@ import { use, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/app-shell";
 import { PaymentReceiptViewer } from "@/components/orders/payment-receipt-viewer";
+import { RiderPicker } from "@/components/orders/rider-picker";
 import { useRoleRedirect } from "@/components/auth/auth-provider";
 import { api } from "@/lib/api";
 import {
@@ -230,22 +231,16 @@ export default function OrderDetailsPage({ params }: Props) {
     order.companyPaymentStatus === "PAID" &&
     order.senderPaymentStatus === "PAID" &&
     order.finalPaymentStatus !== "PAID";
-  const getRiderOptionLabel = (rider: {
-    name?: string;
-    bikeId?: string | null;
-    companyBikeId?: string | null;
-    phone?: string | null;
-    assignedOrders?: number | null;
-    bike?: { bikeId?: string | null; companyPhoneNumber?: string | null } | null;
-  }) => {
-    const bikeNumber = rider.companyBikeId || rider.bikeId || rider.bike?.bikeId;
-    const companyPhone = rider.bike?.companyPhoneNumber || rider.phone || "No company phone";
-    const pendingOrders = rider.assignedOrders ?? 0;
-    return `${rider.name || "Rider"} • ${companyPhone} • ${pendingOrders} pending • Bike ${bikeNumber || "N/A"}`;
-  };
   const assignableRiders = (riders.data || []).filter(
     (rider) => Boolean(rider.bike?.bikeId || rider.bikeId),
   );
+  const riderChoices = assignableRiders.map((rider) => ({
+    id: rider.id,
+    name: rider.name || "Rider",
+    phone: rider.bike?.companyPhoneNumber || rider.phone || "",
+    bikeId: rider.bike?.bikeId || rider.bikeId || "",
+    pendingOrders: rider.assignedOrders ?? 0,
+  }));
   return (
     <AppShell role="OWNER">
       {authorizationSuccess && (
@@ -606,12 +601,12 @@ export default function OrderDetailsPage({ params }: Props) {
                 </dd>
               </div>
               <div>
-                <dt>Company payment</dt>
+                <dt>Company payment Status</dt>
                 <dd>
                   {order.companyPaymentStatus === "PAID" ? "PAID ✓" : "PENDING"}
                 </dd>
               </div>
-              <div>
+              {/* <div>
                 <dt>Sender payment</dt>
                 <dd>
                   {order.senderPaymentStatus === "PAID" ? "PAID ✓" : "PENDING"}
@@ -624,7 +619,7 @@ export default function OrderDetailsPage({ params }: Props) {
                     ? "COLLECTED"
                     : "NOT COLLECTED"}
                 </dd>
-              </div>
+              </div> */}
             </dl>
           </section>
           <aside className="detail-card">
@@ -707,27 +702,17 @@ export default function OrderDetailsPage({ params }: Props) {
               {showAssignRiderStep && (
                 <div className="field">
                   <p className="action-label">{isPbdOrder ? "Step 3: Assign rider" : "Step 1: Assign rider"}</p>
-                  <label htmlFor="assign-rider">
-                    {hasAssignedRider ? "Reassign rider" : "Assign rider"}
-                  </label>
-                  <select
-                    className="select"
+                  <RiderPicker
                     id="assign-rider"
+                    riders={riderChoices}
+                    currentRiderName={order.assignedRider?.name || order.rider?.name}
                     disabled={assignRider.isPending || reassignRider.isPending}
                     value={replacementRiderId || order.assignedRider?.id || order.rider?.id || ""}
-                    onChange={(event) => {
-                      if (!hasAssignedRider && event.target.value)
-                        assignRider.mutate(event.target.value);
-                      else setReplacementRiderId(event.target.value);
+                    onChange={(riderId) => {
+                      if (!hasAssignedRider) assignRider.mutate(riderId);
+                      else setReplacementRiderId(riderId);
                     }}
-                  >
-                    <option value="">Unassigned</option>
-                    {assignableRiders.map((rider) => (
-                      <option key={rider.id} value={rider.id}>
-                        {getRiderOptionLabel(rider)}
-                      </option>
-                    ))}
-                  </select>
+                  />
                   {hasAssignedRider && (
                     <button
                       type="button"
@@ -753,23 +738,14 @@ export default function OrderDetailsPage({ params }: Props) {
               {!showAssignRiderStep && hasAssignedRider && (
                 <div className="field">
                   <p className="action-label">Reassign rider</p>
-                  <label htmlFor="assign-rider-post-approval">
-                    Reassign rider
-                  </label>
-                  <select
-                    className="select"
+                  <RiderPicker
                     id="assign-rider-post-approval"
+                    riders={riderChoices}
+                    currentRiderName={order.assignedRider?.name || order.rider?.name}
                     disabled={assignRider.isPending || reassignRider.isPending}
                     value={replacementRiderId || order.assignedRider?.id || order.rider?.id || ""}
-                    onChange={(event) => setReplacementRiderId(event.target.value)}
-                  >
-                    <option value="">Unassigned</option>
-                    {assignableRiders.map((rider) => (
-                      <option key={rider.id} value={rider.id}>
-                        {getRiderOptionLabel(rider)}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={setReplacementRiderId}
+                  />
                   <button
                     type="button"
                     className="button button-secondary button-full"

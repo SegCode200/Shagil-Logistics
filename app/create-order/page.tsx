@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { normalizeNigerianPhone } from "@/lib/phone";
+import { isNigerianPhone, normalizeNigerianPhone } from "@/lib/phone";
 import { SearchableSelect } from "@/components/ui/primitives";
 
 type Values = {
@@ -183,13 +183,13 @@ export default function CreateOrderPage() {
       setValidationTarget(missingField[0]);
       return;
     }
-    if (values.senderPhoneNumber.trim().length < 7) {
-      setValidationMessage("Sender Phone number must be at least 7 digits.");
+    if (!isNigerianPhone(values.senderPhoneNumber)) {
+      setValidationMessage("Enter a complete Nigerian mobile number for the sender.");
       setValidationTarget("senderPhoneNumber");
       return;
     }
-    if (values.receiverPhoneNumber.trim().length < 7) {
-      setValidationMessage("Receiver Phone number must be at least 7 digits.");
+    if (!isNigerianPhone(values.receiverPhoneNumber)) {
+      setValidationMessage("Enter a complete Nigerian mobile number for the receiver.");
       setValidationTarget("receiverPhoneNumber");
       return;
     }

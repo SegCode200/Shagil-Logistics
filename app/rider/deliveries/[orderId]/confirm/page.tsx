@@ -75,12 +75,6 @@ export default function ConfirmDeliveryPage({ params }: Props) {
       });
     },
   });
-  const companyPaymentMutation = useMutation({
-    mutationFn: () => api.companyPaid(routeOrderId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["rider-orders"] });
-    },
-  });
   const receiverPaymentMutation = useMutation({
     mutationFn: () => api.confirmReceiverPaymentForUser(routeOrderId),
     onSuccess: () => {
@@ -216,10 +210,10 @@ export default function ConfirmDeliveryPage({ params }: Props) {
                 : "Already paid"}
             </span>
           </div>
-          {order.paymentMethod === "PAYMENT_ON_DELIVERY" && !order.paymentReceipts?.length && (
+          {order.paymentMethod === "PAYMENT_ON_DELIVERY" && (
             <div className="payment-receipt-upload rider-payment-receipt-upload">
               <strong>Payment receipt</strong>
-              <p className="subtext">Upload the receipt after collecting payment. A receipt is required before delivery can be confirmed.</p>
+              <p className="subtext">Optional: upload the receipt after the delivery is complete and you are back online.</p>
               <label className="receipt-upload-label" htmlFor="rider-payment-receipt">Choose payment receipt</label>
               <input
                 id="rider-payment-receipt"
@@ -368,13 +362,10 @@ export default function ConfirmDeliveryPage({ params }: Props) {
             )}
             <button
               className="button button-primary button-full"
-              disabled={mutation.isPending || (order.paymentMethod === "PAYMENT_ON_DELIVERY" && !order.paymentReceipts?.length)}
+              disabled={mutation.isPending || order.companyPaymentStatus !== "PAID" || order.receiverCollectionStatus !== "COLLECTED"}
             >
               {mutation.isPending ? "Confirming..." : "CONFIRM DELIVERY"}
             </button>
-            {order.paymentMethod === "PAYMENT_ON_DELIVERY" && !order.paymentReceipts?.length ? (
-              <p className="form-error confirm-error">Upload the payment receipt before confirming delivery.</p>
-            ) : null}
             </div>
           </form>
         </div>

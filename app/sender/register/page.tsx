@@ -3,7 +3,7 @@
 import { ArrowRight, CheckCircle2, Plus, X } from "lucide-react";
 import { useState } from "react";
 import { api } from "@/lib/api";
-import { normalizeNigerianPhone } from "@/lib/phone";
+import { isNigerianPhone, normalizeNigerianPhone } from "@/lib/phone";
 
 export default function SenderRegisterPage() {
   const [name, setName] = useState("");
@@ -20,6 +20,14 @@ export default function SenderRegisterPage() {
     const normalizedAdditionalPhones = additionalPhones
       .filter(Boolean)
       .map(normalizeNigerianPhone);
+    if (!isNigerianPhone(normalizedPhone)) {
+      setError("Enter a complete Nigerian mobile number for your WhatsApp / main phone.");
+      return;
+    }
+    if (normalizedAdditionalPhones.some((additionalPhone) => !isNigerianPhone(additionalPhone))) {
+      setError("Every additional number must be a complete Nigerian mobile number.");
+      return;
+    }
     const normalizedPhones = [normalizedPhone, ...normalizedAdditionalPhones];
     if (new Set(normalizedPhones).size !== normalizedPhones.length) {
       setError("Phone numbers must be unique. Please remove any duplicate numbers.");

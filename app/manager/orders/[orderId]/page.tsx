@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft, Check, Pencil, Save, Upload } from "lucide-react";
+import { ArrowLeft, Check, Pencil, Save, Send, Upload } from "lucide-react";
 import { use, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/app-shell";
 import { PaymentReceiptViewer } from "@/components/orders/payment-receipt-viewer";
+import { RiderPicker } from "@/components/orders/rider-picker";
 import { useRoleRedirect } from "@/components/auth/auth-provider";
 import { api } from "@/lib/api";
 import {
@@ -75,6 +76,7 @@ export default function ManagerOrderDetailsPage({ params }: Props) {
   const [paymentError, setPaymentError] = useState(false);
   const [paymentReceipt, setPaymentReceipt] = useState<File | null>(null);
   const [notice, setNotice] = useState("");
+  const [accessNotice, setAccessNotice] = useState("");
 
   const [editValues, setEditValues] = useState<EditValues>({});
   const order = useQuery({
@@ -154,6 +156,14 @@ export default function ManagerOrderDetailsPage({ params }: Props) {
       queryClient.invalidateQueries({ queryKey: ["managerOrders"] });
     },
   });
+  const resendSenderAccess = useMutation({
+    mutationFn: () => api.resendSenderAccessToken(orderId),
+    onSuccess: () => setAccessNotice("Sender access link sent successfully."),
+  });
+  const resendReceiverAccess = useMutation({
+    mutationFn: () => api.resendReceiverAccessToken(orderId),
+    onSuccess: () => setAccessNotice("Receiver access link sent successfully."),
+  });
   const uploadPaymentReceipt = useMutation({
     mutationFn: () => {
       if (!paymentReceipt) throw new Error("Select a receipt first.");
@@ -165,21 +175,17 @@ export default function ManagerOrderDetailsPage({ params }: Props) {
       queryClient.invalidateQueries({ queryKey: ["managerOrders"] });
     },
   });
-  const getRiderOptionLabel = (rider: {
-    name?: string;
-    bikeId?: string | null;
-    companyBikes?: { bikeId?: string | null; companyPhoneNumber?: string | null } | null;
-    phone?: string | null;
-    assignedOrders?: number | null;
-  }) => {
-    const bikeNumber = rider.companyBikes?.bikeId || rider.bikeId;
-    const companyPhone = rider.companyBikes?.companyPhoneNumber || rider.phone || "No company phone";
-    const pendingOrders = rider.assignedOrders ?? 0;
-    return `${rider.name || "Rider"} • ${companyPhone} • ${pendingOrders} pending • Bike ${bikeNumber || "N/A"}`;
-  };
   const assignableRiders = (riders.data || []).filter(
     (rider) => Boolean(rider.companyBikes?.bikeId || rider.bikeId),
   );
+  const riderChoices = assignableRiders.map((rider) => ({
+    id: rider.id,
+    name: rider.name || "Rider",
+    phone: rider.companyBikes?.companyPhoneNumber || rider.phone || "",
+    bikeId: rider.companyBikes?.bikeId || rider.bikeId || "",
+    
+    pendingOrders: rider.assignedOrders ?? 0,
+  }));
   if (isLoading || !user) return <LoadingState />;
   if (order.isLoading)
     return (
@@ -536,13 +542,18 @@ export default function ManagerOrderDetailsPage({ params }: Props) {
                 </div>
               )}
               <div>
+                <dt>Company Payment Status</dt>
+                <dd>{data.companyPaymentStatus || "-"}</dd>
+              </div>
+              {/* <div>
                 <dt>Sender Payment Status</dt>
                 <dd>{data.paymentStatus || data.senderPaymentStatus || "-"}</dd>
               </div>
+
               <div>
                 <dt>Receiver Payment Status</dt>
                 <dd>{data.companyPaymentStatus || "-"}</dd>
-              </div>
+              </div> */}
             </dl>
             {data.images?.length ? (
               <>
@@ -634,31 +645,22 @@ export default function ManagerOrderDetailsPage({ params }: Props) {
               {showAssignRiderStep && (
                 <div className="field">
                   <p className="action-label">{isPbdOrder ? "Step 3: Assign rider" : "Step 1: Assign rider"}</p>
-                  <label htmlFor="manager-rider">
-                    {hasAssignedRider ? "Reassign rider" : "Assign rider"}
-                  </label>
-                  <select
-                    className="select"
+                  <RiderPicker
                     id="manager-rider"
+                    riders={riderChoices}
+                    currentRiderName={data.assignedRider?.name || data.rider?.name}
                     disabled={
                       riders.isLoading ||
                       assignRider.isPending ||
                       reassignRider.isPending
                     }
                     value={replacementRiderId || data.assignedRider?.id || data.rider?.id || ""}
-                    onChange={(event) => {
+                    onChange={(riderId) => {
                       if (data.assignedRider?.id || data.rider?.id)
-                        setReplacementRiderId(event.target.value);
-                      else if (event.target.value) assignRider.mutate(event.target.value);
+                        setReplacementRiderId(riderId);
+                      else assignRider.mutate(riderId);
                     }}
-                  >
-                    <option value="">Unassigned</option>
-                    {assignableRiders.map((rider) => (
-                      <option key={rider.id} value={rider.id}>
-                        {getRiderOptionLabel(rider)}
-                      </option>
-                    ))}
-                  </select>
+                  />
                   {(data.assignedRider?.id || data.rider?.id) && (
                     <button
                       type="button"
@@ -674,27 +676,18 @@ export default function ManagerOrderDetailsPage({ params }: Props) {
               {!showAssignRiderStep && hasAssignedRider && (
                 <div className="field">
                   <p className="action-label">Reassign rider</p>
-                  <label htmlFor="manager-rider-post-approval">
-                    Reassign rider
-                  </label>
-                  <select
-                    className="select"
+                  <RiderPicker
                     id="manager-rider-post-approval"
+                    riders={riderChoices}
+                    currentRiderName={data.assignedRider?.name || data.rider?.name}
                     disabled={
                       riders.isLoading ||
                       assignRider.isPending ||
                       reassignRider.isPending
                     }
                     value={replacementRiderId || data.assignedRider?.id || data.rider?.id || ""}
-                    onChange={(event) => setReplacementRiderId(event.target.value)}
-                  >
-                    <option value="">Unassigned</option>
-                    {assignableRiders.map((rider) => (
-                      <option key={rider.id} value={rider.id}>
-                        {getRiderOptionLabel(rider)}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={setReplacementRiderId}
+                  />
                   <button
                     type="button"
                     className="button button-secondary button-full"
@@ -743,6 +736,58 @@ export default function ManagerOrderDetailsPage({ params }: Props) {
                       : "Confirm receiver payment"}
                   </button>
                 )}
+              {isApproved && (
+                <div className="access-token-actions section-gap">
+                  <p className="action-label">Public access links</p>
+                  <button
+                    type="button"
+                    className="button button-secondary button-full"
+                    disabled={resendSenderAccess.isPending}
+                    onClick={() => {
+                      setAccessNotice("");
+                      resendSenderAccess.mutate();
+                    }}
+                  >
+                    <Send size={16} />
+                    {resendSenderAccess.isPending
+                      ? "Sending sender link..."
+                      : "Resend sender access"}
+                  </button>
+                  {resendSenderAccess.isError && (
+                    <p className="form-error" role="alert">
+                      {resendSenderAccess.error instanceof Error
+                        ? resendSenderAccess.error.message
+                        : "Could not resend the sender access link."}
+                    </p>
+                  )}
+                  <button
+                    type="button"
+                    className="button button-secondary button-full"
+                    disabled={resendReceiverAccess.isPending}
+                    onClick={() => {
+                      setAccessNotice("");
+                      resendReceiverAccess.mutate();
+                    }}
+                  >
+                    <Send size={16} />
+                    {resendReceiverAccess.isPending
+                      ? "Sending receiver link..."
+                      : "Resend receiver access"}
+                  </button>
+                  {resendReceiverAccess.isError && (
+                    <p className="form-error" role="alert">
+                      {resendReceiverAccess.error instanceof Error
+                        ? resendReceiverAccess.error.message
+                        : "Could not resend the receiver access link."}
+                    </p>
+                  )}
+                  {accessNotice && (
+                    <p className="success-text" role="status">
+                      {accessNotice}
+                    </p>
+                  )}
+                </div>
+              )}
               {(approve.isError || assignRider.isError || reassignRider.isError || confirmReceiverPayment.isError) && (
                 <p className="form-error">
                   The order action could not be completed.

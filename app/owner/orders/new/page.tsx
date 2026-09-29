@@ -16,14 +16,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/app-shell";
 import { useRoleRedirect } from "@/components/auth/auth-provider";
 import { api } from "@/lib/api";
-import { normalizeNigerianPhone } from "@/lib/phone";
+import { isNigerianPhone, normalizeNigerianPhone } from "@/lib/phone";
 import { LoadingState } from "@/components/ui/primitives";
 
 const schema = z.object({
   senderName: z.string().min(2),
-  senderPhone: z.string().min(7),
+  senderPhone: z.string().refine(isNigerianPhone, "Enter a complete Nigerian mobile number."),
   receiverName: z.string().min(2),
-  receiverPhone: z.string().min(7),
+  receiverPhone: z.string().refine(isNigerianPhone, "Enter a complete Nigerian mobile number."),
   notes: z.string().optional(),
   pickupMethod: z.enum(["SENDER_DROPOFF", "RIDER_PICKUP"]),
   pickupAddress: z.string().optional(),

@@ -11,3 +11,11 @@ export function normalizeNigerianPhone(value: string) {
 export function isNigerianPhone(value: string) {
   return /^\+234[789]\d{9}$/.test(normalizeNigerianPhone(value));
 }
+
+export function requireCompleteNigerianPhone(value: string, label = "Phone number") {
+  const normalized = normalizeNigerianPhone(value);
+  if (!isNigerianPhone(value)) {
+    throw new Error(`${label} must be a complete mobile number.`);
+  }
+  return normalized;
+}
