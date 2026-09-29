@@ -223,16 +223,25 @@ export default function OrderDetailsPage({ params }: Props) {
   );
   const showAuthorizePaymentStep = isPbdOrder && !isPaymentAuthorized && !isApproved;
   const showUploadReceiptStep = isPbdOrder && isPaymentAuthorized && (!hasPaymentReceipt || !paymentConfirmed) && !isApproved;
-  const showAssignRiderStep = !hasAssignedRider && (!isPbdOrder || (hasPaymentReceipt && paymentConfirmed)) && !isApproved;
+  const showAssignRiderStep = !isApproved && (!isPbdOrder || (hasPaymentReceipt && paymentConfirmed));
   const showApproveOrderStep = !isApproved && hasAssignedRider && (!isPbdOrder || (hasPaymentReceipt && paymentConfirmed));
   const isFinalPaymentReady =
     order.status === "DELIVERED" &&
     order.companyPaymentStatus === "PAID" &&
     order.senderPaymentStatus === "PAID" &&
     order.finalPaymentStatus !== "PAID";
-  const getRiderOptionLabel = (rider: { name?: string; bikeId?: string | null; companyBikeId?: string | null; phone?: string | null }) => {
-    const bikeNumber = rider.companyBikeId || rider.bikeId;
-    return bikeNumber ? `${rider.name || "Rider"} - Bike ${bikeNumber}` : rider.name || "Rider";
+  const getRiderOptionLabel = (rider: {
+    name?: string;
+    bikeId?: string | null;
+    companyBikeId?: string | null;
+    phone?: string | null;
+    assignedOrders?: number | null;
+    bike?: { bikeId?: string | null; companyPhoneNumber?: string | null } | null;
+  }) => {
+    const bikeNumber = rider.companyBikeId || rider.bikeId || rider.bike?.bikeId;
+    const companyPhone = rider.bike?.companyPhoneNumber || rider.phone || "No company phone";
+    const pendingOrders = rider.assignedOrders ?? 0;
+    return `${rider.name || "Rider"} • ${companyPhone} • ${pendingOrders} pending • Bike ${bikeNumber || "N/A"}`;
   };
   const assignableRiders = (riders.data || []).filter(
     (rider) => Boolean(rider.bike?.bikeId || rider.bikeId),
@@ -761,7 +770,10 @@ export default function OrderDetailsPage({ params }: Props) {
                         order.paymentMethod === "ALREADY_PAID" &&
                         !paymentConfirmed
                       ) {
-                        setPaymentError(true);
+                        const confirmedMessage = `Are you sure you have confirmed that the customer has paid for ${order.orderId || "this order"}?`;
+                        if (window.confirm(confirmedMessage)) {
+                          setPaymentConfirmed(true);
+                        }
                         return;
                       }
                       const confirmedMessage =
