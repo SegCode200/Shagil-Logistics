@@ -222,9 +222,9 @@ export default function OrderDetailsPage({ params }: Props) {
       ].includes(order.status),
   );
   const showAuthorizePaymentStep = isPbdOrder && !isPaymentAuthorized && !isApproved;
-  const showUploadReceiptStep = isPbdOrder && isPaymentAuthorized && !hasPaymentReceipt && !isApproved;
-  const showAssignRiderStep = !hasAssignedRider && (!isPbdOrder || hasPaymentReceipt) && !isApproved;
-  const showApproveOrderStep = !isApproved && hasAssignedRider && (!isPbdOrder || hasPaymentReceipt);
+  const showUploadReceiptStep = isPbdOrder && isPaymentAuthorized && (!hasPaymentReceipt || !paymentConfirmed) && !isApproved;
+  const showAssignRiderStep = !hasAssignedRider && (!isPbdOrder || (hasPaymentReceipt && paymentConfirmed)) && !isApproved;
+  const showApproveOrderStep = !isApproved && hasAssignedRider && (!isPbdOrder || (hasPaymentReceipt && paymentConfirmed));
   const isFinalPaymentReady =
     order.status === "DELIVERED" &&
     order.companyPaymentStatus === "PAID" &&
@@ -664,7 +664,7 @@ export default function OrderDetailsPage({ params }: Props) {
               {authorizePayment.isError && <p className="form-error">Payment authorization could not be completed.</p>}
               {showUploadReceiptStep && (
                 <div className="payment-receipt-upload">
-                  <p className="action-label">Step 2: Upload payment receipt</p>
+                  <p className="action-label">Step 2: Upload receipt and confirm payment</p>
                   <label className="receipt-upload-label" htmlFor="owner-payment-receipt">Choose payment receipt</label>
                   <input
                     id="owner-payment-receipt"
@@ -685,6 +685,14 @@ export default function OrderDetailsPage({ params }: Props) {
                   </button>
                   {uploadPaymentReceipt.isSuccess && <p className="success-text">Payment receipt uploaded.</p>}
                   {uploadPaymentReceipt.isError && <p className="form-error">{uploadPaymentReceipt.error instanceof Error ? uploadPaymentReceipt.error.message : "Could not upload the payment receipt."}</p>}
+                  <label className="payment-confirmation">
+                    <input
+                      type="checkbox"
+                      checked={paymentConfirmed}
+                      onChange={(event) => setPaymentConfirmed(event.target.checked)}
+                    />
+                    <span>I confirm the customer payment is received.</span>
+                  </label>
                 </div>
               )}
               {showAssignRiderStep && (
@@ -736,16 +744,6 @@ export default function OrderDetailsPage({ params }: Props) {
               {showApproveOrderStep && (
                 <div className="field">
                   <p className="action-label">{isPbdOrder ? "Step 4: Approve order" : "Step 2: Approve order"}</p>
-                  {isPbdOrder && (
-                    <label className="payment-confirmation">
-                      <input
-                        type="checkbox"
-                        checked={paymentConfirmed}
-                        onChange={(event) => setPaymentConfirmed(event.target.checked)}
-                      />
-                      <span>I confirm the customer payment is received.</span>
-                    </label>
-                  )}
                   <button
                     className="button button-primary button-full"
                     disabled={action.isPending || !canApprove || !hasAssignedRider || (isPbdOrder && !paymentConfirmed)}
