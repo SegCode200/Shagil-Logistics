@@ -193,7 +193,19 @@ export default function ManagerOrderDetailsPage({ params }: Props) {
     settings.data,
     data.deliveryType,
   );
-      const isFinalPaymentReady =
+      const isPbdOrder = data.paymentMethod === "ALREADY_PAID";
+  const isPaymentAuthorized = Boolean(data.authorizedPayment);
+  const hasPaymentReceipt = Boolean(data.paymentReceipts?.length);
+  const hasAssignedRider = Boolean(data.assignedRider?.id || data.rider?.id);
+  const isApproved = Boolean(
+    data.approvedAt ||
+      ["APPROVED", "ASSIGNED", "PICKED_UP", "DELIVERED"].includes(data.status),
+  );
+  const showAuthorizePaymentStep = isPbdOrder && !isPaymentAuthorized && !isApproved;
+  const showUploadReceiptStep = isPbdOrder && isPaymentAuthorized && !hasPaymentReceipt && !isApproved;
+  const showAssignRiderStep = !hasAssignedRider && (!isPbdOrder || hasPaymentReceipt) && !isApproved;
+  const showApproveOrderStep = !isApproved && hasAssignedRider && (!isPbdOrder || hasPaymentReceipt);
+  const isFinalPaymentReady =
     data.status === "DELIVERED" &&
     data.companyPaymentStatus === "PAID" &&
     data.senderPaymentStatus === "PAID" &&
@@ -559,154 +571,122 @@ export default function ManagerOrderDetailsPage({ params }: Props) {
                 </dd>
               </div>
             </dl>
-            {data.paymentMethod === "ALREADY_PAID" && data.status !== "APPROVED" && (
-              <label className="payment-confirmation">
-                <input
-                  type="checkbox"
-                  checked={paymentConfirmed}
-                  onChange={(event) => setPaymentConfirmed(event.target.checked)}
-                />
-                <span>You must fill checkbox to confirm customer payment.</span>
-              </label>
-            )}
-            {data.paymentMethod === "ALREADY_PAID" && data.status === "PENDING_APPROVAL" && !data.paymentReceipts?.length && (
-              <div className="payment-receipt-upload">
-                <p className="action-label">Attach sender payment receipt</p>
-                <label className="receipt-upload-label" htmlFor="manager-payment-receipt">Choose payment receipt</label>
-                <input
-                  id="manager-payment-receipt"
-                  className="receipt-file-input"
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp,application/pdf"
-                  onChange={(event) => setPaymentReceipt(event.target.files?.[0] || null)}
-                />
-                <span className="receipt-file-name">{paymentReceipt ? paymentReceipt.name : "No receipt selected"}</span>
-                <button
-                  type="button"
-                  className="button button-secondary button-full"
-                  disabled={!paymentReceipt || uploadPaymentReceipt.isPending}
-                  onClick={() => uploadPaymentReceipt.mutate()}
-                >
-                  <Upload size={16} />
-                  {uploadPaymentReceipt.isPending ? "Uploading receipt..." : "Upload payment receipt"}
-                </button>
-                {uploadPaymentReceipt.isSuccess && <p className="success-text">Payment receipt uploaded.</p>}
-                {uploadPaymentReceipt.isError && <p className="form-error">{uploadPaymentReceipt.error instanceof Error ? uploadPaymentReceipt.error.message : "Could not upload the payment receipt."}</p>}
-              </div>
-            )}
             <div className="action-stack section-gap">
-              {data.paymentMethod === "ALREADY_PAID" && !data.authorizedPayment && (
-                <button
-                  type="button"
-                  className="button button-warning button-full"
-                  disabled={authorizePayment.isPending}
-                  onClick={() => {
-                    if (window.confirm("Are you sure you want to authorize the customer to make payment now?")) {
-                      authorizePayment.mutate();
-                    }
-                  }}
-                >
-                  {authorizePayment.isPending ? "Authorizing payment..." : "Customer authorized to make payment"}
-                </button>
+              {showAuthorizePaymentStep && (
+                <div className="field">
+                  <p className="action-label">Step 1: Authorize payment</p>
+                  <button
+                    type="button"
+                    className="button button-warning button-full"
+                    disabled={authorizePayment.isPending}
+                    onClick={() => {
+                      if (window.confirm("Are you sure you want to authorize the customer to make payment now?")) {
+                        authorizePayment.mutate();
+                      }
+                    }}
+                  >
+                    {authorizePayment.isPending ? "Authorizing payment..." : "Authorize payment"}
+                  </button>
+                </div>
               )}
               {authorizePayment.isError && <p className="form-error">Payment authorization could not be completed.</p>}
-              {data.status === "PENDING_APPROVAL" && (
-                <button
-                  className="button button-primary button-full"
-                  disabled={approve.isPending}
-                  onClick={() => {
-                    if (
-                      data.paymentMethod === "ALREADY_PAID" &&
-                      data.senderPaymentStatus !== "PAID" &&
-                      !paymentConfirmed
-                    ) {
-                      setPaymentError(true);
-                      return;
-                    }
-                    approve.mutate();
-                  }}
-                >
-                  {approve.isPending ? "Approving..." : "Approve order"}
-                </button>
-              )}
-
-              {/* {(data.finalPaymentStatus !== "PAID" && data.paymentMethod === "PAYMENT_ON_DELIVERY")   &&  (
-                <button
-                  className="button button-success button-full"
-                  disabled={
-                    confirmFinalPayment.isPending ||
-                    !isFinalPaymentReady
-                  }
-                  title={
-                    !isFinalPaymentReady
-                      ? "Final payment can be confirmed only when all payments are settled and the order is delivered."
-                      : undefined
-                  }
-                  onClick={() => {
-                    if (!isFinalPaymentReady) {
-                      return;
-                    }
-                    if (
-                      window.confirm(
-                        `Are you sure you want to confirm the final payment for ${data.orderId || "this order"}? This action cannot be undone.`,
-                      )
-                    ) {
-                      confirmFinalPayment.mutate();
-                    }
-                  }}
-                >
-                  {confirmFinalPayment.isPending
-                    ? "Confirming final payment..."
-                    : "POD payment confirmation"}
-                </button>
-              )}
-              {!isFinalPaymentReady && data.finalPaymentStatus !== "PAID" && data.paymentMethod === "PAYMENT_ON_DELIVERY" && (
-                <p className="form-error">
-                  Final payment cannot be confirmed until all payments are made and the order is delivered.
-                </p>
-              )}
-            {confirmFinalPayment.isError && (
-                <p className="form-error">Final payment could not be confirmed.</p>
-              )} */}
-              <div className="field">
-                <label htmlFor="manager-rider">
-                  {data.assignedRider?.id || data.rider?.id
-                    ? "Reassign rider"
-                    : "Assign rider"}
-                </label>
-                <select
-                  className="select"
-                  id="manager-rider"
-                  disabled={
-                    riders.isLoading ||
-                    assignRider.isPending ||
-                    reassignRider.isPending
-                  }
-                  value={replacementRiderId || data.assignedRider?.id || data.rider?.id || ""}
-                  onChange={(event) => {
-                    if (data.assignedRider?.id || data.rider?.id)
-                      setReplacementRiderId(event.target.value);
-                    else if (event.target.value) assignRider.mutate(event.target.value);
-                  }}
-                >
-                  <option value="">Unassigned</option>
-                  {assignableRiders.map((rider) => (
-                    <option key={rider.id} value={rider.id}>
-                      {getRiderOptionLabel(rider)}
-                    </option>
-                  ))}
-                </select>
-                {(data.assignedRider?.id || data.rider?.id) && (
+              {showUploadReceiptStep && (
+                <div className="payment-receipt-upload">
+                  <p className="action-label">Step 2: Upload payment receipt</p>
+                  <label className="receipt-upload-label" htmlFor="manager-payment-receipt">Choose payment receipt</label>
+                  <input
+                    id="manager-payment-receipt"
+                    className="receipt-file-input"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,application/pdf"
+                    onChange={(event) => setPaymentReceipt(event.target.files?.[0] || null)}
+                  />
+                  <span className="receipt-file-name">{paymentReceipt ? paymentReceipt.name : "No receipt selected"}</span>
                   <button
                     type="button"
                     className="button button-secondary button-full"
-                    disabled={reassignRider.isPending || !replacementRiderId || replacementRiderId === (data.assignedRider?.id || data.rider?.id)}
-                    onClick={() => reassignRider.mutate(replacementRiderId)}
+                    disabled={!paymentReceipt || uploadPaymentReceipt.isPending}
+                    onClick={() => uploadPaymentReceipt.mutate()}
                   >
-                    {reassignRider.isPending ? "Reassigning rider..." : "Reassign rider"}
+                    <Upload size={16} />
+                    {uploadPaymentReceipt.isPending ? "Uploading receipt..." : "Upload receipt"}
                   </button>
-                )}
-              </div>
+                  {uploadPaymentReceipt.isSuccess && <p className="success-text">Payment receipt uploaded.</p>}
+                  {uploadPaymentReceipt.isError && <p className="form-error">{uploadPaymentReceipt.error instanceof Error ? uploadPaymentReceipt.error.message : "Could not upload the payment receipt."}</p>}
+                </div>
+              )}
+              {showAssignRiderStep && (
+                <div className="field">
+                  <p className="action-label">{isPbdOrder ? "Step 3: Assign rider" : "Step 1: Assign rider"}</p>
+                  <label htmlFor="manager-rider">
+                    {hasAssignedRider ? "Reassign rider" : "Assign rider"}
+                  </label>
+                  <select
+                    className="select"
+                    id="manager-rider"
+                    disabled={
+                      riders.isLoading ||
+                      assignRider.isPending ||
+                      reassignRider.isPending
+                    }
+                    value={replacementRiderId || data.assignedRider?.id || data.rider?.id || ""}
+                    onChange={(event) => {
+                      if (data.assignedRider?.id || data.rider?.id)
+                        setReplacementRiderId(event.target.value);
+                      else if (event.target.value) assignRider.mutate(event.target.value);
+                    }}
+                  >
+                    <option value="">Unassigned</option>
+                    {assignableRiders.map((rider) => (
+                      <option key={rider.id} value={rider.id}>
+                        {getRiderOptionLabel(rider)}
+                      </option>
+                    ))}
+                  </select>
+                  {(data.assignedRider?.id || data.rider?.id) && (
+                    <button
+                      type="button"
+                      className="button button-secondary button-full"
+                      disabled={reassignRider.isPending || !replacementRiderId || replacementRiderId === (data.assignedRider?.id || data.rider?.id)}
+                      onClick={() => reassignRider.mutate(replacementRiderId)}
+                    >
+                      {reassignRider.isPending ? "Reassigning rider..." : "Reassign rider"}
+                    </button>
+                  )}
+                </div>
+              )}
+              {showApproveOrderStep && (
+                <div className="field">
+                  <p className="action-label">{isPbdOrder ? "Step 4: Approve order" : "Step 2: Approve order"}</p>
+                  {isPbdOrder && (
+                    <label className="payment-confirmation">
+                      <input
+                        type="checkbox"
+                        checked={paymentConfirmed}
+                        onChange={(event) => setPaymentConfirmed(event.target.checked)}
+                      />
+                      <span>I confirm the customer payment is received.</span>
+                    </label>
+                  )}
+                  <button
+                    className="button button-primary button-full"
+                    disabled={approve.isPending || (isPbdOrder && !paymentConfirmed)}
+                    onClick={() => {
+                      if (
+                        data.paymentMethod === "ALREADY_PAID" &&
+                        data.senderPaymentStatus !== "PAID" &&
+                        !paymentConfirmed
+                      ) {
+                        setPaymentError(true);
+                        return;
+                      }
+                      approve.mutate();
+                    }}
+                  >
+                    {approve.isPending ? "Approving..." : "Approve order"}
+                  </button>
+                </div>
+              )}
               {data.status === "PICKED_UP" &&
                 data.paymentMethod === "PAYMENT_ON_DELIVERY" &&
                 data.receiverCollectionStatus !== "COLLECTED" && (

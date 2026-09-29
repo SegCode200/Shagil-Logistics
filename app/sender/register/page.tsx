@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { ArrowRight, CheckCircle2, Plus, X } from "lucide-react";
 import { useState } from "react";
 import { api } from "@/lib/api";
@@ -47,17 +46,13 @@ export default function SenderRegisterPage() {
   }
 
   if (created) {
-    const senderPath = created.accessToken ? `/sender/${created.accessToken}` : "/sender/register";
     return (
       <main className="public-page">
         <div className="public-card success-card">
           <CheckCircle2 size={40} color="#2d9862" />
           <h1>Registration complete</h1>
-          <p className="subtext">Your sender access link has been created.</p>
-          <Link className="button button-primary" href={senderPath}>
-            Open sender page <ArrowRight size={17} />
-          </Link>
-          <p className="muted">The access link will also be sent to your registered contact.</p>
+          <p className="subtext">Please check your WhatsApp messages for your sender access link.</p>
+          <p className="muted">The link has been sent to the WhatsApp number you registered.</p>
         </div>
       </main>
     );
