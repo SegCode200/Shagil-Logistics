@@ -407,6 +407,7 @@ export default function SenderOrderDetailsPage({ params }: Props) {
                   : "Mark shipment picked up"}
             </button>
           </div>
+          {order.paymentMethod === "PAYMENT_ON_DELIVERY" &&( 
           <div className="sender-action-card sender-payment-action">
             <div className="sender-action-heading">
               <CheckCircle2 size={20} />
@@ -464,6 +465,7 @@ export default function SenderOrderDetailsPage({ params }: Props) {
                 </p>
               )}
           </div>
+          )}
         </>}
         </section>
 

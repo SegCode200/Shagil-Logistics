@@ -671,6 +671,40 @@ export default function ManagerOrderDetailsPage({ params }: Props) {
                   )}
                 </div>
               )}
+              {!showAssignRiderStep && hasAssignedRider && (
+                <div className="field">
+                  <p className="action-label">Reassign rider</p>
+                  <label htmlFor="manager-rider-post-approval">
+                    Reassign rider
+                  </label>
+                  <select
+                    className="select"
+                    id="manager-rider-post-approval"
+                    disabled={
+                      riders.isLoading ||
+                      assignRider.isPending ||
+                      reassignRider.isPending
+                    }
+                    value={replacementRiderId || data.assignedRider?.id || data.rider?.id || ""}
+                    onChange={(event) => setReplacementRiderId(event.target.value)}
+                  >
+                    <option value="">Unassigned</option>
+                    {assignableRiders.map((rider) => (
+                      <option key={rider.id} value={rider.id}>
+                        {getRiderOptionLabel(rider)}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    className="button button-secondary button-full"
+                    disabled={reassignRider.isPending || !replacementRiderId || replacementRiderId === (data.assignedRider?.id || data.rider?.id)}
+                    onClick={() => reassignRider.mutate(replacementRiderId)}
+                  >
+                    {reassignRider.isPending ? "Reassigning rider..." : "Reassign rider"}
+                  </button>
+                </div>
+              )}
               {showApproveOrderStep && (
                 <div className="field">
                   <p className="action-label">{isPbdOrder ? "Step 4: Approve order" : "Step 2: Approve order"}</p>
