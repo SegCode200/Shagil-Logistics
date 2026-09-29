@@ -185,7 +185,7 @@ export default function ConfirmDeliveryPage({ params }: Props) {
           <p className="subtext">
             Manage this delivery and confirm it when the receiver provides the code.
           </p>
-          {order.paymentReceipts?.length ? (
+          {order.paymentReceipts?.length && order.paymentMethod === "PAYMENT_ON_DELIVERY" ? (
             <section className="payment-receipts-section payment-receipts-top">
               <h2>Uploaded payment receipts ({order.paymentReceipts.length})</h2>
               <PaymentReceiptViewer receipts={order.paymentReceipts} />
