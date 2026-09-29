@@ -368,6 +368,7 @@ export default function SenderOrderDetailsPage({ params }: Props) {
                 : "Resend receiver code"}
             </button>
           </div>
+          { order.status !== "PENDING_APPROVAL" && (
           <div className="sender-action-card sender-pickup-action">
             <div className="sender-action-heading">
               <PackageCheck size={20} />
@@ -406,8 +407,8 @@ export default function SenderOrderDetailsPage({ params }: Props) {
                   ? "Shipment picked up"
                   : "Mark shipment picked up"}
             </button>
-          </div>
-          {order.paymentMethod === "PAYMENT_ON_DELIVERY" &&( 
+          </div>)}
+          {order.paymentMethod === "PAYMENT_ON_DELIVERY" && (order.status === "PICKED_UP") || (order.status === "DELIVERED") && ( 
           <div className="sender-action-card sender-payment-action">
             <div className="sender-action-heading">
               <CheckCircle2 size={20} />
