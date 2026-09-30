@@ -271,6 +271,13 @@ export type CompanyBikes ={
   id: string;
   bikeId: string;
   companyPhoneNumber: string;
+  station?: { id: string; name: string; stationCode: string };
+}
+export type AssignedOrderSummary = {
+  id: string;
+  orderId: string;
+  status: OrderStatus;
+  createdAt: string;
 }
 export type StationRider = {
   id: string;
@@ -278,7 +285,7 @@ export type StationRider = {
   name: string;
   phone?: string | null;
   status: string;
-  assignedOrders?: number;
+  assignedOrders?: AssignedOrderSummary[];
   active?: boolean | null;
   bikeId?: string | null;
   companyBikes?: CompanyBikes;

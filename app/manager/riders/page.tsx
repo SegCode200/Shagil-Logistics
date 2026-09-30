@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/app-shell";
 import { useRoleRedirect } from "@/components/auth/auth-provider";
 import { api } from "@/lib/api";
+import { getAssignedOrderCount } from "@/components/orders/rider-picker";
 import {
   EmptyState,
   ErrorState,
@@ -57,13 +58,13 @@ export default function ManagerRidersPage() {
               {items.map((rider) => {
                 const today = new Date();
                 const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-                const assignedOrders =
-                  orders.data?.filter(
+                const riderOrders = orders.data?.filter(
                     (order) =>
                       (order.assignedRider?.id || order.rider?.id) === rider.id,
-                  ).length ||
-                  rider.assignedOrders ||
-                  0;
+                  );
+                const assignedOrders = riderOrders
+                  ? riderOrders.length
+                  : getAssignedOrderCount(rider.assignedOrders);
                 const todayDeliveries = orders.data?.filter((order) => {
                   const assignedRiderId = order.assignedRider?.id || order.rider?.id;
                   return assignedRiderId === rider.id && order.createdAt.slice(0, 10) === todayKey;

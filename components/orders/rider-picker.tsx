@@ -11,6 +11,31 @@ export type RiderChoice = {
   pendingOrders: number;
 };
 
+export function getPendingOrderCount(value: unknown) {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return Math.max(0, value);
+  }
+
+  const isPendingOrder = (order: unknown) => {
+    if (!order || typeof order !== "object") return false;
+    const status = (order as { status?: unknown }).status;
+    return status !== "DELIVERED" && status !== "CANCELLED";
+  };
+
+  if (Array.isArray(value)) {
+    return value.filter(isPendingOrder).length;
+  }
+  return isPendingOrder(value) ? 1 : 0;
+}
+
+export function getAssignedOrderCount(value: unknown) {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return Math.max(0, value);
+  }
+  if (Array.isArray(value)) return value.length;
+  return value && typeof value === "object" ? 1 : 0;
+}
+
 export function RiderPicker({
   id,
   riders,

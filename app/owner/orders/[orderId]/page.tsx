@@ -15,7 +15,10 @@ import { use, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/app-shell";
 import { PaymentReceiptViewer } from "@/components/orders/payment-receipt-viewer";
-import { RiderPicker } from "@/components/orders/rider-picker";
+import {
+  getPendingOrderCount,
+  RiderPicker,
+} from "@/components/orders/rider-picker";
 import { useRoleRedirect } from "@/components/auth/auth-provider";
 import { api } from "@/lib/api";
 import {
@@ -239,7 +242,7 @@ export default function OrderDetailsPage({ params }: Props) {
     name: rider.name || "Rider",
     phone: rider.bike?.companyPhoneNumber || rider.phone || "",
     bikeId: rider.bike?.bikeId || rider.bikeId || "",
-    pendingOrders: rider.assignedOrders ?? 0,
+    pendingOrders: getPendingOrderCount(rider.assignedOrders),
   }));
   return (
     <AppShell role="OWNER">
