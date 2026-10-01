@@ -13,6 +13,7 @@ import {
 import { use, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/app-shell";
+import { RiderOrderImages } from "@/components/orders/rider-order-images";
 import { useRoleRedirect } from "@/components/auth/auth-provider";
 import { api } from "@/lib/api";
 import { PaymentReceiptViewer } from "@/components/orders/payment-receipt-viewer";
@@ -240,6 +241,7 @@ export default function ConfirmDeliveryPage({ params }: Props) {
               </span>
             )}
           </div>
+          <RiderOrderImages images={order.images} />
           {order.paymentMethod === "PAYMENT_ON_DELIVERY" && (
             <div className="payment-receipt-upload rider-payment-receipt-upload">
               <strong>Payment receipt</strong>

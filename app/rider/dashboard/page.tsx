@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/app-shell";
 import { useRoleRedirect } from "@/components/auth/auth-provider";
+import { RiderOrderImages } from "@/components/orders/rider-order-images";
 import { api } from "@/lib/api";
 import {
   EmptyState,
@@ -146,6 +147,7 @@ export default function RiderDashboard() {
                     </div>
                   </section>
                 </div>
+                <RiderOrderImages images={order.images} />
                 <div className="rider-facts">
                   <span>
                     <strong>Date & time</strong>
