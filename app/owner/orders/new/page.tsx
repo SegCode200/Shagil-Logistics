@@ -32,7 +32,16 @@ const schema = z.object({
   stationId: z.string().min(1),
   deliveryZoneId: z.string().min(1),
   paymentMethod: z.enum(["ALREADY_PAID", "PAYMENT_ON_DELIVERY"]),
+  paymentCoverage: z.enum(["DELIVERY_ONLY", "ITEM_AND_DELIVERY"]).optional(),
   assignedRiderId: z.string().optional(),
+}).superRefine((values, context) => {
+  if (values.paymentMethod === "PAYMENT_ON_DELIVERY" && !values.paymentCoverage) {
+    context.addIssue({
+      code: "custom",
+      path: ["paymentCoverage"],
+      message: "Choose what the receiver will pay for.",
+    });
+  }
 });
 type FormValues = z.infer<typeof schema>;
 
@@ -71,6 +80,10 @@ export default function NewOrderPage() {
   const paymentMethod = useWatch({
     control: form.control,
     name: "paymentMethod",
+  });
+  const paymentCoverage = useWatch({
+    control: form.control,
+    name: "paymentCoverage",
   });
   const getRiderOptionLabel = (rider: { name?: string; bikeId?: string | null; companyBikeId?: string | null }) => {
     const bikeNumber = rider.companyBikeId || rider.bikeId;
@@ -239,7 +252,14 @@ export default function NewOrderPage() {
                 <select
                   className="select"
                   id="paymentMethod"
-                  {...form.register("paymentMethod")}
+                  value={paymentMethod}
+                  onChange={(event) => {
+                    const nextPaymentMethod = event.target.value as FormValues["paymentMethod"];
+                    form.setValue("paymentMethod", nextPaymentMethod, { shouldValidate: true });
+                    if (nextPaymentMethod !== "PAYMENT_ON_DELIVERY") {
+                      form.setValue("paymentCoverage", undefined, { shouldValidate: true });
+                    }
+                  }}
                 >
                   <option value="ALREADY_PAID">Payment before delivery</option>
                   <option value="PAYMENT_ON_DELIVERY">
@@ -247,6 +267,33 @@ export default function NewOrderPage() {
                   </option>
                 </select>
               </div>
+              {paymentMethod === "PAYMENT_ON_DELIVERY" && (
+                <div className="field">
+                  <label htmlFor="paymentCoverage">What will the receiver pay for?</label>
+                  <select
+                    className="select"
+                    id="paymentCoverage"
+                    required
+                    value={paymentCoverage || ""}
+                    onChange={(event) =>
+                      form.setValue(
+                        "paymentCoverage",
+                        event.target.value
+                          ? (event.target.value as NonNullable<FormValues["paymentCoverage"]>)
+                          : undefined,
+                        { shouldValidate: true },
+                      )
+                    }
+                  >
+                    <option value="">Select payment coverage</option>
+                    <option value="DELIVERY_ONLY">Delivery fee only</option>
+                    <option value="ITEM_AND_DELIVERY">Item and delivery fee</option>
+                  </select>
+                  {form.formState.errors.paymentCoverage && (
+                    <small>{form.formState.errors.paymentCoverage.message}</small>
+                  )}
+                </div>
+              )}
               <div className="field">
                 <label htmlFor="assignedRiderId">
                   Assign rider <span className="muted">(optional)</span>

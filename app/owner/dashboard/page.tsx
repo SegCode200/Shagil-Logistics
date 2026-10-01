@@ -258,7 +258,9 @@ export default function OwnerDashboard() {
                   <div className="mobile-order-row mobile-order-row-tight">
                     <span className="mobile-order-label">Payment</span>
                     <span className={`mini-status mini-status-${order.paymentMethod === "PAYMENT_ON_DELIVERY" ? "pending" : "paid"}`}>
-                      {order.paymentMethod === "PAYMENT_ON_DELIVERY" ? "POD" : "PBD"}
+                      {order.paymentMethod === "PAYMENT_ON_DELIVERY"
+                        ? `POD${order.paymentCoverage ? ` · ${order.paymentCoverage === "ITEM_AND_DELIVERY" ? "Item + delivery" : "Delivery only"}` : ""}`
+                        : "PBD"}
                     </span>
                   </div>
                   <div className="mobile-order-row mobile-order-row-tight">

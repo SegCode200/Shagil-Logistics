@@ -9,7 +9,6 @@ import {
   Phone,
   Send,
   ShieldCheck,
-  Upload,
 } from "lucide-react";
 import { use, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -52,10 +51,8 @@ export default function ConfirmDeliveryPage({ params }: Props) {
     },
   });
   const uploadPaymentReceipt = useMutation({
-    mutationFn: () => {
-      if (!paymentReceipt) throw new Error("Select a payment receipt first.");
-      return api.uploadPaymentOnDeliveryReceipts(routeOrderId, paymentReceipt);
-    },
+    mutationFn: (receiptFile: File) =>
+      api.uploadPaymentOnDeliveryReceipts(routeOrderId, receiptFile),
     onSuccess: () => {
       setPaymentReceipt(null);
       setPaymentDialog({
@@ -203,33 +200,45 @@ export default function ConfirmDeliveryPage({ params }: Props) {
               <p>Pickup complete</p>
             )}
           </section>
-          <div className="delivery-summary delivery-summary-card">
+          <div className="delivery-summary delivery-summary-card rider-receiver-highlight">
             <span className="rider-route-label">Delivery</span>
             <div className="receiver-heading">
               <span className="receiver-avatar">
                 {(order.receiverName || order.customerName || "R").slice(0, 1).toUpperCase()}
               </span>
               <div>
-                <strong>{order.receiverName || order.customerName || "Receiver"}</strong>
+                <strong className="rider-receiver-name">
+                  {order.receiverName || order.customerName || "Receiver"}
+                </strong>
                 <span>{order.orderId || routeOrderId}</span>
               </div>
             </div>
-            {order.receiverPhoneNumber || order.receiverPhone ? (
-              <a
-                className="rider-phone-link"
-                href={`tel:${order.receiverPhoneNumber || order.receiverPhone}`}
-              >
-                <Phone size={14} /> {order.receiverPhoneNumber || order.receiverPhone}
-              </a>
-            ) : null}
+            <div className="rider-receiver-phone">
+              <strong>Receiver phone</strong>
+              {order.receiverPhoneNumber || order.receiverPhone ? (
+                <a
+                  className="rider-phone-link"
+                  href={`tel:${order.receiverPhoneNumber || order.receiverPhone}`}
+                >
+                  <Phone size={14} /> {order.receiverPhoneNumber || order.receiverPhone}
+                </a>
+              ) : (
+                <span>Not provided</span>
+              )}
+            </div>
             <p className="delivery-address">
               <MapPin size={15} /> {order.deliveryAddress}
             </p>
             <span className="collection-line">
               {order.paymentMethod === "PAYMENT_ON_DELIVERY"
-                ? `Delivery fee to collect: ₦${Number(order.deliveryFee).toLocaleString()}`
+                ? `${order.paymentCoverage === "ITEM_AND_DELIVERY" ? "Item and delivery amount to collect" : "Delivery fee to collect"}: ₦${Number(order.paymentCoverage === "ITEM_AND_DELIVERY" ? order.totalAmountToCollect ?? order.deliveryFee ?? 0 : order.deliveryFee ?? 0).toLocaleString()}`
                 : "Already paid"}
             </span>
+            {order.paymentMethod === "PAYMENT_ON_DELIVERY" && order.paymentCoverage && (
+              <span className="collection-line">
+                Receiver pays: {order.paymentCoverage === "ITEM_AND_DELIVERY" ? "Item and delivery fee" : "Delivery fee only"}
+              </span>
+            )}
           </div>
           {order.paymentMethod === "PAYMENT_ON_DELIVERY" && (
             <div className="payment-receipt-upload rider-payment-receipt-upload">
@@ -243,6 +252,7 @@ export default function ConfirmDeliveryPage({ params }: Props) {
                 accept="image/jpeg,image/png,image/webp,application/pdf"
                 onChange={(event) => {
                   const selectedReceipt = event.target.files?.[0] || null;
+                  event.target.value = "";
                   if (!selectedReceipt) {
                     setPaymentReceipt(null);
                     return;
@@ -276,12 +286,16 @@ export default function ConfirmDeliveryPage({ params }: Props) {
                   }
                   setPaymentReceipt(selectedReceipt);
                   setPaymentDialog(null);
+                  uploadPaymentReceipt.mutate(selectedReceipt);
                 }}
               />
-              <span className="receipt-file-name">{paymentReceipt ? paymentReceipt.name : order.paymentReceipts?.length ? "Receipt already uploaded" : "No receipt selected"}</span>
-              <button type="button" className="button button-secondary button-full" disabled={!paymentReceipt || uploadPaymentReceipt.isPending} onClick={() => uploadPaymentReceipt.mutate()}>
-                <Upload size={16} /> {uploadPaymentReceipt.isPending ? "Uploading receipt..." : "Upload payment receipt"}
-              </button>
+              <span className="receipt-file-name">
+                {uploadPaymentReceipt.isPending
+                  ? `Uploading ${paymentReceipt?.name || "receipt"}...`
+                  : order.paymentReceipts?.length
+                    ? "Receipt uploaded"
+                    : "Select a receipt to upload automatically"}
+              </span>
               {uploadPaymentReceipt.isError ? <p className="form-error">{uploadPaymentReceipt.error instanceof Error ? uploadPaymentReceipt.error.message : "Could not upload the payment receipt."}</p> : null}
             </div>
           )}

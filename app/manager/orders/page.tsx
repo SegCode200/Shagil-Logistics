@@ -128,6 +128,13 @@ function ManagerOrdersContent() {
                           : order.paymentMethod === "ALREADY_PAID"
                             ? "PBD"
                             : "-"}
+                        {order.paymentMethod === "PAYMENT_ON_DELIVERY" && order.paymentCoverage && (
+                          <small className="muted block">
+                            {order.paymentCoverage === "ITEM_AND_DELIVERY"
+                              ? "Item + delivery"
+                              : "Delivery only"}
+                          </small>
+                        )}
                       </td>
                       <td>
                         <OrderStatusBadge status={order.status} />
@@ -169,7 +176,9 @@ function ManagerOrdersContent() {
                   <div className="mobile-order-row mobile-order-row-tight">
                     <span className="mobile-order-label">Payment</span>
                     <span className={`mini-status mini-status-${order.paymentMethod === "PAYMENT_ON_DELIVERY" ? "pending" : "paid"}`}>
-                      {order.paymentMethod === "PAYMENT_ON_DELIVERY" ? "POD" : "PBD"}
+                      {order.paymentMethod === "PAYMENT_ON_DELIVERY"
+                        ? `POD${order.paymentCoverage ? ` · ${order.paymentCoverage === "ITEM_AND_DELIVERY" ? "Item + delivery" : "Delivery only"}` : ""}`
+                        : "PBD"}
                     </span>
                   </div>
                   <div className="mobile-order-row mobile-order-row-tight">

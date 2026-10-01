@@ -126,25 +126,27 @@ export default function RiderDashboard() {
                       )}
                     </p>
                   </section>
-                  <section className="rider-route-stop rider-route-delivery">
-                    <span className="rider-route-label">Delivery</span>
-                    <strong>{order.receiverName || order.customerName}</strong>
+                  <section className="rider-route-stop rider-route-delivery rider-receiver-highlight">
+                    <span className="rider-route-label">Delivery · Receiver</span>
+                    <strong className="rider-receiver-name">
+                      {order.receiverName || order.customerName}
+                    </strong>
                     <p>
                       <MapPin size={14} /> {order.deliveryAddress}
                     </p>
+                    <div className="rider-receiver-phone">
+                      <strong>Receiver phone</strong>
+                      {order.receiverPhoneNumber ? (
+                        <a href={`tel:${order.receiverPhoneNumber}`}>
+                          <Phone size={14} /> {order.receiverPhoneNumber}
+                        </a>
+                      ) : (
+                        <span>Not provided</span>
+                      )}
+                    </div>
                   </section>
                 </div>
                 <div className="rider-facts">
-                  <span>
-                    <strong>Receiver phone</strong>
-                    {order.receiverPhoneNumber ? (
-                      <a href={`tel:${order.receiverPhoneNumber}`}>
-                        <Phone size={13} /> {order.receiverPhoneNumber}
-                      </a>
-                    ) : (
-                      "—"
-                    )}
-                  </span>
                   <span>
                     <strong>Date & time</strong>
                     <span>{formatDateTime(order.deliveredAt || order.createdAt)}</span>
@@ -155,7 +157,7 @@ export default function RiderDashboard() {
                       <Wallet size={13} />{" "}
                       {order.paymentMethod === "PAYMENT_ON_DELIVERY" ? "POD" : "PBD"}
                       {order.paymentMethod === "PAYMENT_ON_DELIVERY"
-                        ? ` · Collect ₦${Number(order.deliveryFee ?? 0).toLocaleString()}`
+                        ? ` · ${order.paymentCoverage === "ITEM_AND_DELIVERY" ? "Item + delivery" : "Delivery only"} · Collect ₦${Number(order.paymentCoverage === "ITEM_AND_DELIVERY" ? order.totalAmountToCollect ?? order.deliveryFee ?? 0 : order.deliveryFee ?? 0).toLocaleString()}`
                         : " · Already paid"}
                     </span>
                   </span>

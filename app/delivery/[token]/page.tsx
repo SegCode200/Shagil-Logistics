@@ -208,6 +208,16 @@ export default function CustomerDeliveryPage({
                     : "Already paid ✓"}
               </strong>
             </div>
+              {order.paymentMethod === "PAYMENT_ON_DELIVERY" && order.paymentCoverage && (
+                <div>
+                  <span>Receiver pays</span>
+                  <strong>
+                    {order.paymentCoverage === "ITEM_AND_DELIVERY"
+                      ? "Item and delivery fee"
+                      : "Delivery fee only"}
+                  </strong>
+                </div>
+              )}
             {order.paymentMethod === "PAYMENT_ON_DELIVERY" &&
               order.receiverCollectionStatus !== "COLLECTED" && (
                 <div>

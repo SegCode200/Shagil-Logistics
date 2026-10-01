@@ -30,10 +30,8 @@ export default function SenderOrderDetailsPage({ params }: Props) {
   } | null>(null);
   const [receipt, setReceipt] = useState<File | null>(null);
   const uploadReceipt = useMutation({
-    mutationFn: () => {
-      if (!receipt) throw new Error("Please select a payment receipt first.");
-      return api.uploadSenderPaymentReceipt(token, orderId, receipt);
-    },
+    mutationFn: (receiptFile: File) =>
+      api.uploadSenderPaymentReceipt(token, orderId, receiptFile),
     onSuccess: () => {
       setReceipt(null);
       setFeedback({
@@ -252,7 +250,7 @@ export default function SenderOrderDetailsPage({ params }: Props) {
                   <ol>
                     <li>- Take a screenshot of your payment confirmation or download the receipt.</li>
                     <li>- Go to recent on your device to see the file.</li>
-                    <li>- Attach the file below and tap Upload receipt.</li>
+                    <li>- Select the receipt below. It uploads automatically.</li>
                     <li>- If you cannot attach it, forward the receipt on WhatsApp to the station number.</li>
                   </ol>
                   {stationManagerPhone ? (
@@ -275,6 +273,7 @@ export default function SenderOrderDetailsPage({ params }: Props) {
                   accept="image/jpeg,image/png,image/webp,application/pdf"
                   onChange={(event) => {
                     const selectedReceipt = event.target.files?.[0] || null;
+                    event.target.value = "";
                     if (!selectedReceipt) {
                       setReceipt(null);
                       return;
@@ -306,21 +305,17 @@ export default function SenderOrderDetailsPage({ params }: Props) {
                     }
                     setReceipt(selectedReceipt);
                     setFeedback(null);
+                    uploadReceipt.mutate(selectedReceipt);
                   }}
                 />
-                <span className="receipt-file-name">{receipt ? receipt.name : "No receipt selected"}</span>
+                <span className="receipt-file-name">
+                  {uploadReceipt.isPending
+                    ? `Uploading ${receipt?.name || "receipt"}...`
+                    : order.paymentReceipts?.length
+                      ? "Receipt uploaded"
+                      : "Select a receipt to upload automatically"}
+                </span>
               </label> : null}
-              {!order.paymentReceipts?.length ? <button
-                type="button"
-                className="button button-primary button-full"
-                disabled={!receipt || uploadReceipt.isPending}
-                onClick={() => uploadReceipt.mutate()}
-              >
-                <Upload size={16} />{" "}
-                {uploadReceipt.isPending
-                  ? "Uploading receipt..."
-                  : "Upload receipt"}
-              </button> : null}
               {!order.paymentReceipts?.length ? <p className="subtext">
                 Photos are compressed to about 1 MB before upload. PDF receipts must be 3 MB or smaller.
               </p> : null}
@@ -512,6 +507,16 @@ export default function SenderOrderDetailsPage({ params }: Props) {
               {order.senderPaymentStatus === "PAID" ? " · Paid" : " · Pending"}
             </strong>
           </div>
+          {order.paymentMethod === "PAYMENT_ON_DELIVERY" && order.paymentCoverage && (
+            <div>
+              <span>Receiver pays</span>
+              <strong>
+                {order.paymentCoverage === "ITEM_AND_DELIVERY"
+                  ? "Item and delivery fee"
+                  : "Delivery fee only"}
+              </strong>
+            </div>
+          )}
         </div>
 
         {order.packageNotes && (

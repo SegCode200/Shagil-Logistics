@@ -99,6 +99,14 @@ export default function SenderAccessPage({ params }: Props) {
                   <div className="sender-order-meta">
                     <span><UserRound size={14} aria-hidden="true" /><b>Receiver</b>{order.receiverName || "Not provided"}</span>
                     <span><b>Delivery fee</b>₦{Number(order.deliveryFee || 0).toLocaleString()}</span>
+                    {order.paymentMethod === "PAYMENT_ON_DELIVERY" && order.paymentCoverage && (
+                      <span>
+                        <b>Receiver pays</b>
+                        {order.paymentCoverage === "ITEM_AND_DELIVERY"
+                          ? "Item and delivery fee"
+                          : "Delivery fee only"}
+                      </span>
+                    )}
                   </div>
                   <span className="sender-order-view">View delivery <ChevronRight size={17} /></span>
                 </Link>

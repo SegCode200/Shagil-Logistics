@@ -21,6 +21,7 @@ type Values = {
   pickupAddress: string;
   pickupInstructions: string;
   paymentMethod: "" | "ALREADY_PAID" | "PAYMENT_ON_DELIVERY";
+  paymentCoverage: "" | "DELIVERY_ONLY" | "ITEM_AND_DELIVERY";
   deliveryType: "" | "NORMAL" | "EXPRESS";
 };
 const initialValues: Values = {
@@ -35,6 +36,7 @@ const initialValues: Values = {
   pickupAddress: "",
   pickupInstructions: "",
   paymentMethod: "",
+  paymentCoverage: "",
   deliveryType: "",
 };
 function removeEmptyValues(values: Values) {
@@ -193,6 +195,14 @@ export default function CreateOrderPage() {
       setValidationTarget("receiverPhoneNumber");
       return;
     }
+    if (
+      values.paymentMethod === "PAYMENT_ON_DELIVERY" &&
+      !values.paymentCoverage
+    ) {
+      setValidationMessage("Choose what the receiver will pay for.");
+      setValidationTarget("paymentCoverage");
+      return;
+    }
     if (images.length === 0) {
       setValidationMessage("Photo of Goods not added");
       setValidationTarget("productImages");
@@ -317,6 +327,8 @@ export default function CreateOrderPage() {
                               ? "delivery-type"
                               : validationTarget === "paymentMethod"
                                 ? "payment-type"
+                                : validationTarget === "paymentCoverage"
+                                  ? "payment-coverage"
                                 : `create-${validationTarget}`;
                   const target = document.getElementById(targetId);
                   target?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -546,14 +558,39 @@ export default function CreateOrderPage() {
               id="payment-type"
               required
               value={values.paymentMethod}
-              onChange={(e) =>
-                set("paymentMethod", e.target.value as Values["paymentMethod"])
-              }
+              onChange={(e) => {
+                const paymentMethod = e.target.value as Values["paymentMethod"];
+                set("paymentMethod", paymentMethod);
+                if (paymentMethod !== "PAYMENT_ON_DELIVERY") {
+                  set("paymentCoverage", "");
+                }
+              }}
             >
               <option value="">Select payment type</option>
               <option value="ALREADY_PAID">Payment by sender before delivery</option>
               <option value="PAYMENT_ON_DELIVERY">Payment by receiver on delivery </option>
             </select>
+            {values.paymentMethod === "PAYMENT_ON_DELIVERY" && (
+              <div className="field">
+                <label htmlFor="payment-coverage">What will the receiver pay for?</label>
+                <select
+                  className="select"
+                  id="payment-coverage"
+                  required
+                  value={values.paymentCoverage}
+                  onChange={(event) =>
+                    set(
+                      "paymentCoverage",
+                      event.target.value as Values["paymentCoverage"],
+                    )
+                  }
+                >
+                  <option value="">Select payment coverage</option>
+                  <option value="DELIVERY_ONLY">Delivery fee only</option>
+                  <option value="ITEM_AND_DELIVERY">Item and delivery fee</option>
+                </select>
+              </div>
+            )}
           </Section>
             {validationTarget === "productImages" && (
               <p className="form-error" role="alert">

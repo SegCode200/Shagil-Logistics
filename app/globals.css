@@ -1888,6 +1888,11 @@ select {
 .rider-route-delivery {
   border-left-color: var(--navy);
 }
+.rider-route-stop.rider-receiver-highlight {
+  border: 1px solid #efb5a6;
+  border-left: 4px solid var(--brand);
+  background: #fff7f4;
+}
 .rider-route-label {
   color: var(--brand-dark);
   font-size: 10px;
@@ -1897,6 +1902,40 @@ select {
 }
 .rider-route-delivery .rider-route-label {
   color: var(--navy);
+}
+.rider-receiver-name {
+  font-size: 15px !important;
+  font-weight: 850 !important;
+}
+.rider-receiver-phone {
+  display: grid;
+  gap: 5px;
+  margin-top: 3px;
+  padding: 9px 10px;
+  border: 1px solid #f0c5b9;
+  border-radius: 6px;
+  background: white;
+}
+.rider-receiver-phone > strong {
+  color: var(--brand-dark);
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.rider-receiver-phone > a,
+.rider-receiver-phone > span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--navy);
+  font-size: 14px;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+.rider-receiver-phone svg {
+  flex: 0 0 auto;
+  color: var(--brand-dark);
 }
 .rider-route-stop > strong,
 .rider-pickup-summary > strong {
@@ -2056,6 +2095,27 @@ select {
   color: #f6b29e;
 }
 .delivery-summary-card > .rider-route-label {
+  color: #f6b29e;
+}
+.delivery-summary-card.rider-receiver-highlight {
+  border-color: #d68f7e;
+  box-shadow: inset 3px 0 0 #f6b29e;
+}
+.delivery-summary-card .rider-receiver-name {
+  color: white;
+}
+.delivery-summary-card .rider-receiver-phone {
+  border-color: #52758a;
+  background: #173b53;
+}
+.delivery-summary-card .rider-receiver-phone > strong {
+  color: #f6b29e;
+}
+.delivery-summary-card .rider-receiver-phone > a,
+.delivery-summary-card .rider-receiver-phone > span {
+  color: white;
+}
+.delivery-summary-card .rider-receiver-phone svg {
   color: #f6b29e;
 }
 .receiver-heading {

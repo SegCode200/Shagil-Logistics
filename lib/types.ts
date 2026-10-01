@@ -9,6 +9,7 @@ export type OrderStatus =
   | "DELIVERED"
   | "CANCELLED";
 export type PaymentMethod = "ALREADY_PAID" | "PAYMENT_ON_DELIVERY";
+export type PaymentCoverage = "DELIVERY_ONLY" | "ITEM_AND_DELIVERY";
 export type PaymentStatus = "NOT_REQUIRED" | "PENDING" | "PAID";
 export type CompanyPaymentStatus = "PENDING" | "PAID";
 export type ShopOrderStatus = "NEW" | "PROCESSING" | "COMPLETED" | "CANCELLED";
@@ -88,6 +89,7 @@ export type PublicSenderOrder = {
   packageNotes?: string | null;
   deliveryFee: number | string;
   paymentMethod: PaymentMethod;
+  paymentCoverage?: PaymentCoverage;
   authorizePayment?: boolean;
   deliveryType?: DeliveryType;
   assignedRiderId?: string | null;
@@ -325,6 +327,7 @@ export type Order = {
   companyBikeId?: string | null;
   managedBy?: User | null;
   paymentMethod?: PaymentMethod;
+  paymentCoverage?: PaymentCoverage;
   authorizedPayment?: boolean;
   deliveryType?: DeliveryType;
   paymentStatus?: PaymentStatus;

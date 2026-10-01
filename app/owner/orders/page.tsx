@@ -234,6 +234,13 @@ function OrdersContent() {
                           {order.paymentMethod === "PAYMENT_ON_DELIVERY"
                             ? "POD"
                             : "PBD"}
+                          {order.paymentMethod === "PAYMENT_ON_DELIVERY" && order.paymentCoverage && (
+                            <small className="muted block">
+                              {order.paymentCoverage === "ITEM_AND_DELIVERY"
+                                ? "Item + delivery"
+                                : "Delivery only"}
+                            </small>
+                          )}
                           <small className="muted block">
                             <span
                               className={`mini-status mini-status-${(order.finalPaymentStatus || "PENDING").toLowerCase()}`}
@@ -286,7 +293,7 @@ function OrdersContent() {
                         className={`mini-status mini-status-${(order.paymentMethod === "PAYMENT_ON_DELIVERY" ? "pending" : "paid")}`}
                       >
                         {order.paymentMethod === "PAYMENT_ON_DELIVERY"
-                          ? "POD"
+                          ? `POD${order.paymentCoverage ? ` · ${order.paymentCoverage === "ITEM_AND_DELIVERY" ? "Item + delivery" : "Delivery only"}` : ""}`
                           : "PBD"}
                       </span>
                     </div>

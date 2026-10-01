@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft, Check, Pencil, Save, Send, Upload } from "lucide-react";
+import { ArrowLeft, Check, Pencil, Save, Send } from "lucide-react";
 import { use, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/app-shell";
@@ -103,7 +103,13 @@ export default function ManagerOrderDetailsPage({ params }: Props) {
     enabled: Boolean(user),
   });
   const update = useMutation({
-    mutationFn: () => api.updateManagerOrder(orderId, editValues),
+    mutationFn: () => {
+      const values = { ...editValues };
+      if (values.paymentMethod !== "PAYMENT_ON_DELIVERY") {
+        delete values.paymentCoverage;
+      }
+      return api.updateManagerOrder(orderId, values);
+    },
     onSuccess: () => {
       setEditing(false);
       setNotice("Order updated successfully.");
@@ -168,10 +174,8 @@ export default function ManagerOrderDetailsPage({ params }: Props) {
     onSuccess: () => setAccessNotice("Receiver access link sent successfully."),
   });
   const uploadPaymentReceipt = useMutation({
-    mutationFn: () => {
-      if (!paymentReceipt) throw new Error("Select a receipt first.");
-      return api.uploadAlreadyPaidReceipts(orderId, paymentReceipt);
-    },
+    mutationFn: (receiptFile: File) =>
+      api.uploadAlreadyPaidReceipts(orderId, receiptFile),
     onSuccess: () => {
       setPaymentReceipt(null);
       queryClient.invalidateQueries({ queryKey: ["managerOrder", orderId] });
@@ -240,6 +244,7 @@ export default function ManagerOrderDetailsPage({ params }: Props) {
       deliveryZoneId: data.deliveryZoneId || data.deliveryZone?.id || "",
       pickupMethod: data.pickupMethod || "SENDER_DROPOFF",
       paymentMethod: data.paymentMethod || "PAYMENT_ON_DELIVERY",
+      paymentCoverage: data.paymentCoverage || "",
       deliveryFee: String(editableBaseFee),
     });
     setEditing(true);
@@ -423,12 +428,16 @@ export default function ManagerOrderDetailsPage({ params }: Props) {
                   className="select"
                   id="manager-edit-payment"
                   value={editValues.paymentMethod || ""}
-                  onChange={(event) =>
+                  onChange={(event) => {
+                    const paymentMethod = event.target.value;
                     setEditValues({
                       ...editValues,
-                      paymentMethod: event.target.value,
-                    })
-                  }
+                      paymentMethod,
+                      ...(paymentMethod === "PAYMENT_ON_DELIVERY"
+                        ? {}
+                        : { paymentCoverage: "" }),
+                    });
+                  }}
                 >
                   <option value="ALREADY_PAID">Payment before delivery</option>
                   <option value="PAYMENT_ON_DELIVERY">
@@ -436,6 +445,27 @@ export default function ManagerOrderDetailsPage({ params }: Props) {
                   </option>
                 </select>
               </div>
+              {editValues.paymentMethod === "PAYMENT_ON_DELIVERY" && (
+                <div className="field">
+                  <label htmlFor="manager-edit-payment-coverage">What will the receiver pay for?</label>
+                  <select
+                    className="select"
+                    id="manager-edit-payment-coverage"
+                    required
+                    value={editValues.paymentCoverage || ""}
+                    onChange={(event) =>
+                      setEditValues({
+                        ...editValues,
+                        paymentCoverage: event.target.value,
+                      })
+                    }
+                  >
+                    <option value="">Select payment coverage</option>
+                    <option value="DELIVERY_ONLY">Delivery fee only</option>
+                    <option value="ITEM_AND_DELIVERY">Item and delivery fee</option>
+                  </select>
+                </div>
+              )}
               {field("Base fee", "deliveryFee", "number")}
               <div className="form-actions field-span">
                 <button
@@ -514,6 +544,26 @@ export default function ManagerOrderDetailsPage({ params }: Props) {
                     : `₦${Number(data.deliveryFee).toLocaleString()}`}
                 </dd>
               </div>
+              <div>
+                <dt>Payment method</dt>
+                <dd>
+                  {data.paymentMethod === "PAYMENT_ON_DELIVERY"
+                    ? "Payment on delivery"
+                    : "Payment before delivery"}
+                </dd>
+              </div>
+              {data.paymentMethod === "PAYMENT_ON_DELIVERY" && (
+                <div>
+                  <dt>Payment coverage</dt>
+                  <dd>
+                    {data.paymentCoverage === "ITEM_AND_DELIVERY"
+                      ? "Item and delivery fee"
+                      : data.paymentCoverage === "DELIVERY_ONLY"
+                        ? "Delivery fee only"
+                        : "Not specified"}
+                  </dd>
+                </div>
+              )}
               {deliveryBreakdown && (
                 <div className="fee-breakdown-wrap">
                   <dt>Fee breakdown</dt>
@@ -615,24 +665,27 @@ export default function ManagerOrderDetailsPage({ params }: Props) {
               {showUploadReceiptStep && (
                 <div className="payment-receipt-upload">
                   <p className="action-label">Step 2: Upload receipt and confirm payment</p>
-                  <label className="receipt-upload-label" htmlFor="manager-payment-receipt">Choose payment receipt</label>
+                  <label className="receipt-upload-label" htmlFor="manager-payment-receipt">Choose receipt (uploads automatically)</label>
                   <input
                     id="manager-payment-receipt"
                     className="receipt-file-input"
                     type="file"
                     accept="image/jpeg,image/png,image/webp,application/pdf"
-                    onChange={(event) => setPaymentReceipt(event.target.files?.[0] || null)}
+                    onChange={(event) => {
+                      const selectedReceipt = event.target.files?.[0];
+                      event.target.value = "";
+                      if (!selectedReceipt) return;
+                      setPaymentReceipt(selectedReceipt);
+                      uploadPaymentReceipt.mutate(selectedReceipt);
+                    }}
                   />
-                  <span className="receipt-file-name">{paymentReceipt ? paymentReceipt.name : "No receipt selected"}</span>
-                  <button
-                    type="button"
-                    className="button button-secondary button-full"
-                    disabled={!paymentReceipt || uploadPaymentReceipt.isPending}
-                    onClick={() => uploadPaymentReceipt.mutate()}
-                  >
-                    <Upload size={16} />
-                    {uploadPaymentReceipt.isPending ? "Uploading receipt..." : "Upload receipt"}
-                  </button>
+                  <span className="receipt-file-name">
+                    {uploadPaymentReceipt.isPending
+                      ? `Uploading ${paymentReceipt?.name || "receipt"}...`
+                      : uploadPaymentReceipt.isSuccess
+                        ? "Receipt uploaded"
+                        : "Select a receipt to upload automatically"}
+                  </span>
                   {uploadPaymentReceipt.isSuccess && <p className="success-text">Payment receipt uploaded.</p>}
                   {uploadPaymentReceipt.isError && <p className="form-error">{uploadPaymentReceipt.error instanceof Error ? uploadPaymentReceipt.error.message : "Could not upload the payment receipt."}</p>}
                   <label className="payment-confirmation">
