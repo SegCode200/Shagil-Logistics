@@ -3,7 +3,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Download, Phone } from "lucide-react";
+import { ArrowRight, Download, Phone, Share2 } from "lucide-react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { LoadingState } from "@/components/ui/primitives";
 import { api } from "@/lib/api";
@@ -104,6 +104,7 @@ export default function RiderAppPage() {
     if (!installPrompt) return;
     await installPrompt.prompt();
     const choice = await installPrompt.userChoice;
+    if (choice.outcome === "accepted") setAppInstalled(true);
     setInstallPrompt(null);
   }
 
@@ -141,20 +142,31 @@ export default function RiderAppPage() {
               Install this app, then open it from your home screen. Your saved
               rider access link will open automatically.
             </p>
-            <button
-              type="button"
-              className="button button-primary button-full"
-              onClick={installApp}
-              disabled={!installPrompt || appInstalled}
-            >
-              <Download size={17} />
-              {appInstalled ? "Installed · Open from home screen" : "Install Shagil Rider"}
-            </button>
-            {(!installPrompt || appInstalled) && (
+            {installPrompt && !appInstalled ? (
+              <button
+                type="button"
+                className="button button-primary button-full"
+                onClick={installApp}
+              >
+                <Download size={17} /> Install Shagil Rider
+              </button>
+            ) : appInstalled ? (
               <p className="rider-app-install-help">
-                {isIos
-                  ? "In Safari, tap Share, then Add to Home Screen. Open the installed app to continue."
-                  : "Use your browser menu to install or add this app to your home screen. Then open it there to continue."}
+                Shagil Rider is installed. Open it from your home screen to continue.
+              </p>
+            ) : isIos ? (
+              <div className="rider-ios-install-help">
+                <strong><Share2 size={17} /> Install on iPhone</strong>
+                <ol>
+                  <li>Open this page in Safari.</li>
+                  <li>Tap the Share button.</li>
+                  <li>Choose “Add to Home Screen,” then tap “Add.”</li>
+                  <li>Open Shagil Rider from your home screen.</li>
+                </ol>
+              </div>
+            ) : (
+              <p className="rider-app-install-help">
+                Use your browser menu to install or add this app to your home screen, then open it to continue.
               </p>
             )}
             <button
