@@ -1872,6 +1872,110 @@ select {
   gap: 6px;
   margin: 17px 0;
 }
+.rider-app-page {
+  width: 100%;
+  max-width: 480px;
+  min-height: 100vh;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  margin: 0 auto;
+  padding: 24px;
+  background: white;
+}
+.rider-app-header {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.rider-app-header > div {
+  display: grid;
+  gap: 2px;
+}
+.rider-app-header strong {
+  color: var(--navy);
+  font-size: 15px;
+}
+.rider-app-header > div > span {
+  color: var(--muted);
+  font-size: 11px;
+}
+.rider-app-content {
+  width: 100%;
+  margin: auto 0;
+  padding: 42px 0;
+}
+.rider-app-content h1 {
+  margin: 0;
+  color: var(--navy);
+  font-size: 29px;
+  line-height: 1.15;
+}
+.rider-app-intro,
+.rider-app-message > p:not(.eyebrow) {
+  margin: 10px 0 24px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.55;
+}
+.rider-app-form {
+  display: grid;
+  gap: 10px;
+}
+.rider-app-form > label {
+  color: var(--navy);
+  font-size: 12px;
+  font-weight: 750;
+}
+.rider-app-phone-input {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 12px;
+  border: 1px solid #d8dde5;
+  border-radius: 7px;
+  color: var(--muted);
+  background: white;
+}
+.rider-app-phone-input:focus-within {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px #fce5df;
+}
+.rider-app-phone-input .input {
+  min-width: 0;
+  padding-left: 0;
+  border: 0;
+  box-shadow: none;
+}
+.rider-app-install {
+  display: grid;
+  gap: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+.rider-app-install > p {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.rider-app-install svg {
+  flex: 0 0 auto;
+  color: var(--brand-dark);
+}
+.rider-app-message > svg {
+  margin-bottom: 16px;
+  color: #2d9862;
+}
+.rider-app-message > .eyebrow {
+  margin-bottom: 7px;
+}
 .rider-route-stops {
   display: grid;
   gap: 8px;

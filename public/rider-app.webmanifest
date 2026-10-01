@@ -1,0 +1,18 @@
+{
+  "name": "Shagil Rider",
+  "short_name": "Shagil Rider",
+  "description": "Open assigned Shagil deliveries.",
+  "start_url": "/rider/app",
+  "scope": "/rider/",
+  "display": "standalone",
+  "background_color": "#f7f8fa",
+  "theme_color": "#183b56",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

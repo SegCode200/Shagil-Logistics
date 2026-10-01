@@ -112,6 +112,9 @@ export default function LoginPage() {
           <p className="subtext" style={{ textAlign: "center" }}>
             New sender? <Link href="/sender/register" className="text-link">Register here</Link>
           </p>
+          <p className="subtext" style={{ textAlign: "center" }}>
+            Rider? <Link href="/rider/app" className="text-link">Open Shagil Rider</Link>
+          </p>
         </form>
       </section>
     </main>
