@@ -3,7 +3,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Download, Phone, Share2 } from "lucide-react";
+import { ArrowRight, Download, Phone } from "lucide-react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { LoadingState } from "@/components/ui/primitives";
 import { api } from "@/lib/api";
@@ -13,15 +13,17 @@ type InstallPromptEvent = Event & {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 };
+const PENDING_RIDER_ACCESS_LINK_KEY = "pending_rider_access_link";
 
 export default function RiderAppPage() {
   const router = useRouter();
   const { user, isLoading } = useAuth();
   const [phone, setPhone] = useState("");
   const [error, setError] = useState("");
+  const [accessReady, setAccessReady] = useState(false);
+  const [appInstalled, setAppInstalled] = useState(false);
   const [installPrompt, setInstallPrompt] = useState<InstallPromptEvent | null>(null);
   const [isIos, setIsIos] = useState(false);
-  const [isStandalone, setIsStandalone] = useState(false);
 
   const requestAccessLink = useMutation({
     mutationFn: (normalizedPhone: string) =>
@@ -38,7 +40,12 @@ export default function RiderAppPage() {
           setError("The rider access link returned by the server is invalid.");
           return;
         }
-        window.location.assign(accessUrl.href);
+        localStorage.setItem(PENDING_RIDER_ACCESS_LINK_KEY, accessUrl.href);
+        setAccessReady(true);
+        setError("");
+        if (window.matchMedia("(display-mode: standalone)").matches) {
+          window.location.replace(accessUrl.href);
+        }
       } catch {
         setError("The rider access link returned by the server is invalid.");
       }
@@ -65,20 +72,31 @@ export default function RiderAppPage() {
   }, [isLoading, router, user]);
 
   useEffect(() => {
+    if (isLoading || user) return;
+    const isStandalone = window.matchMedia("(display-mode: standalone)").matches;
+    if (!isStandalone) return;
+    const pendingAccessLink = localStorage.getItem(PENDING_RIDER_ACCESS_LINK_KEY);
+    if (pendingAccessLink) window.location.replace(pendingAccessLink);
+  }, [isLoading, user]);
+
+  useEffect(() => {
     const frame = window.requestAnimationFrame(() => {
       setIsIos(/iPad|iPhone|iPod/.test(navigator.userAgent));
-      setIsStandalone(window.matchMedia("(display-mode: standalone)").matches);
+      setAccessReady(Boolean(localStorage.getItem(PENDING_RIDER_ACCESS_LINK_KEY)));
     });
 
     const handleInstallPrompt = (event: Event) => {
       event.preventDefault();
       setInstallPrompt(event as InstallPromptEvent);
     };
+    const handleAppInstalled = () => setAppInstalled(true);
 
     window.addEventListener("beforeinstallprompt", handleInstallPrompt);
+    window.addEventListener("appinstalled", handleAppInstalled);
     return () => {
       window.cancelAnimationFrame(frame);
       window.removeEventListener("beforeinstallprompt", handleInstallPrompt);
+      window.removeEventListener("appinstalled", handleAppInstalled);
     };
   }, []);
 
@@ -86,7 +104,6 @@ export default function RiderAppPage() {
     if (!installPrompt) return;
     await installPrompt.prompt();
     const choice = await installPrompt.userChoice;
-    if (choice.outcome === "accepted") setIsStandalone(true);
     setInstallPrompt(null);
   }
 
@@ -98,6 +115,7 @@ export default function RiderAppPage() {
       setError("Enter a complete Nigerian mobile number.");
       return;
     }
+    setAccessReady(false);
     requestAccessLink.mutate(normalizedPhone);
   }
 
@@ -115,55 +133,77 @@ export default function RiderAppPage() {
       <section className="rider-app-content">
         <p className="eyebrow">Rider access</p>
         <h1>Open your deliveries</h1>
-        <p className="rider-app-intro">
-          Enter the company phone number registered to your bike. The access
-          link returned by the server will open your rider dashboard.
-        </p>
-        <form className="rider-app-form" onSubmit={submit}>
-          <label htmlFor="rider-app-phone">Company phone number</label>
-          <div className="rider-app-phone-input">
-            <Phone size={18} aria-hidden="true" />
-            <input
-              className="input"
-              id="rider-app-phone"
-              type="tel"
-              inputMode="tel"
-              autoComplete="tel"
-              placeholder="+2347042604550"
-              required
-              value={phone}
-              onChange={(event) => setPhone(event.target.value)}
-              onBlur={() => setPhone(normalizeNigerianPhone(phone))}
-            />
-          </div>
-          {error && <p className="form-error" role="alert">{error}</p>}
-          <button
-            className="button button-primary button-full"
-            disabled={requestAccessLink.isPending}
-          >
-            {requestAccessLink.isPending
-              ? "Opening rider access..."
-              : <>Continue to deliveries <ArrowRight size={17} /></>}
-          </button>
-        </form>
-      </section>
-      {!isStandalone && (
-        <aside className="rider-app-install">
-          {installPrompt ? (
+        {accessReady ? (
+          <div className="rider-app-message" role="status">
+            <p className="eyebrow">Access link saved</p>
+            <h2>Install Shagil Rider</h2>
+            <p>
+              Install this app, then open it from your home screen. Your saved
+              rider access link will open automatically.
+            </p>
+            <button
+              type="button"
+              className="button button-primary button-full"
+              onClick={installApp}
+              disabled={!installPrompt || appInstalled}
+            >
+              <Download size={17} />
+              {appInstalled ? "Installed · Open from home screen" : "Install Shagil Rider"}
+            </button>
+            {(!installPrompt || appInstalled) && (
+              <p className="rider-app-install-help">
+                {isIos
+                  ? "In Safari, tap Share, then Add to Home Screen. Open the installed app to continue."
+                  : "Use your browser menu to install or add this app to your home screen. Then open it there to continue."}
+              </p>
+            )}
             <button
               type="button"
               className="button button-secondary button-full"
-              onClick={installApp}
+              onClick={() => {
+                localStorage.removeItem(PENDING_RIDER_ACCESS_LINK_KEY);
+                setAccessReady(false);
+              }}
             >
-              <Download size={17} /> Install Shagil Rider
+              Use another number
             </button>
-          ) : isIos ? (
-            <p><Share2 size={16} /> In Safari, use Share, then Add to Home Screen.</p>
-          ) : (
-            <p>Use your browser menu and choose Install app or Add to Home screen.</p>
-          )}
-        </aside>
-      )}
+          </div>
+        ) : (
+          <>
+            <p className="rider-app-intro">
+              Enter the company phone number registered to your bike. We’ll
+              save the rider access link first, then prepare it for the installed app.
+            </p>
+            <form className="rider-app-form" onSubmit={submit}>
+              <label htmlFor="rider-app-phone">Company phone number</label>
+              <div className="rider-app-phone-input">
+                <Phone size={18} aria-hidden="true" />
+                <input
+                  className="input"
+                  id="rider-app-phone"
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
+                  placeholder="+2347042604550"
+                  required
+                  value={phone}
+                  onChange={(event) => setPhone(event.target.value)}
+                  onBlur={() => setPhone(normalizeNigerianPhone(phone))}
+                />
+              </div>
+              {error && <p className="form-error" role="alert">{error}</p>}
+              <button
+                className="button button-primary button-full"
+                disabled={requestAccessLink.isPending}
+              >
+                {requestAccessLink.isPending
+                  ? "Requesting access..."
+                  : <>Get rider access <ArrowRight size={17} /></>}
+              </button>
+            </form>
+          </>
+        )}
+      </section>
     </main>
   );
 }

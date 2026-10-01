@@ -25,6 +25,7 @@ export default function RiderAccessPage({
           if (!active) return;
         const sessionToken = result.token || result.accessToken;
           localStorage.setItem("rider_access_token", token);
+        localStorage.removeItem("pending_rider_access_link");
         if (sessionToken) localStorage.setItem("auth_token", sessionToken);
         if (result.user) queryClient.setQueryData(["me"], result.user);
         else if (!sessionToken)
