@@ -303,8 +303,8 @@ export default function ConfirmDeliveryPage({ params }: Props) {
             <p className="action-section-label">Delivery controls</p>
             <div className="payment-action-row">
 
-              {order.paymentMethod === "PAYMENT_ON_DELIVERY" &&
-              order.status === "PICKED_UP" && (
+              {(order.paymentMethod === "PAYMENT_ON_DELIVERY" &&
+              order.status === "PICKED_UP" && order.paymentCoverage === "ITEM_AND_DELIVERY") && (
               <button
                 type="button"
                 className="button button-success"
@@ -400,7 +400,7 @@ export default function ConfirmDeliveryPage({ params }: Props) {
             )}
             <button
               className="button button-primary button-full"
-              disabled={mutation.isPending || order.companyPaymentStatus !== "PAID" || order.receiverCollectionStatus !== "COLLECTED"}
+              disabled={mutation.isPending || order.senderPaymentStatus !== "PAID" || order.receiverCollectionStatus !== "COLLECTED"}
             >
               {mutation.isPending ? "Confirming..." : "CONFIRM DELIVERY"}
             </button>
