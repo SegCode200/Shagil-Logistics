@@ -298,11 +298,14 @@ export const api = {
       `/riders/${encodeURIComponent(riderId)}/resend-login-link`,
       { method: "POST" },
     ),
-  requestRiderAccessLink: (phone: string) =>
-    request<{ notificationStatus?: string }>("/riders/request-login-link", {
+  requestRiderAccessLink: (companyPhoneNumber: string) =>
+    request<{ requested: boolean; accessLink: string | null }>(
+      "/riders/request-login-link",
+      {
       method: "POST",
-      body: JSON.stringify(normalizePhoneFields({ companyPhoneNumber: phone })),
-    }),
+        body: JSON.stringify(normalizePhoneFields({ companyPhoneNumber })),
+      },
+    ),
   getPublicShopCategories: async () =>
     listFromResponse<ShopCategory>(await request<unknown>("/shop/categories")),
   getPublicShopProducts: async () =>
