@@ -29,6 +29,7 @@ import type {
 import {
   requireCompleteNigerianPhone,
 } from "@/lib/phone";
+import { compressImageFile } from "@/lib/image-compression";
 
 const API_URL = (
   process.env.NEXT_PUBLIC_API_URL as string
@@ -53,6 +54,33 @@ function normalizePhoneList(phones: string[] = []) {
     .map((phone, index) =>
       requireCompleteNigerianPhone(phone, `Additional phone number ${index + 1}`),
     );
+}
+
+async function prepareShopProductImages(files: File[]) {
+  return Promise.all(
+    files.map((file) =>
+      compressImageFile(file, {
+        targetBytes: 120 * 1024,
+        outputType:
+          file.type === "image/jpeg" || file.type === "image/png"
+            ? "image/jpeg"
+            : "image/webp",
+      }),
+    ),
+  );
+}
+
+async function prepareReceiptFile(file: File) {
+  if (file.type === "application/pdf") {
+    if (file.size > 3 * 1024 * 1024) {
+      throw new Error("PDF receipts must be 3 MB or smaller.");
+    }
+    return file;
+  }
+  if (!file.type.startsWith("image/")) {
+    throw new Error("Receipt must be an image or PDF file.");
+  }
+  return compressImageFile(file);
 }
 
 function unwrap<T>(value: unknown): T {
@@ -179,8 +207,11 @@ export const api = {
     ),
   getAllOrders,
   getOrder: (orderId: string) => request<Order>(`/orders/${orderId}`),
-  createOrder: (payload: Partial<Order>, files: File[] = []) => {
+  createOrder: async (payload: Partial<Order>, files: File[] = []) => {
     if (files.length) {
+      const uploadFiles = await Promise.all(
+        files.slice(0, 3).map((file) => compressImageFile(file)),
+      );
       const body = new FormData();
       Object.entries(normalizePhoneFields(payload)).forEach(([key, value]) => {
         if (key === "images" || value == null) return;
@@ -189,9 +220,7 @@ export const api = {
           typeof value === "object" ? JSON.stringify(value) : String(value),
         );
       });
-      files
-        .slice(0, 3)
-        .forEach((file) => body.append("images", file, file.name));
+      uploadFiles.forEach((file) => body.append("images", file, file.name));
       return request<Order>("/orders", { method: "POST", body });
     }
     return request<Order>("/orders", {
@@ -310,19 +339,20 @@ export const api = {
     }),
   getShopProducts: async () =>
     listFromResponse<ShopProduct>(await request<unknown>("/shop/admin/products")),
-  createShopProduct: (payload: Record<string, unknown>, files: File[] = []) => {
+  createShopProduct: async (payload: Record<string, unknown>, files: File[] = []) => {
+    const uploadFiles = await prepareShopProductImages(files);
     const formData = new FormData();
     Object.entries(payload).forEach(([key, value]) => {
       if (key === "sku") return;
       appendFormField(formData, key, value);
     });
-    files.forEach((file) => formData.append("images", file, file.name));
+    uploadFiles.forEach((file) => formData.append("images", file, file.name));
     return request<ShopProduct>("/shop/admin/products", {
       method: "POST",
       body: formData,
     });
   },
-  updateShopProduct: (productId: string, payload: Record<string, unknown>, files: File[] = []) => {
+  updateShopProduct: async (productId: string, payload: Record<string, unknown>, files: File[] = []) => {
     if (files.length === 0) {
       return request<ShopProduct>(`/shop/admin/products/${encodeURIComponent(productId)}`, {
         method: "PATCH",
@@ -330,11 +360,12 @@ export const api = {
       });
     }
 
+    const uploadFiles = await prepareShopProductImages(files);
     const formData = new FormData();
     Object.entries(payload).forEach(([key, value]) => {
       appendFormField(formData, key, value);
     });
-    files.forEach((file) => formData.append("images", file, file.name));
+    uploadFiles.forEach((file) => formData.append("images", file, file.name));
     return request<ShopProduct>(`/shop/admin/products/${encodeURIComponent(productId)}`, {
       method: "PATCH",
       body: formData,
@@ -557,25 +588,28 @@ export const api = {
         method: "POST",
       },
     ),
-  uploadSenderPaymentReceipt: (token: string, orderId: string, file: File) => {
+  uploadSenderPaymentReceipt: async (token: string, orderId: string, file: File) => {
+    const uploadFile = await prepareReceiptFile(file);
     const body = new FormData();
-    body.append("receipts", file, file.name);
+    body.append("receipts", uploadFile, uploadFile.name);
     return request<unknown>(`/public/sender/${encodeURIComponent(token)}/orders/${encodeURIComponent(orderId)}/already-paid-receipt`, {
       method: "POST",
       body,
     });
   },
-  uploadAlreadyPaidReceipts: (orderId: string, file: File) => {
+  uploadAlreadyPaidReceipts: async (orderId: string, file: File) => {
+    const uploadFile = await prepareReceiptFile(file);
     const body = new FormData();
-    body.append("receipts", file, file.name);
+    body.append("receipts", uploadFile, uploadFile.name);
     return request<unknown>(`/orders/${encodeURIComponent(orderId)}/already-paid-receipts`, {
       method: "POST",
       body,
     });
   },
-  uploadPaymentOnDeliveryReceipts: (orderId: string, file: File) => {
+  uploadPaymentOnDeliveryReceipts: async (orderId: string, file: File) => {
+    const uploadFile = await prepareReceiptFile(file);
     const body = new FormData();
-    body.append("receipts", file, file.name);
+    body.append("receipts", uploadFile, uploadFile.name);
     return request<unknown>(`/orders/${encodeURIComponent(orderId)}/payment-on-delivery-receipts`, {
       method: "POST",
       body,

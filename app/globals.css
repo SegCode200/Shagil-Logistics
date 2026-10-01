@@ -1872,6 +1872,54 @@ select {
   gap: 6px;
   margin: 17px 0;
 }
+.rider-route-stops {
+  display: grid;
+  gap: 8px;
+  margin: 15px 0;
+}
+.rider-route-stop {
+  display: grid;
+  gap: 5px;
+  padding: 11px 12px;
+  border-left: 3px solid var(--brand);
+  border-radius: 0 7px 7px 0;
+  background: #f7f9fa;
+}
+.rider-route-delivery {
+  border-left-color: var(--navy);
+}
+.rider-route-label {
+  color: var(--brand-dark);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.rider-route-delivery .rider-route-label {
+  color: var(--navy);
+}
+.rider-route-stop > strong,
+.rider-pickup-summary > strong {
+  color: var(--foreground);
+  font-size: 13px;
+}
+.rider-route-stop > p,
+.rider-pickup-summary > p {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+.rider-route-stop > p svg,
+.rider-pickup-summary > p svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+  color: var(--brand-dark);
+}
 .rider-facts {
   display: grid;
   gap: 8px;
@@ -1985,6 +2033,30 @@ select {
   border: 1px solid #31556b;
   border-radius: 10px;
   background: #204861;
+}
+.rider-pickup-summary {
+  display: grid;
+  gap: 7px;
+  margin: 20px 0 0;
+  padding: 15px;
+  border: 1px solid #31556b;
+  border-radius: 8px;
+  background: #173b53;
+}
+.rider-pickup-summary .rider-route-label {
+  color: #f6b29e;
+}
+.rider-pickup-summary > strong {
+  color: white;
+}
+.rider-pickup-summary > p {
+  color: #b7cedb;
+}
+.rider-pickup-summary > p svg {
+  color: #f6b29e;
+}
+.delivery-summary-card > .rider-route-label {
+  color: #f6b29e;
 }
 .receiver-heading {
   display: flex;

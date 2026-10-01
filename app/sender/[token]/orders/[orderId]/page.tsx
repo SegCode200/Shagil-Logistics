@@ -293,11 +293,14 @@ export default function SenderOrderDetailsPage({ params }: Props) {
                       });
                       return;
                     }
-                    if (selectedReceipt.size > 3 * 1024 * 1024) {
+                    if (
+                      selectedReceipt.type === "application/pdf" &&
+                      selectedReceipt.size > 3 * 1024 * 1024
+                    ) {
                       setReceipt(null);
                       setFeedback({
                         type: "error",
-                        message: "Receipt must be 3 MB or smaller.",
+                        message: "PDF receipts must be 3 MB or smaller.",
                       });
                       return;
                     }
@@ -319,7 +322,7 @@ export default function SenderOrderDetailsPage({ params }: Props) {
                   : "Upload receipt"}
               </button> : null}
               {!order.paymentReceipts?.length ? <p className="subtext">
-                Accepted: JPEG, PNG, WebP, or PDF. Maximum size: 3 MB.
+                Photos are compressed to about 1 MB before upload. PDF receipts must be 3 MB or smaller.
               </p> : null}
             </div>
           ) : order.paymentMethod === "ALREADY_PAID" && order.status === "PENDING_APPROVAL" && !order.authorizePayment ? (

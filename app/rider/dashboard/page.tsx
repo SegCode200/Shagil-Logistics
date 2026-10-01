@@ -95,7 +95,14 @@ export default function RiderDashboard() {
           />
         ) : (
           <div className="delivery-list">
-            {orders.map((order) => (
+            {orders.map((order) => {
+                const pickupAddressVisible = ![
+                  "PICKED_UP",
+                  "DELIVERED",
+                  "CANCELLED",
+                ].includes(order.status);
+
+                return (
               <article className="panel rider-delivery-card" key={order.id}>
                 <header className="card-row">
                   <div>
@@ -104,16 +111,32 @@ export default function RiderDashboard() {
                   </div>
                   <OrderStatusBadge status={order.status} />
                 </header>
-                <p className="address">
-                  <MapPin size={15} /> {order.deliveryAddress}
-                </p>
+                <div className="rider-route-stops">
+                  <section className="rider-route-stop rider-route-pickup">
+                    <span className="rider-route-label">Pickup</span>
+                    <strong>{order.senderName || "Sender"}</strong>
+                    <p>
+                      {pickupAddressVisible ? (
+                        <>
+                          <MapPin size={14} />
+                          {order.pickupAddress || "Pickup address unavailable"}
+                        </>
+                      ) : (
+                        "Pickup complete"
+                      )}
+                    </p>
+                  </section>
+                  <section className="rider-route-stop rider-route-delivery">
+                    <span className="rider-route-label">Delivery</span>
+                    <strong>{order.receiverName || order.customerName}</strong>
+                    <p>
+                      <MapPin size={14} /> {order.deliveryAddress}
+                    </p>
+                  </section>
+                </div>
                 <div className="rider-facts">
                   <span>
-                    <strong>Receiver</strong>
-                    {order.receiverName || order.customerName}
-                  </span>
-                  <span>
-                    <strong>Phone</strong>
+                    <strong>Receiver phone</strong>
                     {order.receiverPhoneNumber ? (
                       <a href={`tel:${order.receiverPhoneNumber}`}>
                         <Phone size={13} /> {order.receiverPhoneNumber}
@@ -154,7 +177,8 @@ export default function RiderDashboard() {
                   </Link>
                 )}
               </article>
-            ))}
+                );
+            })}
           </div>
         )}
         {query.data && query.data.pagination.totalPages > 1 && (

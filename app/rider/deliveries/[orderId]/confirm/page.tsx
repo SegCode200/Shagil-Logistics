@@ -4,6 +4,7 @@ import Link from "next/link";
 import {
   ArrowLeft,
   CheckCircle2,
+  MapPin,
   MessageCircle,
   Phone,
   Send,
@@ -105,6 +106,11 @@ export default function ConfirmDeliveryPage({ params }: Props) {
         </div>
       </AppShell>
     );
+  const pickupAddressVisible = ![
+    "PICKED_UP",
+    "DELIVERED",
+    "CANCELLED",
+  ].includes(order.status);
   if (confirmed)
     return (
       <AppShell role="RIDER">
@@ -185,7 +191,20 @@ export default function ConfirmDeliveryPage({ params }: Props) {
               <PaymentReceiptViewer receipts={order.paymentReceipts} />
             </section>
           ) : null}
+          <section className="rider-pickup-summary">
+            <span className="rider-route-label">Pickup</span>
+            <strong>{order.senderName || "Sender"}</strong>
+            {pickupAddressVisible ? (
+              <p>
+                <MapPin size={15} />
+                {order.pickupAddress || "Pickup address unavailable"}
+              </p>
+            ) : (
+              <p>Pickup complete</p>
+            )}
+          </section>
           <div className="delivery-summary delivery-summary-card">
+            <span className="rider-route-label">Delivery</span>
             <div className="receiver-heading">
               <span className="receiver-avatar">
                 {(order.receiverName || order.customerName || "R").slice(0, 1).toUpperCase()}
@@ -203,7 +222,9 @@ export default function ConfirmDeliveryPage({ params }: Props) {
                 <Phone size={14} /> {order.receiverPhoneNumber || order.receiverPhone}
               </a>
             ) : null}
-            <p className="delivery-address">{order.deliveryAddress}</p>
+            <p className="delivery-address">
+              <MapPin size={15} /> {order.deliveryAddress}
+            </p>
             <span className="collection-line">
               {order.paymentMethod === "PAYMENT_ON_DELIVERY"
                 ? `Delivery fee to collect: ₦${Number(order.deliveryFee).toLocaleString()}`
@@ -241,12 +262,15 @@ export default function ConfirmDeliveryPage({ params }: Props) {
                     });
                     return;
                   }
-                  if (selectedReceipt.size > 3 * 1024 * 1024) {
+                  if (
+                    selectedReceipt.type === "application/pdf" &&
+                    selectedReceipt.size > 3 * 1024 * 1024
+                  ) {
                     setPaymentReceipt(null);
                     setPaymentDialog({
                       type: "error",
                       title: "Receipt file is too large",
-                      message: "Receipt must be 3 MB or smaller.",
+                      message: "PDF receipts must be 3 MB or smaller.",
                     });
                     return;
                   }
