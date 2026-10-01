@@ -301,7 +301,7 @@ export const api = {
   requestRiderAccessLink: (phone: string) =>
     request<{ notificationStatus?: string }>("/riders/request-login-link", {
       method: "POST",
-      body: JSON.stringify(normalizePhoneFields({ phone })),
+      body: JSON.stringify(normalizePhoneFields({ companyPhoneNumber: phone })),
     }),
   getPublicShopCategories: async () =>
     listFromResponse<ShopCategory>(await request<unknown>("/shop/categories")),
