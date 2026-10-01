@@ -34,12 +34,11 @@ export default function RiderAppPage() {
 
       try {
         const accessUrl = new URL(result.accessLink, window.location.origin);
-        const token = accessUrl.pathname.match(/^\/rider\/([^/]+)\/?$/)?.[1];
-        if (!token) {
+        if (!/^\/rider\/[^/]+\/?$/.test(accessUrl.pathname)) {
           setError("The rider access link returned by the server is invalid.");
           return;
         }
-        router.replace(`/rider/${encodeURIComponent(decodeURIComponent(token))}`);
+        window.location.assign(accessUrl.href);
       } catch {
         setError("The rider access link returned by the server is invalid.");
       }
