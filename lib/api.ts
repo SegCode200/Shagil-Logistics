@@ -302,10 +302,25 @@ export const api = {
     request<{ requested: boolean; accessLink: string | null }>(
       "/riders/request-login-link",
       {
-      method: "POST",
+        method: "POST",
         body: JSON.stringify(normalizePhoneFields({ companyPhoneNumber })),
       },
     ),
+  getWebPushVapidPublicKey: () =>
+    request<{ publicKey: string }>("/notifications/vapid-public-key"),
+  registerRiderPushSubscription: (subscription: {
+    endpoint: string;
+    keys: { p256dh: string; auth: string };
+  }) =>
+    request<{ id: string; createdAt: string }>("/notifications/subscriptions", {
+      method: "POST",
+      body: JSON.stringify(subscription),
+    }),
+  removeRiderPushSubscription: (endpoint: string) =>
+    request<{ removed: boolean }>("/notifications/subscriptions", {
+      method: "DELETE",
+      body: JSON.stringify({ endpoint }),
+    }),
   getPublicShopCategories: async () =>
     listFromResponse<ShopCategory>(await request<unknown>("/shop/categories")),
   getPublicShopProducts: async () =>

@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/app-shell";
 import { useRoleRedirect } from "@/components/auth/auth-provider";
 import { RiderOrderImages } from "@/components/orders/rider-order-images";
+import { RiderPushNotifications } from "@/components/rider/rider-push-notifications";
 import { api } from "@/lib/api";
 import {
   EmptyState,
@@ -85,6 +86,7 @@ export default function RiderDashboard() {
           </strong>
           <small>{ratingQuery.data?.length || 0} ratings</small>
         </section>
+        <RiderPushNotifications />
         {query.isLoading ? (
           <LoadingState label="Loading deliveries" />
         ) : query.isError ? (

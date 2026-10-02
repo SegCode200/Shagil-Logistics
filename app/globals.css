@@ -272,6 +272,45 @@ select {
   font-size: 27px;
   letter-spacing: -0.04em;
 }
+.rider-push-panel {
+  display: grid;
+  gap: 13px;
+  margin: 0 0 20px;
+  padding: 16px;
+  border-left: 3px solid var(--brand);
+}
+.rider-push-heading {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+.rider-push-icon {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--brand-dark);
+  background: #fff0eb;
+}
+.rider-push-heading h2 {
+  margin: 0;
+  color: var(--navy);
+  font-size: 14px;
+}
+.rider-push-heading p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+.rider-push-panel > .button {
+  justify-self: start;
+}
+.rider-push-message {
+  margin: 0;
+}
 .summary-card span {
   color: var(--muted);
   font-size: 12px;
