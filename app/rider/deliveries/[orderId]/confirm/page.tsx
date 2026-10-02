@@ -191,14 +191,22 @@ export default function ConfirmDeliveryPage({ params }: Props) {
           ) : null}
           <section className="rider-pickup-summary">
             <span className="rider-route-label">Pickup</span>
-            <strong>{order.senderName || "Sender"}</strong>
+            <div className="rider-route-detail">
+              <span className="rider-route-detail-label">Pickup name</span>
+              <strong className="rider-route-detail-value">{order.senderName || "Sender"}</strong>
+            </div>
             {pickupAddressVisible ? (
-              <p>
-                <MapPin size={15} />
-                {order.pickupAddress || "Pickup address unavailable"}
-              </p>
+              <div className="rider-route-detail">
+                <span className="rider-route-detail-label">Pickup address</span>
+                <p className="rider-route-address">
+                  <MapPin size={15} />
+                  <strong className="rider-route-detail-value">
+                    {order.pickupAddress || "Pickup address unavailable"}
+                  </strong>
+                </p>
+              </div>
             ) : (
-              <p>Pickup complete</p>
+              <p className="rider-route-complete">Pickup complete</p>
             )}
           </section>
           <div className="delivery-summary delivery-summary-card rider-receiver-highlight">
@@ -208,10 +216,11 @@ export default function ConfirmDeliveryPage({ params }: Props) {
                 {(order.receiverName || order.customerName || "R").slice(0, 1).toUpperCase()}
               </span>
               <div>
+                <span className="rider-route-detail-label">Receiver name</span>
                 <strong className="rider-receiver-name">
                   {order.receiverName || order.customerName || "Receiver"}
                 </strong>
-                <span>{order.orderId || routeOrderId}</span>
+                <span className="rider-order-id">{order.orderId || routeOrderId}</span>
               </div>
             </div>
             <div className="rider-receiver-phone">
@@ -227,9 +236,13 @@ export default function ConfirmDeliveryPage({ params }: Props) {
                 <span>Not provided</span>
               )}
             </div>
-            <p className="delivery-address">
-              <MapPin size={15} /> {order.deliveryAddress}
-            </p>
+            <div className="rider-route-detail">
+              <span className="rider-route-detail-label">Receiver address</span>
+              <p className="delivery-address rider-route-address">
+                <MapPin size={15} />
+                <strong className="rider-route-detail-value">{order.deliveryAddress}</strong>
+              </p>
+            </div>
             <span className="collection-line">
               {order.paymentMethod === "PAYMENT_ON_DELIVERY"
                 ? `${order.paymentCoverage === "ITEM_AND_DELIVERY" ? "Item and delivery amount to collect" : "Delivery fee to collect"}: ₦${Number(order.paymentCoverage === "ITEM_AND_DELIVERY" ? order.totalAmountToCollect ?? order.deliveryFee ?? 0 : order.deliveryFee ?? 0).toLocaleString()}`

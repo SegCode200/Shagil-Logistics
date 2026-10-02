@@ -117,26 +117,39 @@ export default function RiderDashboard() {
                 <div className="rider-route-stops">
                   <section className="rider-route-stop rider-route-pickup">
                     <span className="rider-route-label">Pickup</span>
-                    <strong>{order.senderName || "Sender"}</strong>
-                    <p>
-                      {pickupAddressVisible ? (
-                        <>
+                    <div className="rider-route-detail">
+                      <span className="rider-route-detail-label">Pickup name</span>
+                      <strong className="rider-route-detail-value">{order.senderName || "Sender"}</strong>
+                    </div>
+                    {pickupAddressVisible ? (
+                      <div className="rider-route-detail">
+                        <span className="rider-route-detail-label">Pickup address</span>
+                        <p className="rider-route-address">
                           <MapPin size={14} />
-                          {order.pickupAddress || "Pickup address unavailable"}
-                        </>
-                      ) : (
-                        "Pickup complete"
-                      )}
-                    </p>
+                          <strong className="rider-route-detail-value">
+                            {order.pickupAddress || "Pickup address unavailable"}
+                          </strong>
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="rider-route-complete">Pickup complete</p>
+                    )}
                   </section>
                   <section className="rider-route-stop rider-route-delivery rider-receiver-highlight">
-                    <span className="rider-route-label">Delivery · Receiver</span>
-                    <strong className="rider-receiver-name">
-                      {order.receiverName || order.customerName}
-                    </strong>
-                    <p>
-                      <MapPin size={14} /> {order.deliveryAddress}
-                    </p>
+                    <span className="rider-route-label">Delivery</span>
+                    <div className="rider-route-detail">
+                      <span className="rider-route-detail-label">Receiver name</span>
+                      <strong className="rider-route-detail-value rider-receiver-name">
+                        {order.receiverName || order.customerName}
+                      </strong>
+                    </div>
+                    <div className="rider-route-detail">
+                      <span className="rider-route-detail-label">Receiver address</span>
+                      <p className="rider-route-address">
+                        <MapPin size={14} />
+                        <strong className="rider-route-detail-value">{order.deliveryAddress}</strong>
+                      </p>
+                    </div>
                     <div className="rider-receiver-phone">
                       <strong>Receiver phone</strong>
                       {order.receiverPhoneNumber ? (

@@ -2205,6 +2205,44 @@ select {
 .rider-route-delivery .rider-route-label {
   color: var(--navy);
 }
+.rider-route-detail {
+  display: grid;
+  gap: 4px;
+}
+.rider-route-detail-label {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.rider-route-detail-value {
+  color: var(--foreground);
+  font-size: 13px;
+  font-weight: 850;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+.rider-route-address {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+.rider-route-address svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: var(--brand-dark);
+}
+.rider-route-complete {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
 .rider-receiver-name {
   font-size: 15px !important;
   font-weight: 850 !important;
@@ -2406,6 +2444,21 @@ select {
 .delivery-summary-card .rider-receiver-name {
   color: white;
 }
+.delivery-summary-card .rider-route-detail-label {
+  color: #f6b29e;
+}
+.delivery-summary-card .rider-route-detail-value {
+  color: white;
+}
+.rider-pickup-summary .rider-route-detail-label {
+  color: #f6b29e;
+}
+.rider-pickup-summary .rider-route-detail-value {
+  color: white;
+}
+.rider-pickup-summary .rider-route-complete {
+  color: #b7cedb;
+}
 .delivery-summary-card .rider-receiver-phone {
   border-color: #52758a;
   background: #173b53;
@@ -2432,6 +2485,10 @@ select {
 .receiver-heading > div span {
   color: #b7cedb;
   font-size: 12px;
+}
+.receiver-heading > div .rider-order-id {
+  color: white;
+  font-weight: 800;
 }
 .receiver-avatar {
   width: 38px;
