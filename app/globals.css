@@ -2237,6 +2237,21 @@ select {
   margin-top: 2px;
   color: var(--brand-dark);
 }
+.rider-map-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  min-height: 36px;
+  color: var(--brand-dark);
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.rider-map-link svg {
+  flex: 0 0 auto;
+}
 .rider-route-complete {
   margin: 0;
   color: var(--muted);
@@ -2455,6 +2470,9 @@ select {
 }
 .rider-pickup-summary .rider-route-detail-value {
   color: white;
+}
+.rider-pickup-summary .rider-map-link {
+  color: #f6b29e;
 }
 .rider-pickup-summary .rider-route-complete {
   color: #b7cedb;

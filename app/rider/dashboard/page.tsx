@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { MapPin, ArrowRight, Phone, Wallet } from "lucide-react";
+import { MapPin, ArrowRight, Navigation, Phone, Wallet } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/app-shell";
@@ -9,6 +9,7 @@ import { useRoleRedirect } from "@/components/auth/auth-provider";
 import { RiderOrderImages } from "@/components/orders/rider-order-images";
 import { RiderPushNotifications } from "@/components/rider/rider-push-notifications";
 import { api } from "@/lib/api";
+import { googleMapsDirectionsUrl } from "@/lib/maps";
 import {
   EmptyState,
   ErrorState,
@@ -130,6 +131,14 @@ export default function RiderDashboard() {
                             {order.pickupAddress || "Pickup address unavailable"}
                           </strong>
                         </p>
+                        {order.pickupAddress && (
+                          <a
+                            className="rider-map-link"
+                            href={googleMapsDirectionsUrl(order.pickupAddress)}
+                          >
+                            <Navigation size={14} /> Open in Maps
+                          </a>
+                        )}
                       </div>
                     ) : (
                       <p className="rider-route-complete">Pickup complete</p>
@@ -149,6 +158,14 @@ export default function RiderDashboard() {
                         <MapPin size={14} />
                         <strong className="rider-route-detail-value">{order.deliveryAddress}</strong>
                       </p>
+                      {order.deliveryAddress && (
+                        <a
+                          className="rider-map-link"
+                          href={googleMapsDirectionsUrl(order.deliveryAddress)}
+                        >
+                          <Navigation size={14} /> Open in Maps
+                        </a>
+                      )}
                     </div>
                     <div className="rider-receiver-phone">
                       <strong>Receiver phone</strong>

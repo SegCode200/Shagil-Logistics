@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   MapPin,
   MessageCircle,
+  Navigation,
   Phone,
   Send,
   ShieldCheck,
@@ -16,6 +17,7 @@ import { AppShell } from "@/components/layout/app-shell";
 import { RiderOrderImages } from "@/components/orders/rider-order-images";
 import { useRoleRedirect } from "@/components/auth/auth-provider";
 import { api } from "@/lib/api";
+import { googleMapsDirectionsUrl } from "@/lib/maps";
 import { PaymentReceiptViewer } from "@/components/orders/payment-receipt-viewer";
 import { ErrorState, LoadingState } from "@/components/ui/primitives";
 
@@ -284,6 +286,14 @@ export default function ConfirmDeliveryPage({ params }: Props) {
                     {currentOrder?.pickupAddress || "Pickup address unavailable"}
                   </strong>
                 </p>
+                {currentOrder?.pickupAddress && (
+                  <a
+                    className="rider-map-link"
+                    href={googleMapsDirectionsUrl(currentOrder.pickupAddress)}
+                  >
+                    <Navigation size={14} /> Open in Maps
+                  </a>
+                )}
               </div>
             ) : (
               <p className="rider-route-complete">Pickup complete</p>
@@ -322,6 +332,14 @@ export default function ConfirmDeliveryPage({ params }: Props) {
                 <MapPin size={15} />
                 <strong className="rider-route-detail-value">{currentOrder?.deliveryAddress || "Delivery address unavailable"}</strong>
               </p>
+              {currentOrder?.deliveryAddress && (
+                <a
+                  className="rider-map-link"
+                  href={googleMapsDirectionsUrl(currentOrder.deliveryAddress)}
+                >
+                  <Navigation size={14} /> Open in Maps
+                </a>
+              )}
             </div>
             <span className="collection-line">
               {currentOrder?.paymentMethod === "PAYMENT_ON_DELIVERY"
