@@ -412,7 +412,7 @@ export const api = {
     }),
   getRiderOrders: (page = 1, pageSize = 20) =>
     request<PaginatedResponse<Order>>(
-      `/rider/orders${paginationQuery(page, pageSize)}`,
+      `/riders/orders${paginationQuery(page, pageSize)}`,
     ),
   accessRider: (token: string) =>
     request<{ token?: string; accessToken?: string; user?: User }>(
