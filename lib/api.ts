@@ -438,6 +438,11 @@ export const api = {
       `/orders/${encodeURIComponent(orderId)}/confirm-receiver-payment`,
       { method: "POST" },
     ),
+  lookupAssignedOrderByDeliveryCode: (payload: { deliveryCode: string }) =>
+    request<Order>("/riders/orders/lookup-by-delivery-code", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
   confirmFinalPayment: (orderId: string) =>
     request<Order>(`/orders/${encodeURIComponent(orderId)}/confirm-final-payment`, {
       method: "POST",

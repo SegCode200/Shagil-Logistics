@@ -24,7 +24,11 @@ export default function ConfirmDeliveryPage({ params }: Props) {
   const { orderId: routeOrderId } = use(params);
   const { user, isLoading } = useRoleRedirect("RIDER");
   const queryClient = useQueryClient();
-  const [code, setCode] = useState("");
+  const [lookupCode, setLookupCode] = useState("");
+  const [validatedOrder, setValidatedOrder] = useState<Awaited<
+    ReturnType<typeof api.lookupAssignedOrderByDeliveryCode>
+  > | null>(null);
+  const [lookupError, setLookupError] = useState<string | null>(null);
   const [paymentReceipt, setPaymentReceipt] = useState<File | null>(null);
   const [confirmed, setConfirmed] = useState(false);
   const [paymentDialog, setPaymentDialog] = useState<null | {
@@ -44,8 +48,32 @@ export default function ConfirmDeliveryPage({ params }: Props) {
     (delivery) =>
       delivery.id === routeOrderId || delivery.orderId === routeOrderId,
   );
+  const currentOrder = validatedOrder ?? order;
+  const orderIdForAction = currentOrder?.id ?? routeOrderId;
+  const deliveryCodeForAction = validatedOrder?.deliveryCode ?? lookupCode.trim();
+  const lookupOrderMutation = useMutation({
+    mutationFn: () =>
+      api.lookupAssignedOrderByDeliveryCode({
+        deliveryCode: lookupCode.trim(),
+      }),
+    onSuccess: (data) => {
+      setValidatedOrder(data);
+      setLookupError(null);
+    },
+    onError: (error) => {
+      setLookupError(
+        error instanceof Error && error.message !== "REQUEST_FAILED"
+          ? error.message
+          : "This delivery code was not found for your assigned orders.",
+      );
+    },
+  });
   const mutation = useMutation({
-    mutationFn: () => api.confirmDelivery({ orderId: routeOrderId, deliveryCode: code }),
+    mutationFn: () =>
+      api.confirmDelivery({
+        orderId: orderIdForAction,
+        deliveryCode: deliveryCodeForAction,
+      }),
     onSuccess: (data) => {
       setConfirmedOrder(data);
       setConfirmed(true);
@@ -53,7 +81,7 @@ export default function ConfirmDeliveryPage({ params }: Props) {
   });
   const uploadPaymentReceipt = useMutation({
     mutationFn: (receiptFile: File) =>
-      api.uploadPaymentOnDeliveryReceipts(routeOrderId, receiptFile),
+      api.uploadPaymentOnDeliveryReceipts(orderIdForAction, receiptFile),
     onSuccess: () => {
       setPaymentReceipt(null);
       setPaymentDialog({
@@ -75,7 +103,7 @@ export default function ConfirmDeliveryPage({ params }: Props) {
     },
   });
   const receiverPaymentMutation = useMutation({
-    mutationFn: () => api.confirmReceiverPaymentForUser(routeOrderId),
+    mutationFn: () => api.confirmReceiverPaymentForUser(orderIdForAction),
     onSuccess: () => {
       setPaymentDialog({
         type: "success",
@@ -93,10 +121,13 @@ export default function ConfirmDeliveryPage({ params }: Props) {
     },
   });
   const resendCodeMutation = useMutation({
-    mutationFn: () => api.resendReceiverDeliveryCodeForUser(routeOrderId),
+    mutationFn: () => api.resendReceiverDeliveryCodeForUser(orderIdForAction),
   });
+  const orderIsReadyForFinalConfirmation =
+    currentOrder?.senderPaymentStatus === "PAID" &&
+    currentOrder?.receiverCollectionStatus === "COLLECTED";
   if (isLoading || !user || deliveries.isLoading) return <LoadingState />;
-  if (deliveries.isError || !order)
+  if (deliveries.isError && !validatedOrder)
     return (
       <AppShell role="RIDER">
         <div className="page">
@@ -104,11 +135,60 @@ export default function ConfirmDeliveryPage({ params }: Props) {
         </div>
       </AppShell>
     );
+  if (!order && !validatedOrder) {
+    return (
+      <AppShell role="RIDER">
+        <div className="page confirm-page">
+          <Link href="/rider/dashboard" className="back-link">
+            <ArrowLeft size={16} /> Back to deliveries
+          </Link>
+          <div className="confirm-box">
+            <div className="confirm-kicker">
+              <ShieldCheck size={18} />
+              <span>Delivery lookup</span>
+            </div>
+            <h2>Verify delivery code</h2>
+            <p className="subtext">
+              Enter the delivery code to confirm the order belongs to you before continuing.
+            </p>
+            <form
+              className="confirm-form"
+              onSubmit={(event) => {
+                event.preventDefault();
+                lookupOrderMutation.mutate();
+              }}
+            >
+              <div className="field">
+                <label htmlFor="delivery-code-lookup">Delivery code</label>
+                <input
+                  className="input"
+                  id="delivery-code-lookup"
+                  required
+                  inputMode="numeric"
+                  value={lookupCode}
+                  onChange={(event) => setLookupCode(event.target.value)}
+                  placeholder="739284"
+                />
+              </div>
+              {lookupError && <p className="form-error confirm-error">{lookupError}</p>}
+              <button
+                type="submit"
+                className="button button-primary button-full"
+                disabled={lookupOrderMutation.isPending || lookupCode.trim().length < 4}
+              >
+                {lookupOrderMutation.isPending ? "Checking code..." : "Verify delivery code"}
+              </button>
+            </form>
+          </div>
+        </div>
+      </AppShell>
+    );
+  }
   const pickupAddressVisible = ![
     "PICKED_UP",
     "DELIVERED",
     "CANCELLED",
-  ].includes(order.status);
+  ].includes(currentOrder?.status ?? "PENDING");
   if (confirmed)
     return (
       <AppShell role="RIDER">
@@ -117,13 +197,13 @@ export default function ConfirmDeliveryPage({ params }: Props) {
             <CheckCircle2 size={42} color="#2d9862" />
             <h2>Delivery confirmed</h2>
             <p>
-              Order {confirmedOrder?.orderId || order.orderId || routeOrderId} has
+              Order {confirmedOrder?.orderId || currentOrder?.orderId || routeOrderId} has
               been successfully delivered.
             </p>
             <dl className="detail-list">
               <div>
                 <dt>Customer</dt>
-                <dd>{order.customerName || "—"}</dd>
+                <dd>{currentOrder?.customerName || "—"}</dd>
               </div>
               <div>
                 <dt>Delivery time</dt>
@@ -177,23 +257,23 @@ export default function ConfirmDeliveryPage({ params }: Props) {
         <div className="confirm-box">
           <div className="confirm-kicker">
             <ShieldCheck size={18} />
-            <span>Active delivery</span>
+            <span>Delivery verification</span>
           </div>
-          <h2>Complete this delivery</h2>
+          <h2>Step-by-step delivery confirmation</h2>
           <p className="subtext">
-            Manage this delivery and confirm it when the receiver provides the code.
+            First verify the code, then confirm payment and finish when the sender confirms receipt.
           </p>
-          {order.paymentReceipts?.length && order.paymentMethod === "PAYMENT_ON_DELIVERY" ? (
+          {currentOrder?.paymentReceipts?.length && currentOrder?.paymentMethod === "PAYMENT_ON_DELIVERY" ? (
             <section className="payment-receipts-section payment-receipts-top">
-              <h2>Uploaded payment receipts ({order.paymentReceipts.length})</h2>
-              <PaymentReceiptViewer receipts={order.paymentReceipts} />
+              <h2>Uploaded payment receipts ({currentOrder.paymentReceipts.length})</h2>
+              <PaymentReceiptViewer receipts={currentOrder.paymentReceipts} />
             </section>
           ) : null}
           <section className="rider-pickup-summary">
             <span className="rider-route-label">Pickup</span>
             <div className="rider-route-detail">
               <span className="rider-route-detail-label">Pickup name</span>
-              <strong className="rider-route-detail-value">{order.senderName || "Sender"}</strong>
+              <strong className="rider-route-detail-value">{currentOrder?.senderName || "Sender"}</strong>
             </div>
             {pickupAddressVisible ? (
               <div className="rider-route-detail">
@@ -201,7 +281,7 @@ export default function ConfirmDeliveryPage({ params }: Props) {
                 <p className="rider-route-address">
                   <MapPin size={15} />
                   <strong className="rider-route-detail-value">
-                    {order.pickupAddress || "Pickup address unavailable"}
+                    {currentOrder?.pickupAddress || "Pickup address unavailable"}
                   </strong>
                 </p>
               </div>
@@ -213,24 +293,24 @@ export default function ConfirmDeliveryPage({ params }: Props) {
             <span className="rider-route-label">Delivery</span>
             <div className="receiver-heading">
               <span className="receiver-avatar">
-                {(order.receiverName || order.customerName || "R").slice(0, 1).toUpperCase()}
+                {(currentOrder?.receiverName || currentOrder?.customerName || "R").slice(0, 1).toUpperCase()}
               </span>
               <div>
                 <span className="rider-route-detail-label">Receiver name</span>
                 <strong className="rider-receiver-name">
-                  {order.receiverName || order.customerName || "Receiver"}
+                  {currentOrder?.receiverName || currentOrder?.customerName || "Receiver"}
                 </strong>
-                <span className="rider-order-id">{order.orderId || routeOrderId}</span>
+                <span className="rider-order-id">{currentOrder?.orderId || routeOrderId}</span>
               </div>
             </div>
             <div className="rider-receiver-phone">
               <strong>Receiver phone</strong>
-              {order.receiverPhoneNumber || order.receiverPhone ? (
+              {currentOrder?.receiverPhoneNumber || currentOrder?.receiverPhone ? (
                 <a
                   className="rider-phone-link"
-                  href={`tel:${order.receiverPhoneNumber || order.receiverPhone}`}
+                  href={`tel:${currentOrder?.receiverPhoneNumber || currentOrder?.receiverPhone}`}
                 >
-                  <Phone size={14} /> {order.receiverPhoneNumber || order.receiverPhone}
+                  <Phone size={14} /> {currentOrder?.receiverPhoneNumber || currentOrder?.receiverPhone}
                 </a>
               ) : (
                 <span>Not provided</span>
@@ -240,25 +320,25 @@ export default function ConfirmDeliveryPage({ params }: Props) {
               <span className="rider-route-detail-label">Receiver address</span>
               <p className="delivery-address rider-route-address">
                 <MapPin size={15} />
-                <strong className="rider-route-detail-value">{order.deliveryAddress}</strong>
+                <strong className="rider-route-detail-value">{currentOrder?.deliveryAddress || "Delivery address unavailable"}</strong>
               </p>
             </div>
             <span className="collection-line">
-              {order.paymentMethod === "PAYMENT_ON_DELIVERY"
-                ? `${order.paymentCoverage === "ITEM_AND_DELIVERY" ? "Item and delivery amount to collect" : "Delivery fee to collect"}: ₦${Number(order.paymentCoverage === "ITEM_AND_DELIVERY" ? order.totalAmountToCollect ?? order.deliveryFee ?? 0 : order.deliveryFee ?? 0).toLocaleString()}`
+              {currentOrder?.paymentMethod === "PAYMENT_ON_DELIVERY"
+                ? `${currentOrder?.paymentCoverage === "ITEM_AND_DELIVERY" ? "Item and delivery amount to collect" : "Delivery fee to collect"}: ₦${Number(currentOrder?.paymentCoverage === "ITEM_AND_DELIVERY" ? currentOrder?.totalAmountToCollect ?? currentOrder?.deliveryFee ?? 0 : currentOrder?.deliveryFee ?? 0).toLocaleString()}`
                 : "Already paid"}
             </span>
-            {order.paymentMethod === "PAYMENT_ON_DELIVERY" && order.paymentCoverage && (
+            {currentOrder?.paymentMethod === "PAYMENT_ON_DELIVERY" && currentOrder?.paymentCoverage && (
               <span className="collection-line">
-                Receiver pays: {order.paymentCoverage === "ITEM_AND_DELIVERY" ? "Item and delivery fee" : "Delivery fee only"}
+                Receiver pays: {currentOrder?.paymentCoverage === "ITEM_AND_DELIVERY" ? "Item and delivery fee" : "Delivery fee only"}
               </span>
             )}
           </div>
-          <RiderOrderImages images={order.images} />
-          {order.paymentMethod === "PAYMENT_ON_DELIVERY" && (
+          <RiderOrderImages images={currentOrder?.images ?? []} />
+          {currentOrder?.paymentMethod === "PAYMENT_ON_DELIVERY" && (
             <div className="payment-receipt-upload rider-payment-receipt-upload">
               <strong>Payment receipt</strong>
-              <p className="subtext">Optional: upload the receipt after the delivery is complete and you are back online.</p>
+              <p className="subtext">Step 2: upload the receipt after the receiver payment is confirmed.</p>
               <label className="receipt-upload-label" htmlFor="rider-payment-receipt">Choose payment receipt</label>
               <input
                 id="rider-payment-receipt"
@@ -307,7 +387,7 @@ export default function ConfirmDeliveryPage({ params }: Props) {
               <span className="receipt-file-name">
                 {uploadPaymentReceipt.isPending
                   ? `Uploading ${paymentReceipt?.name || "receipt"}...`
-                  : order.paymentReceipts?.length
+                  : currentOrder?.paymentReceipts?.length
                     ? "Receipt uploaded"
                     : "Select a receipt to upload automatically"}
               </span>
@@ -315,23 +395,28 @@ export default function ConfirmDeliveryPage({ params }: Props) {
             </div>
           )}
           <div className="rider-action-stack">
-            <p className="action-section-label">Delivery controls</p>
+            <p className="action-section-label">Step 1: Delivery verification</p>
+            <div className="payment-action-row">
+              <span className="status status-active">Verified</span>
+              <strong>{deliveryCodeForAction || lookupCode}</strong>
+            </div>
+            <p className="action-section-label">Step 2: Payment confirmation</p>
             <div className="payment-action-row">
 
-              {(order.paymentMethod === "PAYMENT_ON_DELIVERY" &&
-              order.status === "PICKED_UP" && order.paymentCoverage === "ITEM_AND_DELIVERY") && (
+              {(currentOrder?.paymentMethod === "PAYMENT_ON_DELIVERY" &&
+              currentOrder?.status === "PICKED_UP" && currentOrder?.paymentCoverage === "ITEM_AND_DELIVERY") && (
               <button
                 type="button"
                 className="button button-success"
-                disabled={order.receiverCollectionStatus === "COLLECTED" || receiverPaymentMutation.isPending}
+                disabled={currentOrder?.receiverCollectionStatus === "COLLECTED" || receiverPaymentMutation.isPending}
                 onClick={() => receiverPaymentMutation.mutate()}
               >
                 <CheckCircle2 size={16} />
                 {receiverPaymentMutation.isPending ? "Releasing payment..." : "Allow payment confirmation for sender"}
               </button>
               )}
-              <span className={`status status-${(order.receiverCollectionStatus || "PENDING").toLowerCase()}`}>
-                {order.receiverCollectionStatus === "COLLECTED" ? "PAID" : "PENDING"}
+              <span className={`status status-${(currentOrder?.receiverCollectionStatus || "PENDING").toLowerCase()}`}>
+                {currentOrder?.receiverCollectionStatus === "COLLECTED" ? "PAID" : "PENDING"}
               </span>
             </div>
               
@@ -372,6 +457,12 @@ export default function ConfirmDeliveryPage({ params }: Props) {
             {resendCodeMutation.isError && (
               <p className="form-error confirm-error">Could not send the delivery code by WhatsApp.</p>
             )}
+            <p className="action-section-label">Step 3: Sender confirmation</p>
+            <p className="subtext">
+              {currentOrder?.senderPaymentStatus === "PAID"
+                ? "The sender has confirmed payment received. You can continue to final delivery confirmation."
+                : "Waiting for the sender to confirm payment received before final delivery confirmation."}
+            </p>
             <a
               className="button button-whatsapp button-full"
               target="_blank"
@@ -391,20 +482,20 @@ export default function ConfirmDeliveryPage({ params }: Props) {
               <div className="code-heading">
                 <div>
                   <span className="code-eyebrow">Final step</span>
-                  <h3>Enter delivery code</h3>
+                  <h3>Confirm delivery</h3>
                 </div>
                 <ShieldCheck size={22} />
               </div>
-              <p>Ask the receiver for the code before completing the delivery.</p>
+              <p>Use the verified code to complete the handover after payment is confirmed.</p>
             <div className="field">
-              <label htmlFor="delivery-code">Delivery code</label>
+              <label htmlFor="delivery-code">Verified delivery code</label>
               <input
                 className="input"
                 id="delivery-code"
                 required
                 inputMode="numeric"
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
+                value={deliveryCodeForAction}
+                onChange={(e) => setLookupCode(e.target.value)}
                 placeholder="739284"
               />
             </div>
@@ -415,7 +506,7 @@ export default function ConfirmDeliveryPage({ params }: Props) {
             )}
             <button
               className="button button-primary button-full"
-              disabled={mutation.isPending || order.senderPaymentStatus !== "PAID" || order.receiverCollectionStatus !== "COLLECTED"}
+              disabled={mutation.isPending || !orderIsReadyForFinalConfirmation}
             >
               {mutation.isPending ? "Confirming..." : "CONFIRM DELIVERY"}
             </button>
