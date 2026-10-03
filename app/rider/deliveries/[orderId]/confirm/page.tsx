@@ -335,11 +335,21 @@ export default function ConfirmDeliveryPage({ params }: Props) {
               {currentOrder?.deliveryAddress && (
                 <a
                   className="rider-map-link"
-                  href={googleMapsDirectionsUrl(currentOrder.deliveryAddress)}
+                  href={googleMapsDirectionsUrl(
+                    [currentOrder.deliveryAddress, currentOrder.deliveryZone?.name]
+                      .filter(Boolean)
+                      .join(", "),
+                  )}
                 >
                   <Navigation size={14} /> Open in Maps
                 </a>
               )}
+            </div>
+            <div className="rider-route-detail">
+              <span className="rider-route-detail-label">Delivery zone</span>
+              <strong className="rider-route-detail-value">
+                {currentOrder?.deliveryZone?.name || "Not provided"}
+              </strong>
             </div>
             <span className="collection-line">
               {currentOrder?.paymentMethod === "PAYMENT_ON_DELIVERY"

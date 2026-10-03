@@ -1,0 +1,19 @@
+{
+  "id": "/owner/install",
+  "name": "Shagil Owner",
+  "short_name": "Shagil Owner",
+  "description": "Owner workspace for Shagil order delivery.",
+  "start_url": "/owner/install",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f7f8fa",
+  "theme_color": "#183b56",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

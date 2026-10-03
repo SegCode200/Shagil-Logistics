@@ -9,7 +9,15 @@ export default function Home() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
   useEffect(() => {
-    if (!isLoading) router.replace(user ? (user.role === "OWNER" ? "/owner/dashboard" : "/rider/dashboard") : "/login");
+    if (isLoading) return;
+    const destination = !user
+      ? "/login"
+      : user.role === "OWNER"
+        ? "/owner/dashboard"
+        : user.role === "STATION_MANAGER"
+          ? "/manager/dashboard"
+          : "/rider/dashboard";
+    router.replace(destination);
   }, [isLoading, router, user]);
   return <LoadingState label="Opening Shagil" />;
 }

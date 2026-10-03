@@ -109,12 +109,17 @@ export default function LoginPage() {
               </>
             )}
           </button>
-          <p className="subtext" style={{ textAlign: "center" }}>
+          {/* <p className="subtext" style={{ textAlign: "center" }}>
             New sender? <Link href="/sender/register" className="text-link">Register here</Link>
           </p>
           <p className="subtext" style={{ textAlign: "center" }}>
             Rider? <Link href="/rider/app" className="text-link">Open Shagil Rider</Link>
           </p>
+          <p className="subtext" style={{ textAlign: "center" }}>
+            Install: <Link href="/owner/install" className="text-link">Owner app</Link>
+            {" · "}
+            <Link href="/manager/install" className="text-link">Station manager app</Link>
+          </p> */}
         </form>
       </section>
     </main>

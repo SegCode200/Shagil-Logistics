@@ -161,11 +161,21 @@ export default function RiderDashboard() {
                       {order.deliveryAddress && (
                         <a
                           className="rider-map-link"
-                          href={googleMapsDirectionsUrl(order.deliveryAddress)}
+                          href={googleMapsDirectionsUrl(
+                            [order.deliveryAddress, order.deliveryZone?.name]
+                              .filter(Boolean)
+                              .join(", "),
+                          )}
                         >
                           <Navigation size={14} /> Open in Maps
                         </a>
                       )}
+                    </div>
+                    <div className="rider-route-detail">
+                      <span className="rider-route-detail-label">Delivery zone</span>
+                      <strong className="rider-route-detail-value">
+                        {order.deliveryZone?.name || "Not provided"}
+                      </strong>
                     </div>
                     <div className="rider-receiver-phone">
                       <strong>Receiver phone</strong>

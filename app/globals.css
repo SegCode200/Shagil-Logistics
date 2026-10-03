@@ -2026,6 +2026,89 @@ select {
   font-size: 12px;
   line-height: 1.5;
 }
+.role-install-page {
+  width: 100%;
+  max-width: 480px;
+  min-height: 100vh;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  margin: 0 auto;
+  padding: 24px;
+  background: white;
+}
+.role-install-header {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.role-install-header > div {
+  display: grid;
+  gap: 2px;
+}
+.role-install-header strong {
+  color: var(--navy);
+  font-size: 15px;
+}
+.role-install-header > div > span {
+  color: var(--muted);
+  font-size: 11px;
+}
+.role-install-content {
+  width: 100%;
+  margin: auto 0;
+  padding: 42px 0;
+}
+.role-install-content h1 {
+  margin: 0;
+  color: var(--navy);
+  font-size: 29px;
+  line-height: 1.15;
+}
+.role-install-intro,
+.role-install-help {
+  margin: 10px 0 24px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.55;
+}
+.role-ios-install-help {
+  margin: 16px 0;
+  padding: 14px;
+  border: 1px solid #efc6ba;
+  border-left: 4px solid var(--brand);
+  border-radius: 7px;
+  color: var(--foreground);
+  background: #fff7f4;
+}
+.role-ios-install-help > strong {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--navy);
+  font-size: 13px;
+}
+.role-ios-install-help > strong svg {
+  flex: 0 0 auto;
+  color: var(--brand-dark);
+}
+.role-ios-install-help ol {
+  display: grid;
+  gap: 7px;
+  margin: 11px 0 0;
+  padding-left: 20px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+.role-install-actions {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+  text-align: center;
+}
 .rider-ios-install-help {
   margin: 16px 0;
   padding: 14px;
