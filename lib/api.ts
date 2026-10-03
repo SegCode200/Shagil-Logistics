@@ -186,9 +186,7 @@ export const api = {
       method: "POST",
       body: JSON.stringify({
         ...payload,
-        phone: payload.phone.includes("@")
-          ? payload.phone.trim()
-          : requireCompleteNigerianPhone(payload.phone),
+        phone: payload.phone.includes("@") ? payload.phone.trim() : payload.phone,
       }),
     }),
 
