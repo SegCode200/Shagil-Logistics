@@ -125,6 +125,14 @@ export default function ManagerOrderDetailsPage({ params }: Props) {
       queryClient.invalidateQueries({ queryKey: ["managerOrders"] });
     },
   });
+  const markPickedUp = useMutation({
+    mutationFn: () => api.markOrderPickedUp(orderId),
+    onSuccess: () => {
+      setNotice("Order marked as picked up successfully.");
+      queryClient.invalidateQueries({ queryKey: ["managerOrder", orderId] });
+      queryClient.invalidateQueries({ queryKey: ["managerOrders"] });
+    },
+  });
   const assignRider = useMutation({
     mutationFn: (riderId: string) =>
       api.updateManagerOrder(orderId, { assignedRiderId: riderId }),
@@ -792,6 +800,34 @@ export default function ManagerOrderDetailsPage({ params }: Props) {
                       : "Confirm receiver payment"}
                   </button>
                 )}
+              {data.status === "APPROVED" && (
+                <button
+                  type="button"
+                  className="button button-primary button-full"
+                  disabled={markPickedUp.isPending}
+                  onClick={() => {
+                    if (
+                      window.confirm(
+                        `Are you sure the assigned rider has picked up ${data.orderId || "this order"}?`,
+                      )
+                    ) {
+                      markPickedUp.mutate();
+                    }
+                  }}
+                >
+                  <Check size={17} />
+                  {markPickedUp.isPending
+                    ? "Marking as picked up..."
+                    : "Mark as picked up"}
+                </button>
+              )}
+              {markPickedUp.isError && (
+                <p className="form-error" role="alert">
+                  {markPickedUp.error instanceof Error
+                    ? markPickedUp.error.message
+                    : "Could not mark this order as picked up. Please try again."}
+                </p>
+              )}
               {isApproved && (
                 <div className="access-token-actions section-gap">
                   <p className="action-label">Public access links</p>

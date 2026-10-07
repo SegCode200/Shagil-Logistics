@@ -8,6 +8,7 @@ import {
   Pencil,
   Save,
   LoaderCircle,
+  PackageCheck,
   Send,
 } from "lucide-react";
 import { use, useState } from "react";
@@ -103,6 +104,13 @@ export default function OrderDetailsPage({ params }: Props) {
       if (type === "cancel") return api.cancelOrder(orderId);
       return api.approveOrder(orderId);
     },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["order", orderId] });
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+    },
+  });
+  const markPickedUp = useMutation({
+    mutationFn: () => api.markOrderPickedUp(orderId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["order", orderId] });
       queryClient.invalidateQueries({ queryKey: ["orders"] });
@@ -840,6 +848,34 @@ export default function OrderDetailsPage({ params }: Props) {
               )}
               {isApproved && (
                 <div className="access-token-actions">
+                  {order.status === "APPROVED" && (
+                    <button
+                      type="button"
+                      className="button button-primary button-full"
+                      disabled={markPickedUp.isPending}
+                      onClick={() => {
+                        if (
+                          window.confirm(
+                            `Are you sure the assigned rider has picked up ${order.orderId || "this order"}?`,
+                          )
+                        ) {
+                          markPickedUp.mutate();
+                        }
+                      }}
+                    >
+                      <PackageCheck size={17} />
+                      {markPickedUp.isPending
+                        ? "Marking as picked up..."
+                        : "Mark as picked up"}
+                    </button>
+                  )}
+                  {markPickedUp.isError && (
+                    <p className="form-error" role="alert">
+                      {markPickedUp.error instanceof Error
+                        ? markPickedUp.error.message
+                        : "Could not mark this order as picked up. Please try again."}
+                    </p>
+                  )}
                   <p className="action-label">Public access links</p>
                   <button
                     className="button button-secondary button-full"

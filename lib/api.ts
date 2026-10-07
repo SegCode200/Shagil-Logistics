@@ -240,6 +240,10 @@ export const api = {
     request<AccountDetails | null>("/auth/account-details"),
   approveOrder: (orderId: string) =>
     request<Order>(`/orders/${orderId}/approve`, { method: "POST" }),
+  markOrderPickedUp: (orderId: string) =>
+    request<Order>(`/orders/${encodeURIComponent(orderId)}/pickup`, {
+      method: "POST",
+    }),
   resendSenderAccessToken: (orderId: string) =>
     request<{ notificationStatus?: string }>(
       `/orders/${orderId}/resend-sender-access-token`,
@@ -717,5 +721,4 @@ export const api = {
       { method: "POST" },
     ),
 }
-
 
