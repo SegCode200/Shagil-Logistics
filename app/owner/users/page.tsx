@@ -1,11 +1,12 @@
 "use client";
 
-import { Edit3, Eye, EyeOff, Plus, X } from "lucide-react";
+import { Edit3, Eye, EyeOff, Plus, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { StationManager } from "@/lib/types";
 import { AppShell } from "@/components/layout/app-shell";
 import { useRoleRedirect } from "@/components/auth/auth-provider";
+import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { api } from "@/lib/api";
 import { normalizeNigerianPhone } from "@/lib/phone";
 import {
@@ -29,6 +30,10 @@ export default function UsersPage() {
   });
   const [open, setOpen] = useState(false);
   const [editingManager, setEditingManager] = useState<StationManager | null>(null);
+  const [managerToDelete, setManagerToDelete] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
   const [managerPhone, setManagerPhone] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [draft, setDraft] = useState({
@@ -58,6 +63,14 @@ export default function UsersPage() {
       queryClient.invalidateQueries({ queryKey: ["managers"] });
     },
   });
+  const deleteManager = useMutation({
+    mutationFn: (managerId: string) => api.deleteManager(managerId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["managers"] });
+      queryClient.invalidateQueries({ queryKey: ["stations"] });
+      setManagerToDelete(null);
+    },
+  });
 
   if (isLoading || !user) return <LoadingState />;
   const stationForManager = (managerId: string) =>
@@ -72,6 +85,22 @@ export default function UsersPage() {
     status || (active === false ? "INACTIVE" : "ACTIVE");
   return (
     <AppShell role="OWNER">
+      {managerToDelete && (
+        <ConfirmDeleteDialog
+          title={`Delete station manager ${managerToDelete.name}?`}
+          description="Are you sure you want to permanently delete this station manager?"
+          isPending={deleteManager.isPending}
+          error={
+            deleteManager.isError
+              ? deleteManager.error instanceof Error
+                ? deleteManager.error.message
+                : "Station manager could not be deleted."
+              : undefined
+          }
+          onCancel={() => setManagerToDelete(null)}
+          onConfirm={() => deleteManager.mutate(managerToDelete.id)}
+        />
+      )}
       <div className="page">
         <header className="page-header">
           <div>
@@ -342,6 +371,19 @@ export default function UsersPage() {
                           >
                             <Edit3 size={15} /> Edit phone
                           </button>
+                          <button
+                            type="button"
+                            className="button button-danger"
+                            disabled={deleteManager.isPending}
+                            onClick={() =>
+                              setManagerToDelete({
+                                id: manager.id,
+                                name: manager.name,
+                              })
+                            }
+                          >
+                            <Trash2 size={15} /> Delete
+                          </button>
                         </td>
                       </tr>
                     ))}
@@ -379,6 +421,19 @@ export default function UsersPage() {
                           }}
                         >
                           <Edit3 size={15} /> Edit phone
+                        </button>
+                        <button
+                          type="button"
+                          className="button button-danger"
+                          disabled={deleteManager.isPending}
+                          onClick={() =>
+                            setManagerToDelete({
+                              id: manager.id,
+                              name: manager.name,
+                            })
+                          }
+                        >
+                          <Trash2 size={15} /> Delete manager
                         </button>
                       </div>
                     </dl>

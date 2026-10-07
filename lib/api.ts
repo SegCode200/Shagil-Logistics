@@ -268,6 +268,11 @@ export const api = {
       method: "POST",
       body: JSON.stringify(normalizePhoneFields(payload)),
     }),
+  deleteBike: (bikeId: string) =>
+    request<{ id: string; bikeId: string }>(
+      `/bikes/${encodeURIComponent(bikeId)}`,
+      { method: "DELETE" },
+    ),
   assignBike: (bikeId: string, riderId: string) =>
     request<CompanyBike>(
       `/bikes/${encodeURIComponent(bikeId)}/riders/${encodeURIComponent(riderId)}`,
@@ -289,12 +294,17 @@ export const api = {
     }),
   updateRider: (
     riderId: string,
-    payload: { name: string },
+    payload: { name?: string; phone?: string; address?: string },
   ) =>
     request<Rider>(`/riders/${encodeURIComponent(riderId)}`, {
       method: "PATCH",
-      body: JSON.stringify(payload),
+      body: JSON.stringify(normalizePhoneFields(payload)),
     }),
+  deleteRider: (riderId: string) =>
+    request<{ id: string; name: string }>(
+      `/riders/${encodeURIComponent(riderId)}`,
+      { method: "DELETE" },
+    ),
   resendRiderAccess: (riderId: string) =>
     request<{ notificationStatus: string }>(
       `/riders/${encodeURIComponent(riderId)}/resend-login-link`,
@@ -524,6 +534,11 @@ export const api = {
         body: JSON.stringify(normalizePhoneFields(payload)),
       },
     ),
+  deleteManager: (managerId: string) =>
+    request<{ id: string; name: string }>(
+      `/stations/managers/${encodeURIComponent(managerId)}`,
+      { method: "DELETE" },
+    ),
   assignManagerToStation: (stationId: string, userId: string) =>
     request<StationManager>(
       `/stations/${encodeURIComponent(stationId)}/managers`,
@@ -721,4 +736,3 @@ export const api = {
       { method: "POST" },
     ),
 }
-

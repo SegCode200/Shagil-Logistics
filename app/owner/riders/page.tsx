@@ -1,11 +1,12 @@
 "use client";
 
-import { Pencil, Plus, Send, Users } from "lucide-react";
+import { Pencil, Plus, Send, Trash2, Users } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/app-shell";
 import { useRoleRedirect } from "@/components/auth/auth-provider";
+import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { api } from "@/lib/api";
 import { normalizeNigerianPhone } from "@/lib/phone";
 import {
@@ -27,13 +28,17 @@ export default function RidersPage() {
     enabled: Boolean(user),
   });
   const [showForm, setShowForm] = useState(false);
+  const [riderToDelete, setRiderToDelete] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
   const queryClient = useQueryClient();
   const form = useForm({
     defaultValues: { name: "", phone: "", address: "", bikeId: "" },
   });
   const [editingId, setEditingId] = useState<string | null>(null);
   const editForm = useForm({
-    defaultValues: { name: "" },
+    defaultValues: { name: "", phone: "", address: "" },
   });
   const mutation = useMutation({
     mutationFn: api.createRider,
@@ -44,11 +49,22 @@ export default function RidersPage() {
     },
   });
   const update = useMutation({
-    mutationFn: (values: { name: string }) =>
-      api.updateRider(editingId as string, values),
+    mutationFn: (values: { name: string; phone: string; address: string }) =>
+      api.updateRider(editingId as string, {
+        ...values,
+        phone: normalizeNigerianPhone(values.phone),
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["riders"] });
       setEditingId(null);
+    },
+  });
+  const deleteRider = useMutation({
+    mutationFn: (riderId: string) => api.deleteRider(riderId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["riders"] });
+      queryClient.invalidateQueries({ queryKey: ["bikes"] });
+      setRiderToDelete(null);
     },
   });
   const resendAccess = useMutation({
@@ -57,7 +73,23 @@ export default function RidersPage() {
   if (isLoading || !user) return <LoadingState />;
   return (
     <AppShell role="OWNER">
-      <div className="page"> 
+      {riderToDelete && (
+        <ConfirmDeleteDialog
+          title={`Delete rider ${riderToDelete.name}?`}
+          description="Are you sure you want to permanently delete this rider? Their assigned orders will be unassigned."
+          isPending={deleteRider.isPending}
+          error={
+            deleteRider.isError
+              ? deleteRider.error instanceof Error
+                ? deleteRider.error.message
+                : "Rider could not be deleted."
+              : undefined
+          }
+          onCancel={() => setRiderToDelete(null)}
+          onConfirm={() => deleteRider.mutate(riderToDelete.id)}
+        />
+      )}
+      <div className="page">
         <header className="page-header">
           <div>
             <p className="eyebrow">Team</p>
@@ -199,17 +231,75 @@ export default function RidersPage() {
                   className="button button-secondary rider-access-button"
                   onClick={() => {
                     setEditingId(rider.id);
-                    editForm.reset({ name: rider.name });
+                    editForm.reset({
+                      name: rider.name,
+                      phone: rider.phone || "",
+                      address: rider.address || "",
+                    });
                   }}
                 >
-                  <Pencil size={15} /> Edit assignment
+                  <Pencil size={15} /> Edit rider details
                 </button>
                 {editingId === rider.id && (
                   <form className="rider-edit-form" onSubmit={editForm.handleSubmit((values) => update.mutate(values))}>
-                    <input className="input" aria-label="Rider name" {...editForm.register("name")} required />
-                    <button className="button button-primary" disabled={update.isPending}>{update.isPending ? "Saving..." : "Save changes"}</button>
+                    <label className="field">
+                      <span>Name</span>
+                      <input className="input" aria-label="Rider name" {...editForm.register("name")} required />
+                    </label>
+                    <label className="field">
+                      <span>Phone</span>
+                      <input
+                        className="input"
+                        aria-label="Rider phone"
+                        type="tel"
+                        required
+                        {...editForm.register("phone", {
+                          onBlur: (event) =>
+                            editForm.setValue(
+                              "phone",
+                              normalizeNigerianPhone(event.target.value),
+                            ),
+                        })}
+                      />
+                    </label>
+                    <label className="field">
+                      <span>Address</span>
+                      <input className="input" aria-label="Rider address" {...editForm.register("address")} required />
+                    </label>
+                    {update.isError && (
+                      <p className="form-error" role="alert">
+                        {update.error instanceof Error
+                          ? update.error.message
+                          : "Rider details could not be updated."}
+                      </p>
+                    )}
+                    <div className="form-actions">
+                      <button
+                        type="button"
+                        className="button button-secondary"
+                        onClick={() => setEditingId(null)}
+                      >
+                        Cancel
+                      </button>
+                      <button className="button button-primary" disabled={update.isPending}>
+                        {update.isPending ? "Saving..." : "Save changes"}
+                      </button>
+                    </div>
                   </form>
                 )}
+                <button
+                  type="button"
+                  className="button button-danger rider-access-button"
+                  disabled={deleteRider.isPending}
+                  onClick={() =>
+                    setRiderToDelete({ id: rider.id, name: rider.name })
+                  }
+                >
+                  <Trash2 size={15} />
+                  {deleteRider.isPending && deleteRider.variables === rider.id
+                    ? "Deleting rider..."
+                    : "Delete rider"}
+                </button>
                 {resendAccess.isSuccess && resendAccess.variables === rider.id && (
                   <p className="success-text">Access link sent successfully.</p>
                 )}

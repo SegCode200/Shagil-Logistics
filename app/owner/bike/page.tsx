@@ -1,10 +1,11 @@
 "use client";
 
-import { Bike, Plus, Unlink } from "lucide-react";
+import { Bike, Plus, Trash2, Unlink } from "lucide-react";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/app-shell";
 import { useRoleRedirect } from "@/components/auth/auth-provider";
+import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { api } from "@/lib/api";
 import { normalizeNigerianPhone } from "@/lib/phone";
 import {
@@ -26,6 +27,11 @@ export default function OwnerBikePage() {
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [draft, setDraft] = useState<Draft>(emptyDraft);
+  const [bikeToDelete, setBikeToDelete] = useState<{
+    id: string;
+    bikeId: string;
+    riderName?: string;
+  } | null>(null);
   const bikes = useQuery({
     queryKey: ["bikes"],
     queryFn: api.getBikes,
@@ -60,10 +66,18 @@ export default function OwnerBikePage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["bikes"] });
       queryClient.invalidateQueries({ queryKey: ["riders"] });
+      setBikeToDelete(null);
     },
   });
   const remove = useMutation({
     mutationFn: (bikeId: string) => api.removeBikeRider(bikeId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["bikes"] });
+      queryClient.invalidateQueries({ queryKey: ["riders"] });
+    },
+  });
+  const deleteBike = useMutation({
+    mutationFn: (bikeId: string) => api.deleteBike(bikeId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["bikes"] });
       queryClient.invalidateQueries({ queryKey: ["riders"] });
@@ -77,6 +91,26 @@ export default function OwnerBikePage() {
 
   return (
     <AppShell role="OWNER">
+      {bikeToDelete && (
+        <ConfirmDeleteDialog
+          title={`Delete bike ${bikeToDelete.bikeId}?`}
+          description={
+            bikeToDelete.riderName
+              ? `Are you sure you want to delete this bike? This will deactivate ${bikeToDelete.riderName}'s rider account and revoke their access.`
+              : "Are you sure you want to permanently delete this bike?"
+          }
+          isPending={deleteBike.isPending}
+          error={
+            deleteBike.isError
+              ? deleteBike.error instanceof Error
+                ? deleteBike.error.message
+                : "Bike could not be deleted."
+              : undefined
+          }
+          onCancel={() => setBikeToDelete(null)}
+          onConfirm={() => deleteBike.mutate(bikeToDelete.id)}
+        />
+      )}
       <div className="page">
         <header className="page-header">
           <div>
@@ -241,6 +275,23 @@ export default function OwnerBikePage() {
                     Bike assignment could not be updated.
                   </p>
                 )}
+                <button
+                  type="button"
+                  className="button button-danger rider-access-button"
+                  disabled={deleteBike.isPending}
+                  onClick={() =>
+                    setBikeToDelete({
+                      id: bike.id,
+                      bikeId: bike.bikeId,
+                      riderName: bike.rider?.name,
+                    })
+                  }
+                >
+                  <Trash2 size={15} />
+                  {deleteBike.isPending && deleteBike.variables === bike.id
+                    ? "Deleting bike..."
+                    : "Delete bike"}
+                </button>
               </article>
             ))}
           </div>
