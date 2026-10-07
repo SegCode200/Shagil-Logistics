@@ -46,7 +46,6 @@ export default function SenderRegisterPage() {
     setBusy(true);
     try {
       const sender = await api.createSenderPublic({
-        name: normalizedPhone,
         phone: normalizedPhone,
         whatsappPhone: normalizedPhone,
         additionalPhones: normalizedAdditionalPhones,
@@ -66,16 +65,11 @@ export default function SenderRegisterPage() {
 
   if (created) {
     return (
-      <main className="public-page">
-        <div className="public-card success-card">
-          <CheckCircle2 size={40} color="#2d9862" />
-          <h1>Registration complete</h1>
-          <p className="subtext">
-            Your sender account is ready. No WhatsApp message has been sent.
-          </p>
-          <p className="muted">
-            Select Enter to open your sender page.
-          </p>
+      <main className="public-page sender-register-page">
+        <div className="public-card sender-register-card sender-register-success">
+          <CheckCircle2 size={36} color="#2d9862" aria-hidden="true" />
+          <h1>You’re registered</h1>
+          <p>Your sender account is ready.</p>
           <Link
             className="button button-primary button-full"
             href={created.senderPath}
@@ -88,16 +82,17 @@ export default function SenderRegisterPage() {
   }
 
   return (
-    <main className="public-page">
-      <div className="public-card">
-        <header className="public-header">
-          <p className="eyebrow">Shagil sender registration</p>
-          <h1>Create your sender account</h1>
-          <p className="subtext">
-            Enter your WhatsApp number and any additional contact numbers.
+    <main className="public-page sender-register-page">
+      <div className="public-card sender-register-card">
+        <header className="sender-register-header">
+          <p className="eyebrow">Shagil</p>
+          <h1>Register as a sender</h1>
+          <p>
+            Enter your WhatsApp number and optional extra numbers. No message
+            will be sent.
           </p>
         </header>
-        <form className="public-form" onSubmit={submit}>
+        <form className="sender-register-form" onSubmit={submit}>
           <div className="field">
             <label htmlFor="sender-register-phone">WhatsApp number</label>
             <input
@@ -105,22 +100,21 @@ export default function SenderRegisterPage() {
               id="sender-register-phone"
               type="tel"
               required
+              placeholder="+234..."
               value={phone}
               onChange={(event) => setPhone(event.target.value)}
               onBlur={() => setPhone(normalizeNigerianPhone(phone))}
             />
-            <small className="field-help">
-              This will also be saved as your main phone number. No WhatsApp
-              message will be sent.
-            </small>
           </div>
-          <div className="field">
-            <label>Additional phone numbers</label>
+          <fieldset className="field sender-register-additional">
+            <legend>Additional numbers <span>(optional)</span></legend>
             {additionalPhones.map((additionalPhone, index) => (
               <div className="input-icon" key={index}>
                 <input
                   className="input"
                   type="tel"
+                  aria-label={`Additional phone number ${index + 1}`}
+                  placeholder="Phone number"
                   value={additionalPhone}
                   onChange={(event) =>
                     setAdditionalPhones((current) =>
@@ -143,7 +137,7 @@ export default function SenderRegisterPage() {
                   <button
                     type="button"
                     className="icon-button"
-                    aria-label="Remove phone number"
+                    aria-label={`Remove additional phone number ${index + 1}`}
                     onClick={() =>
                       setAdditionalPhones((current) =>
                         current.filter((_, itemIndex) => itemIndex !== index),
@@ -158,22 +152,22 @@ export default function SenderRegisterPage() {
             {additionalPhones.length < 10 && (
               <button
                 type="button"
-                className="button button-secondary"
+                className="sender-register-add-button"
                 onClick={() =>
                   setAdditionalPhones((current) => [...current, ""])
                 }
               >
-                <Plus size={16} /> Add another number
+                <Plus size={15} /> Add another
               </button>
             )}
-          </div>
+          </fieldset>
           {error && <p className="form-error">{error}</p>}
           <button className="button button-primary button-full" disabled={busy}>
             {busy ? (
               "Registering..."
             ) : (
               <>
-                Register as sender <ArrowRight size={17} />
+                Register <ArrowRight size={17} />
               </>
             )}
           </button>

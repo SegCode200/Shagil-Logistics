@@ -448,6 +448,7 @@ export default function PublicOrderPage({ params }: Props) {
     queryFn: api.getPublicStations,
   });
   const [values, setValues] = useState(initialValues);
+  const [pickupAddressEditing, setPickupAddressEditing] = useState(false);
   const [validationMessage, setValidationMessage] = useState("");
   const [validationTarget, setValidationTarget] = useState("");
   const [images, setImages] = useState<{ file: File; url: string }[]>([]);
@@ -467,15 +468,24 @@ export default function PublicOrderPage({ params }: Props) {
     const sender = senderProfile.data;
     if (!sender) return;
     const prefill = window.setTimeout(() => {
+      const senderAddress =
+        sender.senderAddress?.trim() || sender.permanentAddress?.trim() || "";
       setValues((current) => ({
         ...current,
-        senderName: sender.senderName || "",
+        senderName: sender.senderName?.trim() || "",
         senderPhoneNumber: sender.senderPhoneNumber || "",
+        pickupAddress: senderAddress,
       }));
+      setPickupAddressEditing(!senderAddress);
     }, 0);
     return () => window.clearTimeout(prefill);
   }, [senderProfile.data]);
-  const senderFieldsLocked = true;
+  const senderNameLocked = Boolean(senderProfile.data?.senderName?.trim());
+  const senderPhoneLocked = true;
+  const senderHasAddress = Boolean(
+    senderProfile.data?.senderAddress?.trim() ||
+      senderProfile.data?.permanentAddress?.trim(),
+  );
   const selectedDistance = stations.data
     ?.find((station) => station.id === values.stationId)
     ?.zoneDistances?.find((distance) => distance.deliveryZoneId === values.deliveryZoneId);
@@ -716,7 +726,7 @@ export default function PublicOrderPage({ params }: Props) {
                 id="create-senderName"
                 value={values.senderName}
                 required
-                disabled={senderFieldsLocked}
+                disabled={senderNameLocked}
                 onChange={(v) => set("senderName", v)}
               />
               <Field
@@ -725,7 +735,7 @@ export default function PublicOrderPage({ params }: Props) {
                 type="tel"
                 required
                 value={values.senderPhoneNumber}
-                disabled={senderFieldsLocked}
+                disabled={senderPhoneLocked}
                 onChange={(v) => set("senderPhoneNumber", v)}
                 onBlur={() =>
                   set(
@@ -734,14 +744,24 @@ export default function PublicOrderPage({ params }: Props) {
                   )
                 }
               />
-              <div className="form-grid">
+              <div className="field field-span">
                 <Field
-                  label="Sender address/  pickup address"
+                  label="Sender address/ Pickup address"
                   id="create-pickupAddress"
                   required
                   value={values.pickupAddress}
+                  disabled={senderHasAddress && !pickupAddressEditing}
                   onChange={(v) => set("pickupAddress", v)}
                 />
+                {senderHasAddress && !pickupAddressEditing && (
+                  <button
+                    type="button"
+                    className="button button-secondary"
+                    onClick={() => setPickupAddressEditing(true)}
+                  >
+                    Change address
+                  </button>
+                )}
               </div>
             </div>
           </Section>
@@ -1064,4 +1084,3 @@ function Field({
     </div>
   );
 }
-

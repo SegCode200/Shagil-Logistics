@@ -700,7 +700,6 @@ export const api = {
       }),
     }),
   createSenderPublic: (payload: {
-    name: string;
     phone: string;
     whatsappPhone?: string;
     additionalPhones?: string[];

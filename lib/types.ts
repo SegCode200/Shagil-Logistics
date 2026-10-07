@@ -82,6 +82,8 @@ export type PublicSenderOrder = {
   createdAt?: string;
   senderName?: string | null;
   senderPhoneNumber?: string | null;
+  senderAddress?: string | null;
+  permanentAddress?: string | null;
   receiverName?: string | null;
   receiverPhoneNumber?: string | null;
   deliveryAddress: string;
