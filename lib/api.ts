@@ -705,7 +705,7 @@ export const api = {
     whatsappPhone?: string;
     additionalPhones?: string[];
   }) =>
-    request<Sender>("/public/senders/register", {
+    request<Sender & { senderPath: string }>("/public/senders/register", {
       method: "POST",
       body: JSON.stringify({
         ...normalizePhoneFields(payload),
@@ -718,6 +718,5 @@ export const api = {
       { method: "POST" },
     ),
 }
-
 
 
