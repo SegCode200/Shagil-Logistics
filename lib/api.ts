@@ -719,17 +719,22 @@ export const api = {
       }),
     }),
   createSenderPublic: (payload: {
+    name: string;
     phone: string;
     whatsappPhone?: string;
     additionalPhones?: string[];
   }) =>
-    request<Sender & { senderPath: string }>("/public/senders/register", {
+    request<{ senderPath: string }>("/public/senders/register", {
       method: "POST",
       body: JSON.stringify({
         ...normalizePhoneFields(payload),
         additionalPhones: normalizePhoneList(payload.additionalPhones),
       }),
     }),
+  searchPublicSender: (phone: string) =>
+    request<{ senderPath: string }>(
+      `/public/senders/search?phone=${encodeURIComponent(phone)}`,
+    ),
   resendSenderAccess: (senderId: string) =>
     request<{ notificationStatus?: string }>(
       `/senders/${encodeURIComponent(senderId)}/resend-access-token`,

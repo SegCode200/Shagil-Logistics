@@ -2822,6 +2822,13 @@ select {
   display: grid;
   gap: 18px;
 }
+.sender-register-choice-list {
+  display: grid;
+  gap: 12px;
+}
+.sender-register-back {
+  margin: 0 0 16px;
+}
 .sender-register-form .field {
   gap: 8px;
 }
