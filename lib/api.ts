@@ -732,9 +732,10 @@ export const api = {
       }),
     }),
   searchPublicSender: (phone: string) =>
-    request<{ senderPath: string }>(
-      `/public/senders/search?phone=${encodeURIComponent(phone)}`,
-    ),
+    request<{ senderPath: string }>("/public/senders/search", {
+      method: "POST",
+      body: JSON.stringify({ phone }),
+    }),
   resendSenderAccess: (senderId: string) =>
     request<{ notificationStatus?: string }>(
       `/senders/${encodeURIComponent(senderId)}/resend-access-token`,
