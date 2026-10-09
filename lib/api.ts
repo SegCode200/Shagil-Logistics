@@ -206,12 +206,17 @@ export const api = {
   getAllOrders,
   getOrder: (orderId: string) => request<Order>(`/orders/${orderId}`),
   createOrder: async (payload: Partial<Order>, files: File[] = []) => {
+    const orderPayload =
+      payload.paymentMethod === "PAYMENT_ON_DELIVERY"
+        ? { ...payload, paymentCoverage: "DELIVERY_ONLY" as const }
+        : payload;
+
     if (files.length) {
       const uploadFiles = await Promise.all(
         files.slice(0, 3).map((file) => compressImageFile(file)),
       );
       const body = new FormData();
-      Object.entries(normalizePhoneFields(payload)).forEach(([key, value]) => {
+      Object.entries(normalizePhoneFields(orderPayload)).forEach(([key, value]) => {
         if (key === "images" || value == null) return;
         body.append(
           key,
@@ -223,7 +228,7 @@ export const api = {
     }
     return request<Order>("/orders", {
       method: "POST",
-      body: JSON.stringify(normalizePhoneFields(payload)),
+      body: JSON.stringify(normalizePhoneFields(orderPayload)),
     });
   },
   updateOrder: (orderId: string, payload: Record<string, unknown>) =>
