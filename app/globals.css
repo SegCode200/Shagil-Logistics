@@ -1797,18 +1797,23 @@ select {
 .rider-delivery-card-delivered .rider-facts span span {
   color: #245d39;
 }
-.rider-delivery-card-delivered .rider-route-stop,
+.rider-delivery-card.rider-delivery-card-delivered .rider-route-stop,
 .rider-delivery-card-delivered .rider-receiver-phone,
 .rider-delivery-card-delivered .rider-facts,
 .rider-delivery-card-delivered .rider-order-images {
   border-color: #b8d9c2;
   background: #f5fbf6;
 }
-.rider-delivery-card-delivered .rider-route-stop.rider-receiver-highlight {
+.rider-delivery-card.rider-delivery-card-delivered
+  .rider-route-stop.rider-receiver-highlight {
+  border: 1px solid #b8d9c2;
   border-left-color: #4b9564;
+  background: #f5fbf6;
 }
-.rider-delivery-card-delivered .rider-order-phone-number,
-.rider-delivery-card-delivered .rider-order-phone-number strong {
+.rider-delivery-card.rider-delivery-card-delivered
+  .rider-order-receiver-phone .rider-order-phone-number,
+.rider-delivery-card.rider-delivery-card-delivered
+  .rider-order-receiver-phone .rider-order-phone-number strong {
   border-color: #8bc5a0;
   background: #d8efdf;
   color: #245d39;
