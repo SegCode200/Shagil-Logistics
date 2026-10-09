@@ -168,8 +168,11 @@ export default function RiderDashboard() {
                     <p className="rider-order-receiver-phone">
                       <span>Receiver phone:</span>{" "}
                       {order.receiverPhoneNumber || order.receiverPhone ? (
-                        <a href={`tel:${order.receiverPhoneNumber || order.receiverPhone}`}>
-                          {order.receiverPhoneNumber || order.receiverPhone}
+                        <a
+                          className="rider-order-phone-number"
+                          href={`tel:${order.receiverPhoneNumber || order.receiverPhone}`}
+                        >
+                          <strong>{order.receiverPhoneNumber || order.receiverPhone}</strong>
                         </a>
                       ) : (
                         <strong>Not provided</strong>
@@ -257,6 +260,16 @@ export default function RiderDashboard() {
                   <span>
                     <strong>Date & time</strong>
                     <span>{formatDateTime(order.deliveredAt || order.createdAt)}</span>
+                  </span>
+                  <span>
+                    <strong>Delivery type</strong>
+                    <span>
+                      {order.deliveryType === "EXPRESS"
+                        ? "Express"
+                        : order.deliveryType === "NORMAL"
+                          ? "Normal"
+                          : "Not specified"}
+                    </span>
                   </span>
                   <span>
                     <strong>Payment</strong>

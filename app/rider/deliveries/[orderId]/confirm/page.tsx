@@ -352,6 +352,12 @@ export default function ConfirmDeliveryPage({ params }: Props) {
               </strong>
             </div>
             <span className="collection-line">
+              Payment method:{" "}
+              {currentOrder?.paymentMethod === "PAYMENT_ON_DELIVERY"
+                ? "Payment on delivery"
+                : "Payment before delivery"}
+            </span>
+            <span className="collection-line">
               {currentOrder?.paymentMethod === "PAYMENT_ON_DELIVERY"
                 ? `${currentOrder?.paymentCoverage === "ITEM_AND_DELIVERY" ? "Item and delivery amount to collect" : "Delivery fee to collect"}: ₦${Number(currentOrder?.paymentCoverage === "ITEM_AND_DELIVERY" ? currentOrder?.totalAmountToCollect ?? currentOrder?.deliveryFee ?? 0 : currentOrder?.deliveryFee ?? 0).toLocaleString()}`
                 : "Already paid"}
@@ -423,13 +429,13 @@ export default function ConfirmDeliveryPage({ params }: Props) {
             </div>
           )}
           <div className="rider-action-stack">
-            <p className="action-section-label">Step 1: Delivery verification</p>
+            {/* <p className="action-section-label">Step 1: Delivery verification</p>
             <div className="payment-action-row">
               <span className="status status-active">Verified</span>
               <strong>{deliveryCodeForAction || lookupCode}</strong>
             </div>
-            <p className="action-section-label">Step 2: Payment confirmation</p>
-            <div className="payment-action-row">
+            <p className="action-section-label">Step 2: Payment confirmation</p> */}
+            {/* <div className="payment-action-row">
 
               {(currentOrder?.paymentMethod === "PAYMENT_ON_DELIVERY" &&
               currentOrder?.status === "PICKED_UP" && currentOrder?.paymentCoverage === "ITEM_AND_DELIVERY") && (
@@ -446,7 +452,7 @@ export default function ConfirmDeliveryPage({ params }: Props) {
               <span className={`status status-${(currentOrder?.receiverCollectionStatus || "PENDING").toLowerCase()}`}>
                 {currentOrder?.receiverCollectionStatus === "COLLECTED" ? "PAID" : "PENDING"}
               </span>
-            </div>
+            </div> */}
               
             {receiverPaymentMutation.isError && (
               <p className="form-error confirm-error">Receiver payment could not be confirmed</p>

@@ -1761,10 +1761,21 @@ select {
   color: var(--muted);
   font-weight: 600;
 }
-.rider-delivery-card .rider-order-receiver-phone a,
+.rider-delivery-card .rider-order-receiver-phone .rider-order-phone-number,
 .rider-order-receiver-phone strong {
-  color: var(--navy);
+  color: #a63820;
+  font-size: 16px;
   font-weight: 900;
+}
+.rider-delivery-card .rider-order-receiver-phone .rider-order-phone-number {
+  flex-basis: 100%;
+  width: fit-content;
+  padding: 5px 9px;
+  border: 1px solid #e8b1a3;
+  border-radius: 6px;
+  background: #fff0eb;
+  letter-spacing: 0.02em;
+  text-decoration: none;
 }
 .rider-delivery-card-delivered {
   border: 1px solid #8bc5a0;
@@ -1773,8 +1784,6 @@ select {
 .rider-delivery-card-delivered h3,
 .rider-delivery-card-delivered .order-ref,
 .rider-delivery-card-delivered .rider-order-receiver-phone > span,
-.rider-delivery-card-delivered .rider-order-receiver-phone a,
-.rider-delivery-card-delivered .rider-order-receiver-phone strong,
 .rider-delivery-card-delivered .rider-route-label,
 .rider-delivery-card-delivered .rider-route-detail-label,
 .rider-delivery-card-delivered .rider-route-detail-value,
