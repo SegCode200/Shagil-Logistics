@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { MapPin, ArrowRight, Navigation, Phone, Wallet } from "lucide-react";
+import { MapPin, ArrowRight, Navigation, Phone, Search, Wallet } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/app-shell";
@@ -33,10 +33,26 @@ const formatDateTime = (value?: string | null) => {
 export default function RiderDashboard() {
   const { user, isLoading: authLoading } = useRoleRedirect("RIDER");
   const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const searchTerm = search.trim().toLowerCase();
   const query = useQuery({
     queryKey: ["rider-orders", page],
     queryFn: () => api.getRiderOrders(page, 10),
     enabled: Boolean(user),
+  });
+  const searchQuery = useQuery({
+    queryKey: ["rider-orders-search", searchTerm],
+    queryFn: async () => {
+      const firstPage = await api.getRiderOrders(1, 100);
+      if (firstPage.pagination.totalPages <= 1) return firstPage.items;
+      const remainingPages = await Promise.all(
+        Array.from({ length: firstPage.pagination.totalPages - 1 }, (_, index) =>
+          api.getRiderOrders(index + 2, 100),
+        ),
+      );
+      return [firstPage, ...remainingPages].flatMap((result) => result.items);
+    },
+    enabled: Boolean(user && searchTerm),
   });
   const ratingQuery = useQuery({
     queryKey: ["rider-ratings"],
@@ -60,9 +76,24 @@ export default function RiderDashboard() {
   );
   if (authLoading || !user) return <LoadingState />;
   const orders = query.data?.items || [];
-  const visibleOrders = orders.filter(
-    (order) =>
-      !(order.status === "DELIVERED" && order.finalPaymentStatus === "PAID"),
+  const isSearching = Boolean(searchTerm);
+  const matchingOrders = (isSearching ? searchQuery.data || [] : orders).filter(
+    (order) => {
+      if (order.status === "DELIVERED" && order.finalPaymentStatus === "PAID") {
+        return false;
+      }
+      if (!isSearching) return true;
+      const phoneDigits = searchTerm.replace(/\D/g, "");
+      const orderIdMatches = (order.orderId || order.id)
+        .toLowerCase()
+        .includes(searchTerm);
+      const receiverPhoneMatches = phoneDigits
+        ? (order.receiverPhoneNumber || order.receiverPhone || "")
+            .replace(/\D/g, "")
+            .includes(phoneDigits)
+        : false;
+      return orderIdMatches || receiverPhoneMatches;
+    },
   );
   return (
     <AppShell role="RIDER">
@@ -92,18 +123,33 @@ export default function RiderDashboard() {
           <small>{ratingQuery.data?.length || 0} ratings</small>
         </section>
         <RiderPushNotifications />
-        {query.isLoading ? (
+        <div className="input-icon search rider-order-search">
+          <Search size={16} aria-hidden="true" />
+          <input
+            className="input"
+            type="search"
+            aria-label="Search deliveries by order ID or receiver phone number"
+            placeholder="Search by order ID or receiver phone"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+          />
+        </div>
+        {(isSearching ? searchQuery.isLoading : query.isLoading) ? (
           <LoadingState label="Loading deliveries" />
-        ) : query.isError ? (
+        ) : (isSearching ? searchQuery.isError : query.isError) ? (
           <ErrorState />
-        ) : visibleOrders.length === 0 ? (
+        ) : matchingOrders.length === 0 ? (
           <EmptyState
-            title="No deliveries assigned to you"
-            description="New deliveries will appear here when they are ready."
+            title={isSearching ? "No matching deliveries" : "No deliveries assigned to you"}
+            description={
+              isSearching
+                ? "Try a different order ID or receiver phone number."
+                : "New deliveries will appear here when they are ready."
+            }
           />
         ) : (
           <div className="delivery-list">
-            {visibleOrders.map((order) => {
+            {matchingOrders.map((order) => {
                 const pickupAddressVisible = ![
                   "PICKED_UP",
                   "DELIVERED",
@@ -244,7 +290,7 @@ export default function RiderDashboard() {
             })}
           </div>
         )}
-        {query.data && query.data.pagination.totalPages > 1 && (
+        {!isSearching && query.data && query.data.pagination.totalPages > 1 && (
           <div className="pagination">
             <button
               className="button button-secondary"

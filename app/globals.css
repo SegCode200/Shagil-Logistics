@@ -1747,6 +1747,10 @@ select {
   margin-bottom: 0;
   padding: 22px;
 }
+.rider-order-search {
+  width: min(100%, 480px);
+  margin: 0 0 16px;
+}
 .rider-order-receiver-phone {
   display: flex;
   flex-wrap: wrap;
@@ -1757,10 +1761,10 @@ select {
   color: var(--muted);
   font-weight: 600;
 }
-.rider-order-receiver-phone a,
+.rider-delivery-card .rider-order-receiver-phone a,
 .rider-order-receiver-phone strong {
   color: var(--navy);
-  font-weight: 850;
+  font-weight: 900;
 }
 .rider-delivery-card-delivered {
   border: 1px solid #8bc5a0;
@@ -2647,7 +2651,8 @@ select {
 }
 .receiver-heading > div .rider-order-id {
   color: white;
-  font-weight: 800;
+  font-size: 14px;
+  font-weight: 900;
 }
 .receiver-avatar {
   width: 38px;
@@ -2662,6 +2667,7 @@ select {
 }
 .delivery-summary-card .rider-phone-link {
   color: #fff;
+  font-weight: 900;
 }
 .delivery-summary-card .rider-phone-link svg {
   color: #f6b29e;
