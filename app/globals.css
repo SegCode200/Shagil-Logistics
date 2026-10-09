@@ -768,8 +768,8 @@ select {
   background: #f0eaff;
 }
 .status-picked_up {
-  color: #18705c;
-  background: #ddf6ed;
+  color: #7a3900;
+  background: #ffe1ad;
 }
 .status-delivered {
   color: #287650;
@@ -1778,8 +1778,8 @@ select {
   text-decoration: none;
 }
 .rider-delivery-card-delivered {
-  border: 1px solid #8bc5a0;
-  background: #edf8f0;
+  border: 1px solid #72ad83;
+  background: #e5f5e9;
 }
 .rider-delivery-card-delivered h3,
 .rider-delivery-card-delivered .order-ref,
@@ -1806,6 +1806,12 @@ select {
 }
 .rider-delivery-card-delivered .rider-route-stop.rider-receiver-highlight {
   border-left-color: #4b9564;
+}
+.rider-delivery-card-delivered .rider-order-phone-number,
+.rider-delivery-card-delivered .rider-order-phone-number strong {
+  border-color: #8bc5a0;
+  background: #d8efdf;
+  color: #245d39;
 }
 .rider-delivery-card-delivered .rider-route-address svg,
 .rider-delivery-card-delivered .rider-map-link,
