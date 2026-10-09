@@ -60,6 +60,10 @@ export default function RiderDashboard() {
   );
   if (authLoading || !user) return <LoadingState />;
   const orders = query.data?.items || [];
+  const visibleOrders = orders.filter(
+    (order) =>
+      !(order.status === "DELIVERED" && order.finalPaymentStatus === "PAID"),
+  );
   return (
     <AppShell role="RIDER">
       <div className="page">
@@ -92,14 +96,14 @@ export default function RiderDashboard() {
           <LoadingState label="Loading deliveries" />
         ) : query.isError ? (
           <ErrorState />
-        ) : orders.length === 0 ? (
+        ) : visibleOrders.length === 0 ? (
           <EmptyState
             title="No deliveries assigned to you"
             description="New deliveries will appear here when they are ready."
           />
         ) : (
           <div className="delivery-list">
-            {orders.map((order) => {
+            {visibleOrders.map((order) => {
                 const pickupAddressVisible = ![
                   "PICKED_UP",
                   "DELIVERED",
@@ -107,11 +111,24 @@ export default function RiderDashboard() {
                 ].includes(order.status);
 
                 return (
-              <article className="panel rider-delivery-card" key={order.id}>
+              <article
+                className={`panel rider-delivery-card${order.status === "DELIVERED" ? " rider-delivery-card-delivered" : ""}`}
+                key={order.id}
+              >
                 <header className="card-row">
                   <div>
                     <h3>{order.customerName}</h3>
                     <p className="order-ref">{order.orderId || order.id}</p>
+                    <p className="rider-order-receiver-phone">
+                      <span>Receiver phone:</span>{" "}
+                      {order.receiverPhoneNumber || order.receiverPhone ? (
+                        <a href={`tel:${order.receiverPhoneNumber || order.receiverPhone}`}>
+                          {order.receiverPhoneNumber || order.receiverPhone}
+                        </a>
+                      ) : (
+                        <strong>Not provided</strong>
+                      )}
+                    </p>
                   </div>
                   <OrderStatusBadge status={order.status} />
                 </header>

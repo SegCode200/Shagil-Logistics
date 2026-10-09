@@ -1747,6 +1747,64 @@ select {
   margin-bottom: 0;
   padding: 22px;
 }
+.rider-order-receiver-phone {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 5px 0 0;
+}
+.rider-order-receiver-phone > span {
+  color: var(--muted);
+  font-weight: 600;
+}
+.rider-order-receiver-phone a,
+.rider-order-receiver-phone strong {
+  color: var(--navy);
+  font-weight: 850;
+}
+.rider-delivery-card-delivered {
+  border: 1px solid #8bc5a0;
+  background: #edf8f0;
+}
+.rider-delivery-card-delivered h3,
+.rider-delivery-card-delivered .order-ref,
+.rider-delivery-card-delivered .rider-order-receiver-phone > span,
+.rider-delivery-card-delivered .rider-order-receiver-phone a,
+.rider-delivery-card-delivered .rider-order-receiver-phone strong,
+.rider-delivery-card-delivered .rider-route-label,
+.rider-delivery-card-delivered .rider-route-detail-label,
+.rider-delivery-card-delivered .rider-route-detail-value,
+.rider-delivery-card-delivered .rider-route-address,
+.rider-delivery-card-delivered .rider-route-complete,
+.rider-delivery-card-delivered .rider-receiver-phone > strong,
+.rider-delivery-card-delivered .rider-receiver-phone > a,
+.rider-delivery-card-delivered .rider-receiver-phone > span,
+.rider-delivery-card-delivered .rider-facts strong,
+.rider-delivery-card-delivered .rider-facts a,
+.rider-delivery-card-delivered .rider-facts span span {
+  color: #245d39;
+}
+.rider-delivery-card-delivered .rider-route-stop,
+.rider-delivery-card-delivered .rider-receiver-phone,
+.rider-delivery-card-delivered .rider-facts,
+.rider-delivery-card-delivered .rider-order-images {
+  border-color: #b8d9c2;
+  background: #f5fbf6;
+}
+.rider-delivery-card-delivered .rider-route-stop.rider-receiver-highlight {
+  border-left-color: #4b9564;
+}
+.rider-delivery-card-delivered .rider-route-address svg,
+.rider-delivery-card-delivered .rider-map-link,
+.rider-delivery-card-delivered .rider-receiver-phone svg,
+.rider-delivery-card-delivered .rider-facts svg {
+  color: #32764a;
+}
+.rider-delivery-card-delivered .button-primary {
+  border-color: #32764a;
+  background: #32764a;
+  color: #fff;
+}
 .rider-summary-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
