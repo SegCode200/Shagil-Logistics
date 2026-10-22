@@ -21,7 +21,7 @@ type Values = {
   pickupAddress: string;
   pickupInstructions: string;
   paymentMethod: "" | "ALREADY_PAID" | "PAYMENT_ON_DELIVERY";
-  deliveryType: "" | "NORMAL" | "EXPRESS";
+  deliveryType: "NORMAL";
 };
 const initialValues: Values = {
   senderName: "",
@@ -35,7 +35,7 @@ const initialValues: Values = {
   pickupAddress: "",
   pickupInstructions: "",
   paymentMethod: "",
-  deliveryType: "",
+  deliveryType: "NORMAL",
 };
 function removeEmptyValues(values: Values) {
   return Object.fromEntries(
@@ -133,11 +133,7 @@ export default function CreateOrderPage() {
     ? Number(settings.data?.fixedDeliveryRate || 0) +
       Number(settings.data?.variableDeliveryRate || 0) * Number(selectedDistance.distanceKm)
     : 0;
-  const expressMultiplier =
-    values.deliveryType === "EXPRESS"
-      ? Number(settings.data?.expressMultiplier || 1)
-      : 1;
-  const baseFee = baseFeeBeforeExpress * expressMultiplier;
+  const baseFee = baseFeeBeforeExpress;
   const riderCommissionAmount =
     (Number(settings.data?.riderCommissionRate || 0) * baseFee) / 100;
   const vatAmount =
@@ -174,7 +170,6 @@ export default function CreateOrderPage() {
       ["deliveryAddress", "Delivery address not filled."],
       ["stationId", "Select a station."],
       ["deliveryZoneId", "Select a delivery area."],
-      ["deliveryType", "Select a delivery type."],
       ["paymentMethod", "Select a payment type."],
     ];
     const missingField = requiredFields.find(([key]) => !values[key].trim());
@@ -422,13 +417,9 @@ export default function CreateOrderPage() {
                 id="delivery-type"
                 required
                 value={values.deliveryType}
-                onChange={(event) =>
-                  set("deliveryType", event.target.value as Values["deliveryType"])
-                }
+                onChange={() => set("deliveryType", "NORMAL")}
               >
-                <option value="">Select delivery type</option>
                 <option value="NORMAL">Normal delivery</option>
-                <option value="EXPRESS">Express/Charter delivery</option>
               </select>
             </div>
           </Section>

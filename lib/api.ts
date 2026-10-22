@@ -208,8 +208,12 @@ export const api = {
   createOrder: async (payload: Partial<Order>, files: File[] = []) => {
     const orderPayload =
       payload.paymentMethod === "PAYMENT_ON_DELIVERY"
-        ? { ...payload, paymentCoverage: "DELIVERY_ONLY" as const }
-        : payload;
+        ? {
+            ...payload,
+            deliveryType: "NORMAL" as const,
+            paymentCoverage: "DELIVERY_ONLY" as const,
+          }
+        : { ...payload, deliveryType: "NORMAL" as const };
 
     if (files.length) {
       const uploadFiles = await Promise.all(
@@ -235,6 +239,10 @@ export const api = {
     request<Order>(`/orders/${orderId}`, {
       method: "PATCH",
       body: JSON.stringify(normalizePhoneFields(payload)),
+    }),
+  deleteOrder: (orderId: string) =>
+    request<{ orderId: string }>(`/orders/${encodeURIComponent(orderId)}`, {
+      method: "DELETE",
     }),
   updateAccountDetails: (payload: AccountDetails) =>
     request<User>("/auth/account-details", {

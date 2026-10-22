@@ -10,9 +10,11 @@ import {
   LoaderCircle,
   PackageCheck,
   Send,
+  Trash2,
 } from "lucide-react";
 import { use, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
 import { PaymentReceiptViewer } from "@/components/orders/payment-receipt-viewer";
 import {
@@ -20,6 +22,7 @@ import {
   RiderPicker,
 } from "@/components/orders/rider-picker";
 import { useRoleRedirect } from "@/components/auth/auth-provider";
+import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { api } from "@/lib/api";
 import {
   ErrorState,
@@ -67,6 +70,7 @@ export default function OrderDetailsPage({ params }: Props) {
   const { orderId } = use(params);
   const { user, isLoading } = useRoleRedirect("OWNER");
   const queryClient = useQueryClient();
+  const router = useRouter();
   const riders = useQuery({
     queryKey: ["riders"],
     queryFn: api.getRiders,
@@ -99,6 +103,14 @@ export default function OrderDetailsPage({ params }: Props) {
   const [paymentReceipt, setPaymentReceipt] = useState<File | null>(null);
   const [authorizationSuccess, setAuthorizationSuccess] = useState(false);
   const [editValues, setEditValues] = useState<Record<string, string>>({});
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const deleteOrder = useMutation({
+    mutationFn: () => api.deleteOrder(orderId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+      router.replace("/owner/orders");
+    },
+  });
   const action = useMutation({
     mutationFn: (type: "approve" | "cancel") => {
       if (type === "cancel") return api.cancelOrder(orderId);
@@ -253,6 +265,22 @@ export default function OrderDetailsPage({ params }: Props) {
   }));
   return (
     <AppShell role="OWNER">
+      {confirmingDelete && (
+        <ConfirmDeleteDialog
+          title={`Delete order ${order.orderId || order.id}?`}
+          description="Are you sure you want to permanently delete this order? This action cannot be undone."
+          isPending={deleteOrder.isPending}
+          error={
+            deleteOrder.isError
+              ? deleteOrder.error instanceof Error
+                ? deleteOrder.error.message
+                : "Order could not be deleted."
+              : undefined
+          }
+          onCancel={() => setConfirmingDelete(false)}
+          onConfirm={() => deleteOrder.mutate()}
+        />
+      )}
       {authorizationSuccess && (
         <div className="validation-dialog-backdrop">
           <section
@@ -311,6 +339,18 @@ export default function OrderDetailsPage({ params }: Props) {
           <div className="inline-actions">
             <OrderStatusBadge status={order.status} />
             <button
+              type="button"
+              className="button button-danger"
+              disabled={deleteOrder.isPending}
+              onClick={() => {
+                deleteOrder.reset();
+                setConfirmingDelete(true);
+              }}
+            >
+              <Trash2 size={16} /> Delete order
+            </button>
+            <button
+              type="button"
               className="button button-secondary"
               onClick={() => {
                 setEditValues({
