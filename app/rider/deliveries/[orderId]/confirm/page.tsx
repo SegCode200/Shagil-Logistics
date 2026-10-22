@@ -480,7 +480,15 @@ export default function ConfirmDeliveryPage({ params }: Props) {
               type="button"
               className="button button-warning button-full"
               disabled={resendCodeMutation.isPending}
-              onClick={() => resendCodeMutation.mutate()}
+              onClick={() => {
+                if (
+                  window.confirm(
+                    "Are you sure you want to resend the delivery code to the receiver via WhatsApp?",
+                  )
+                ) {
+                  resendCodeMutation.mutate();
+                }
+              }}
             >
               <Send size={16} />
               {resendCodeMutation.isPending ? "Sending Code..." : "Send delivery code via Whatsapp"}
