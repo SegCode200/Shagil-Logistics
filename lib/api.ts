@@ -210,10 +210,9 @@ export const api = {
       payload.paymentMethod === "PAYMENT_ON_DELIVERY"
         ? {
             ...payload,
-            deliveryType: "NORMAL" as const,
             paymentCoverage: "DELIVERY_ONLY" as const,
           }
-        : { ...payload, deliveryType: "NORMAL" as const };
+        : payload;
 
     if (files.length) {
       const uploadFiles = await Promise.all(

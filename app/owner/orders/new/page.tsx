@@ -32,6 +32,7 @@ const schema = z.object({
   stationId: z.string().min(1),
   deliveryZoneId: z.string().min(1),
   paymentMethod: z.enum(["ALREADY_PAID", "PAYMENT_ON_DELIVERY"]),
+  deliveryType: z.enum(["NORMAL", "EXPRESS"]),
   assignedRiderId: z.string().optional(),
 });
 type FormValues = z.infer<typeof schema>;
@@ -62,6 +63,7 @@ export default function NewOrderPage() {
     defaultValues: {
       pickupMethod: "SENDER_DROPOFF",
       paymentMethod: "PAYMENT_ON_DELIVERY",
+      deliveryType: "NORMAL",
     },
   });
   const pickupMethod = useWatch({
@@ -232,6 +234,19 @@ export default function NewOrderPage() {
                 {form.formState.errors.deliveryZoneId && (
                   <small>{String(form.formState.errors.deliveryZoneId.message || "Select a zone")}</small>
                 )}
+              </div>
+              <div className="field">
+                <label htmlFor="deliveryType">Delivery type</label>
+                <select
+                  className="select"
+                  id="deliveryType"
+                  required
+                  {...form.register("deliveryType")}
+                >
+                  <option value="">Select delivery type</option>
+                  <option value="NORMAL">Normal delivery</option>
+                  <option value="EXPRESS">Express/Charter delivery</option>
+                </select>
               </div>
               <h2 className="field-span form-section-title">Payment</h2>
               <div className="field">
